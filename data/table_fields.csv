@@ -1,0 +1,36 @@
+"shiny_input","dt_cols","col_type","col_input","input_mult","editable","pcode","take_comments","choices","input_width"
+"SampleDateTime","Date-Time","text","textInput",,"yes",,"no",,170
+"site","Site","factor","selectInput","no","yes",,"no","sites",350
+"sampler","Samplers","factor","selectInput","yes","yes",,"no","samplers",200
+"wea48","Weather Last 48hrs","factor","selectInput","yes","yes","P01","yes","wea_choices",180
+"wea_now","Current Weather","factor","selectInput","yes","yes","P02","yes","wea_choices",180
+"temp_air","Air Temperature (C)","numeric","numericInput",,"yes","P03","yes",,120
+"temp_wat","Water Temperature (C)","numeric","numericInput",,"yes","P04","yes",,120
+"wat_appear","Water Appearance","factor","selectInput","yes","yes",,"yes","wat_appear_choices",120
+"wat_trash","Trash","factor","selectInput","no","yes",,"yes","wat_trash_choices",120
+"trash_descr","Trash Description","text","textInput",,"yes",,"no",,200
+"erosion","Erosion","factor","selectInput","yes","yes",,"yes","wat_erosion_choices",170
+"erosion_change","Erosion Change","text","textInput",,"yes",,"no",,200
+"wat_odor","Water Odor","factor","selectInput","yes","yes",,"yes","wat_odor_choices",170
+"wat_nav","Water Veg","factor","selectInput","no","yes",,"yes","wat_NAV_choices",170
+"wat_nav_descr","Water Veg Comment","text","textInput",,"yes",,"no",,170
+"wat_clarity","Water Clarity","factor","selectInput","no","yes",,"yes","wat_clarity_choices",170
+"lab_turb","Lab Turbidity","numeric","numericInput",,"yes",,"yes",,120
+"lab_turb_rep","Lab Turbidity Replicate","numeric","numericInput",,"yes",,"yes",,170
+"depth_type","Depth Measurement Type","factor","selectInput","no","yes",,"yes","depth_choices",200
+"depth_meas","Water Depth","numeric","numericInput",,"yes",,"yes",,100
+"do","Dissolved Oxygen","numeric","numericInput",,"yes",,"yes",,150
+"o2","Oxygen Saturation","numeric","numericInput",,"yes",,"yes",,170
+"no3","Nitrate","numeric","numericInput",,"yes",,"yes",,100
+"no3_rep","Nitrate Replicate","numeric","numericInput",,"yes",,"yes",,150
+"po4","Orthophosphate","numeric","numericInput",,"yes",,"yes",,150
+"po4_rep","Orthophosphate Replicate","numeric","numericInput",,"yes",,"yes",,200
+"conduct","Conductivity","numeric","numericInput",,"yes",,"yes",,140
+"conduct_rep","Conductivity Replicate","numeric","numericInput",,"yes",,"yes",,170
+"photos","Photos?","text","checkboxInput",,"yes",,"no",,100
+"Entered_By","Entered By","text","textInput",,"no",,"no",,140
+"SITE","Comment Site","factor","selectInput","no","yes",,"no","sites",350
+"DATE","Date","text","textInput",,"yes",,"no",,150
+"PARAMETER","Parameter","factor","selectInput","no","yes",,"no","comment_par_choices",170
+"COMMENTER","Commenter","factor","selectInput","no","yes",,"no","commenter_choices",170
+"COMMENT","Comment","text","textInput",,"yes",,"no",,300
