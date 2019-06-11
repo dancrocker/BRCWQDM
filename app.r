@@ -94,7 +94,7 @@ data_fields <- table_fields[1:30,]
 comment_fields <- table_fields[31:35,]
 
 ### DATA FIELDS ####
-fieldsASIS <- data_fields$shiny_input[!data_fields$shiny_input %in% c("SampleDateTime","sampler","Entered_By")]
+fieldsASIS <- data_fields$shiny_input[data_fields$as_is == "yes"]
 ### Data Column names csv ####
 col_names <- data_fields$shiny_input
 ### Comment Column Names csv ####
@@ -324,7 +324,7 @@ ui <-tagList(
   tabPanel("STAGED DATA",
            fluidRow(
            column(2, imageOutput("brc_logo2", height = 80), align = "left"),
-           column(8, h2("Data Ready to process and submit", align = "center")),
+           column(8, h2("Data Ready to Process & Submit", align = "center")),
            column(2, imageOutput("zap_logo2", height = 80), align = "right")
          ),
          tabsetPanel(
@@ -373,7 +373,7 @@ ui <-tagList(
                     )
                   )
                 ), # End tp
-                tabPanel("PROCESS + SUBMIT", type = "pills",
+                tabPanel("PROCESS & SUBMIT", type = "pills",
                   fluidRow(
                     column(12,
                       h4("Make sure all data has been entered and checked over for accuracy. Click the 'PROCESS' button \n
@@ -417,7 +417,7 @@ ui <-tagList(
     tabPanel("SUBMITTED DATA",
         fluidRow(
            column(2, imageOutput("brc_logo3", height = 80), align = "left"),
-           column(8,  h2("Process and Submit all Staged Records", align = "center")),
+           column(8,  h2("These Records Have Been Submitted", align = "center")),
            column(2, imageOutput("zap_logo3", height = 80), align = "right")
          )
         # fluidRow(
@@ -643,22 +643,35 @@ observe({
 #     loadData()
 # })
 
-
+### REACTIVE DATA ENTRY VALS ####
 ### SAMPLEDATE-TIME CALC ####
-SampleDT <- reactive({
-  paste0(strftime(input$date, "%Y-%m-%d"), " ", strftime(input$time, "%H:%M"))
-})
-### DateTime value
-output$dt <- renderText(SampleDT())
+SampleDT <- reactive({paste0(strftime(input$date, "%Y-%m-%d"), " ", strftime(input$time, "%H:%M"))})
 
 ### CONVERT MULIPLE SELECT INPUTS TO 1 STRING ####
-### Need to do this for each selectInput that allows multiple?
 samplersRX <- reactive({
   req(input$sampler)
-  paste0(input$sampler, collapse = "-") %>% trimws()
-})
-#
-output$samplers_rx <- renderText(samplersRX())
+  paste0(input$sampler, collapse = ";") %>% trimws()
+  })
+wea48RX <- reactive({
+  req(input$wea48)
+  paste0(input$wea48, collapse = ";") %>% trimws()
+  })
+wea_nowRX <- reactive({
+  req(input$wea_now)
+  paste0(input$wea_now, collapse = ";") %>% trimws()
+  })
+wat_appearRX <- reactive({
+  req(input$wat_appear)
+  paste0(input$wat_appear, collapse = ";") %>% trimws()
+  })
+erosionRX <- reactive({
+  req(input$erosion)
+  paste0(input$erosion, collapse = ";") %>% trimws()
+  })
+wat_odorRX <- reactive({
+  req(input$wat_odor)
+  paste0(input$wat_odor, collapse = ";") %>% trimws()
+  })
 
 
 output$depth <- renderUI({
@@ -671,18 +684,12 @@ output$depth <- renderUI({
   )
 })
 
-
-# formOutput <- function(x){
-#   paste(x, collapse = "; ") %>% trimws()
-# }
-# formOutput(test)
-
-
 ### FORM DATA ####
 formData <- reactive({
   data <- sapply(fieldsASIS, function(x) input[[x]])
-  # data <- sapply(data, formOutput)
-  data <- c(data, "SampleDateTime" = SampleDT(), "sampler" = samplersRX(), "Entered_By" = app_user)
+  data <- c(data, "SampleDateTime" = SampleDT(), "sampler" = samplersRX(),
+            wea48 = wea48RX(), wea_now = wea_nowRX(), wat_appear = wat_appearRX(),
+            erosion =  erosionRX(), wat_odor = wat_odorRX(), "Entered_By" = app_user)
   data <- data[col_names] %>% as.character()
   data <- t(data)
   data

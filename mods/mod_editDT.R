@@ -570,7 +570,7 @@ editableDT <- function(input, output, session,
 
 
   })
-
+### DELETE ROW ####
   observeEvent(input$delRow,{
     ns <- session$ns
     ids <- input$origTable_rows_selected
@@ -593,7 +593,7 @@ editableDT <- function(input, output, session,
       }
     ) # End Modal
   })
-
+### CONFIRM DELETE ####
   ### If user say OK, then delete the selected rows
   observeEvent(input$ok, {
     ids <- input$origTable_rows_selected
@@ -763,47 +763,47 @@ editableDT <- function(input, output, session,
   #
   # })
   #
-  observeEvent(input$manipulate,{
-
-    x<-as.data.frame(df())
-
-    mycode=paste0("x %>%",input$newCode)
-
-    x1<- tryCatch(eval(parse(text=mycode)),error=function(e) "error")
-
-    if(any(class(x) %in% c("data.frame","tibble","tbl_df"))) {
-
-      if(nrow(x1)==nrow(x)) rownames(x1) <- rownames(x)
-
-      if(input$result=="edited"){
-        edited1<<-x1
-        updateTextInput(session,"result",value="edited1")
-      } else{
-        edited<<-x1
-        updateTextInput(session,"result",value="edited")
-      }
-    }
-    removeModal()
-
-  })
+  # observeEvent(input$manipulate,{
+  #
+  #   x<-as.data.frame(df())
+  #
+  #   mycode=paste0("x %>%",input$newCode)
+  #
+  #   x1<- tryCatch(eval(parse(text=mycode)),error=function(e) "error")
+  #
+  #   if(any(class(x) %in% c("data.frame","tibble","tbl_df"))) {
+  #
+  #     if(nrow(x1)==nrow(x)) rownames(x1) <- rownames(x)
+  #
+  #     if(input$result=="edited"){
+  #       edited1<<-x1
+  #       updateTextInput(session,"result",value="edited1")
+  #     } else{
+  #       edited<<-x1
+  #       updateTextInput(session,"result",value="edited")
+  #     }
+  #   }
+  #   removeModal()
+  #
+  # })
   #
   #
-  observeEvent(input$remove,{
-
-
-    x<-as.data.frame(df())
-    x <- x[-input$no,]
-
-    if(input$result=="deleted"){
-      deleted1<<-x
-      updateTextInput(session,"result",value="deleted1")
-    } else{
-      deleted<<-x
-      updateTextInput(session,"result",value="deleted")
-    }
-    if(input$no>nrow(x)) updateNumericInput(session,"no",value=nrow(x))
-
-  })
+  # observeEvent(input$remove,{
+  #
+  #
+  #   x<-as.data.frame(df())
+  #   x <- x[-input$no,]
+  #
+  #   if(input$result=="deleted"){
+  #     deleted1<<-x
+  #     updateTextInput(session,"result",value="deleted1")
+  #   } else{
+  #     deleted<<-x
+  #     updateTextInput(session,"result",value="deleted")
+  #   }
+  #   if(input$no>nrow(x)) updateNumericInput(session,"no",value=nrow(x))
+  #
+  # })
   #
   # observeEvent(input$addRow,{
   #
@@ -867,8 +867,6 @@ editableDT <- function(input, output, session,
   #       footer=modalButton("OK")
   #     ))
   #   }
-  #
-  #
   # })
   #
   # observeEvent(input$new,{
@@ -889,7 +887,7 @@ editableDT <- function(input, output, session,
   #   updateNumericInput(session,"no",value=newname)
   #
   # })
-
+### UPDATE ROW ####
   observeEvent(input$update,{
     ids <- input$no
     x<-df()
@@ -900,13 +898,17 @@ editableDT <- function(input, output, session,
     x<-as.data.frame(x)
     rownames(x)[ids]=input$rowname
 
-    # for(i in 1:ncol(x)){
-    #     x[ids,i]=input[[myname[i]]]
-    # }
-
     for(i in 1:ncol(x)){
       #x[ids,i]=input[[myname[i]]]
-      try(x[ids,i]<-input[[myname[i]]])
+      if("character" %in% class(x[ids,i])){
+        # levels(x[ids,i]) <- unique(c(levels(x[ids,i]), newlevel()))
+        try(x[ids,i] <- paste0(input[[myname[i]]], collapse = ";") %>% trimws())
+      } else {
+        try(x[ids,i] <- input[[myname[i]]])
+      }
+      # if("numeric" %in% class(x[ids,i])){
+      #   x[ids,i]=as.numeric(input[[myname[i]]])
+      # }
       if("POSIXct" %in% class(x[ids,i])){
         tz=""
         if(!is.null(attr(x[ids,i],"tzone"))) tz=attr(x[ids,i],"tzone")
@@ -926,7 +928,7 @@ editableDT <- function(input, output, session,
   observeEvent(input$Close,{
     updateCheckboxInput(session,"showEdit",value=FALSE)
   })
-
+### TOGGLE ROW EDIT ####
   observeEvent(input$no,{
     mydf2=df()
 
@@ -936,11 +938,33 @@ editableDT <- function(input, output, session,
       updateTextInput(session,"rowname",value=rownames(mydf2)[input$no])
       updateNumericInput(session,"width",value=input$width)
       mydf=as.data.frame(mydf2[input$no,])
+
       for(i in 1:ncol(mydf)){
         myname=colnames(mydf)[i]
-        if("factor" %in% myclass[[i]]){
-          updateSelectInput(session,myname,
-                            choices=levels(mydf[[i]]),selected=mydf[1,i])
+        type <- table_fields$col_type[table_fields$dt_cols == myname]
+        choices <- table_fields$choices[table_fields$dt_cols == myname]
+        mult <- switch(table_fields$input_mult[table_fields$dt_cols == myname],
+                       "yes" = TRUE,
+                       "no" = FALSE)
+        width <- table_fields$input_width[table_fields$dt_cols == myname]
+
+        if(type == "factor"){
+          if(mult == TRUE){
+            updateSelectInput(session,myname,
+                              choices=unique(c(mydf[1,i],get(choices))), selected=mydf[1,i])
+          } else {
+            updateSelectInput(session,myname,
+                              choices=get(choices), selected=mydf[1,i])
+          }
+
+        # if("factor" %in% myclass[[i]]){
+        #   updateSelectInput(session,myname,
+        #                     choices=unique(c(levels(mydf[[i]]),get(choices))), selected=mydf[1,i])
+      # for(i in 1:ncol(mydf)){
+      #   myname=colnames(mydf)[i]
+      #   if("factor" %in% myclass[[i]]){
+          # updateSelectInput(session,myname,
+      #                       choices=levels(mydf[[i]]),selected=mydf[1,i])
         } else if("Date" %in% myclass[[i]]){
           updateDateInput(session,myname,value=mydf[1,i])
         } else if("logical" %in% myclass[[i]]){
@@ -975,7 +999,6 @@ editableDT <- function(input, output, session,
   })
 
   observeEvent(input$right,{
-
     value=ifelse(input$no<nrow(df()),input$no+1,nrow(df()))
     updateNumericInput(session,"no",value=value)
   })
@@ -993,8 +1016,8 @@ editableDT <- function(input, output, session,
     }
 
   })
-
-  output$test2=renderUI({
+### EDIT MODAL UI ####
+  output$edit_modal=renderUI({
     ns <- session$ns
     ids <- input$no
     if(length(ids)==1){
@@ -1017,16 +1040,28 @@ editableDT <- function(input, output, session,
 
       for(i in 1:ncol(mydf)){
         myname=colnames(mydf)[i]
-
+        type <- table_fields$col_type[table_fields$dt_cols == myname]
         choices <- table_fields$choices[table_fields$dt_cols == myname]
         mult <- switch(table_fields$input_mult[table_fields$dt_cols == myname],
                        "yes" = TRUE,
                        "no" = FALSE)
         width <- table_fields$input_width[table_fields$dt_cols == myname]
+### Note: connot update levels of factors during edit - use table-fields to pick which input style for each variable
+        # Try changing sampler to character type so that the choices can be updated during edit mode.
 
-        if("factor" %in% myclass[[i]]){
-          mylist[[i+addno]]=selectInput3(ns(myname),myname,
-                                         choices=get(choices),selected=mydf[1,i], multiple = mult, width=width)
+        if(type == "factor"){
+          if(mult == TRUE){
+            mylist[[i+addno]]=selectInput3(ns(myname),myname,
+                                           choices=unique(c(mydf[[i]],get(choices))),selected=mydf[1,i], multiple = mult, width=width)
+          } else {
+            mylist[[i+addno]]=selectInput3(ns(myname),myname,
+                                           choices=get(choices),selected=mydf[1,i], multiple = mult, width=width)
+
+          }
+          # } else
+          # if("factor" %in% myclass[[i]]){
+          #  mylist[[i+addno]]=selectInput3(ns(myname),myname,
+          #                                choices=unique(c(levels(mydf[[i]]),get(choices))),selected=mydf[1,i], multiple = mult, width=width)
                                          # choices=levels(mydf[[i]]),selected=mydf[1,i],width=input$width2)
         } else if("Date" %in% myclass[[i]]){
           mylist[[i+addno]]=dateInput3(ns(myname),myname,value=mydf[1,i],width=input$width2)
@@ -1048,17 +1083,14 @@ editableDT <- function(input, output, session,
       }
       do.call(tagList,mylist)
     } else{
-
       h4("You can edit data after select one row in datatable.")
-
     }
-
-
   })
 
   observeEvent(input$width,{
     updateNumericInput(session,"width2",value=input$width)
   })
+
   observeEvent(input$editData,{
     ids <- input$origTable_rows_selected
     if(length(ids)==1) updateNumericInput(session,"no",value=ids)
@@ -1069,10 +1101,8 @@ editableDT <- function(input, output, session,
   })
 
   editData2=reactive({
-
     input$editData
     # input$addRow
-
     ns <- session$ns
 
     showModal(modalDialog(
@@ -1082,13 +1112,10 @@ editableDT <- function(input, output, session,
         actionButton(ns("update"),"Update",icon=icon("ok",lib="glyphicon")),
         modalButton("Close",icon=icon("eject",lib="glyphicon"))),
       easyClose=TRUE,
-      uiOutput(ns("test2"))
+      uiOutput(ns("edit_modal"))
     ))
   })
-
-
   return(df)
-
 }
 
 
