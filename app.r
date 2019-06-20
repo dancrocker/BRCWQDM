@@ -36,7 +36,7 @@ ipak <- function(pkg){
 
 packages <- c("shiny","shinyjs", "shinyFiles", "shinyTime", "shinyalert","shinydashboard","rmarkdown", "knitr", "tidyselect", "lubridate",
               "plotly", "leaflet", "RColorBrewer", "devtools", "data.table", "DT", "scales", "stringr", "shinythemes", "ggthemes",
-              "dplyr" , "httr", "tibble", "bsplus", "readxl", "miniUI", "rstudioapi")
+              "dplyr" , "httr", "tibble", "bsplus", "readxl", "miniUI", "rstudioapi", "rdrop2")
 ipak(packages)
 
 # loadData()
@@ -47,12 +47,14 @@ print(paste0("BRCWQDM App lauched at ", Sys.time()))
 ### Set Directories ####
 wdir <- getwd()
 ### Local Data Directory ####
-dataDir <- file.path(paste0(config[1],"Data/"))
+dataDir <<- file.path(paste0(config[1],"Data/"))
+app_user <<- config[2]
+user_zone <<- config[13]
 ### CSV Files ####
-stagedDataCSV <- paste0(dataDir,"StagedData/BRC_StagedData.csv")
-stagedCommentsCSV <- paste0(dataDir,"StagedData/BRC_StagedComments.csv")
-submittedDataCSV <- paste0(dataDir,"SubmittedData/BRC_SubmittedData.csv")
-submittedCommentsCSV <- paste0(dataDir,"SubmittedData/BRC_SubmittedComments.csv")
+stagedDataCSV <<- paste0(dataDir,"StagedData/BRC_StagedData.csv")
+stagedCommentsCSV <<- paste0(dataDir,"StagedData/BRC_StagedComments.csv")
+submittedDataDir <<- paste0(dataDir,"SubmittedData/")
+
 ### RDS FILES ####
 rdsFiles <- paste0(dataDir,"rdsFiles/")
 stagedDataRDS <- paste0(rdsFiles,"stagedData.rds")
@@ -69,57 +71,54 @@ peopleRDS <- paste0(remote_data_dir,"people_db.rds")
 parametersRDS <- paste0(remote_data_dir,"parameters_db.rds")
 assignmentsRDS <- paste0(remote_data_dir,"assignments_db.rds")
 
-sites_db <- readRDS(sitesRDS)
-people_db <- readRDS(peopleRDS)
-parameters_db <- readRDS(parametersRDS)
-assignments_db <- readRDS(assignmentsRDS)
-
 ### From edit module ####
 useShinyalert()
-### SOURCE EXTERNAL SCRIPTS ####
-source(paste0(wdir,"/funs/csv2df.R"))
-source(paste0(wdir,"/funs/editableDT_modFuns.R"))
-source(paste0(wdir,"/mods/mod_editDT.R"))
 
+source(paste0(wdir, "/funs/dropB.R"))
+### Download rds files cached on dropbox to local data folder and load these and any staged RDS files
+LOAD_DB_RDS()
 ### Change to the last record date (rds file)
 last_update <- Sys.Date()
-
-app_user <- config[2]
 
 ### AS IS fields require no manipulation and can go directly to outputs
 ### Date and Time and any other QC'd values need to come from reactive elements
 # wdir
-table_fields <- readr::read_csv(paste0(wdir,"/data/table_fields.csv"))
-data_fields <- table_fields[1:30,]
-comment_fields <- table_fields[31:35,]
+table_fields <<- readr::read_csv(paste0(wdir,"/data/table_fields.csv"))
+data_fields <<- table_fields[1:30,]
+comment_fields <<- table_fields[31:35,]
 
 ### DATA FIELDS ####
-fieldsASIS <- data_fields$shiny_input[data_fields$as_is == "yes"]
+fieldsASIS <<- data_fields$shiny_input[data_fields$as_is == "yes"]
 ### Data Column names csv ####
-col_names <- data_fields$shiny_input
+col_names <<- data_fields$shiny_input
 ### Comment Column Names csv ####
-comm_col_names <-comment_fields$shiny_input
+comm_col_names <<- comment_fields$shiny_input
 
 ### Select Option Choices ####
 ### All selection dependent lists need to go in server
 ### These lists are static
 sites <- sites_db$BRC_CODE
 names(sites) <- paste0(sites_db$SITE_NAME, " - ", sites_db$BRC_CODE)
-sites <- sites[order(names(sites))]
-samplers <- sort(unique(assignments_db$NAME[assignments_db$YEAR == year(Sys.Date())]))
+sites <<- sites[order(names(sites))]
+samplers <<- sort(unique(assignments_db$NAME[assignments_db$YEAR == year(Sys.Date())]))
 
-wea_choices <- c("","Storm (heavy rain)", "Rain (steady rain)",
+wea_choices <<- c("","Storm (heavy rain)", "Rain (steady rain)",
                  "Showers (intermittent rain)", "Overcast","Clear/Sunny", "Other","Not Recorded")
-wat_appear_choices <- c("","Clear", "Milky", "Foamy", "Oily Sheen",
+wat_appear_choices <<- c("","Clear", "Milky", "Foamy", "Oily Sheen",
                         "Dark Brown", "Greenish", "Orange", "Tea Color", "Other", "Not Recorded")
-wat_trash_choices <- c("","None", "Light", "Medium", "Heavy", "Not Recorded")
-wat_odor_choices <-c("","None", "Sewage", "Fishy", "Chlorine",
+wat_trash_choices <<- c("","None", "Light", "Medium", "Heavy", "Not Recorded")
+wat_odor_choices <<-c("","None", "Sewage", "Fishy", "Chlorine",
                      "Rotten Eggs", "Other", "Not Recorded")
-wat_NAV_choices <- c("","None", "Light", "Medium", "Heavy", "Not Recorded")
-wat_clarity_choices <- c("","Clear","Slightly Hazy","Cloudy","Opaque", "Not Recorded")
-wat_erosion_choices <- c("","Undercut bank", "Slumping", "Erosional gullies in bank",
+wat_NAV_choices <<- c("","None", "Light", "Medium", "Heavy", "Not Recorded")
+wat_clarity_choices <<- c("","Clear","Slightly Hazy","Cloudy","Opaque", "Not Recorded")
+wat_erosion_choices <<- c("","Undercut bank", "Slumping", "Erosional gullies in bank",
                          "Bridge or building undermining", "No erosion", "Not Recorded")
-depth_choices <- c("","Gage (Staff Plate-feet)", "Ruler (inches)", "Not Recorded", "No Datum")
+depth_choices <<- c("","Gage (Staff Plate-feet)", "Ruler (inches)", "Not Recorded", "No Datum")
+
+### SOURCE EXTERNAL SCRIPTS ####
+source(paste0(wdir, "/funs/csv2df.R"))
+source(paste0(wdir, "/funs/editableDT_modFuns.R"))
+source(paste0(wdir, "/mods/mod_editDT.R"))
 
 ### CSS ####
 appCSS <-   ".mandatory_star { color: red; }
@@ -133,7 +132,7 @@ labelMandatory <- function(label) {
     span("*", class = "mandatory_star")
   )
 }
-
+actionCount <- reactiveVal(0)
 ### End Global Scope ####
 ### NOTES FOR UI AND SERVER ####
     # User enters records in form
@@ -378,42 +377,47 @@ ui <-tagList(
                     column(12,
                       h4("Make sure all data has been entered and checked over for accuracy. Click the 'PROCESS' button \n
                             when you are ready to proceed. During processing the data will be checked for errors and anomalies.\n
-                            If no problems are found then you may submit the data to the Program Coordinator for final QC and database import."),
-                      # fluidRow(
-                      #   column(6,
-                      #          wellPanel(
-                      #            strong(h4("3. Run the 'Process Data' script:")),
-                      #            br(),
-                      #            uiOutput("process.UI"),
-                      #            br(),
-                      #            h4(textOutput("text.process.status"))
-                      #          ),
-                      #          wellPanel(
-                      #            strong(h4("4. Run the 'Import Data' script to upload processed data to DB:")),
-                      #            br(),
-                      #            uiOutput("import.UI"),
-                      #            br(),
-                      #            uiOutput("text.import.status")
-                      #          ),
-                      #          tabsetPanel(
-                      #            tabPanel("Processed WQ Data",
-                      #                     dataTableOutput("table.process.wq")
-                      #            ),
-                      #            tabPanel("Processed Flag Index Data",
-                      #                     dataTableOutput("table.process.flag")
-                      #            ) # End Tab Panel
-                      #          ) # End Tabset Panel
-                      #   ) # End Col
-                      # ) # End Fluid row
-
-                      actionButton(inputId = "process",label = "PROCESS", width = "200px", class="butt"),
-                    actionButton(inputId = "submit",label = "SUBMIT", width = "200px", class="butt")
+                            If no problems are found then you may submit the data to the Program Coordinator for final QC and database import.")
+                    # actionButton(inputId = "process",label = "PROCESS", width = "200px", class="butt"),
+                    # actionButton(inputId = "submit",label = "SUBMIT", width = "200px", class="butt"),
                     )
-                  )
-                )
+                  ),
+                  fluidRow(
+                    column(6,
+                    wellPanel(
+                        strong(h4("Process staged records:")),
+                        br(),
+                        uiOutput("process.UI"),
+                        br(),
+                        h4(textOutput("text.process.status"))
+                      )
+                    ),
+                    column(6,
+                      wellPanel(
+                        strong(h4("Submit processed staged records to program coordinator:")),
+                        br(),
+                        uiOutput("submit.UI"),
+                        br(),
+                        uiOutput("text.submit.status")
+                      )
+                    )
+                  ),
+                  fluidRow(
+                    column(12,
+                           tabsetPanel(
+                             tabPanel("Processed Data",
+                                      dataTableOutput("table.process.data")
+                             ),
+                             tabPanel("Processed Comments",
+                                      dataTableOutput("table.process.comments")
+                             ) # End Tab Panel
+                           ) # End Tabset Panel
+                    ) # End Col
+                  ) # End Fluid row
+                ) # End TabPanel
          )
-  ),
-  ### PROCESS-SUBMIT TAB ####
+  ),# End Tab Panel
+  ### SUBMITTED RECORDS TAB ####
     tabPanel("SUBMITTED DATA",
         fluidRow(
            column(2, imageOutput("brc_logo3", height = 80), align = "left"),
@@ -458,35 +462,31 @@ ui <-tagList(
 ####################################################.
 
 server <- function(input, output, session) {
-
-  ### interactive dataset
+  app_user <- config[2]
   rxdata <- reactiveValues()
-  rxdata$stagedData <- readRDS(stagedDataRDS)
-  rxdata$stagedComments <- readRDS(stagedCommentsRDS)
-
   loadData <- function() {
     if(file.exists(stagedDataCSV) == TRUE){
-      data <- read.table(stagedDataCSV, stringsAsFactors = FALSE, header = T)
+      data <- read.table(stagedDataCSV, stringsAsFactors = FALSE, header = T,  sep = " " , na.strings = "NA")
       df <- data_csv2df(data, data_fields) ### saves RDS file as data.frame
       saveRDS(df, stagedDataRDS)
-      df
+      rxdata$stagedData <- readRDS(stagedDataRDS)
     } else {
       df <- NULL
+      rxdata$stagedData <- NULL
     }
-    rxdata$stagedData <- readRDS(stagedDataRDS)
     return(df)
   }
 
   loadComments <- function() {
     if(file.exists(stagedCommentsCSV) == TRUE){
-      data <- read.table(stagedCommentsCSV, stringsAsFactors = FALSE, header = T)
+      data <- read.table(stagedCommentsCSV, stringsAsFactors = FALSE, sep = " " ,header = T)
       df <- comm_csv2df(data, comment_fields) ### saves RDS file as data.frame
       saveRDS(df, stagedCommentsRDS)
-      df
+      rxdata$stagedComments <- readRDS(stagedCommentsRDS)
     } else {
       df <- NULL
+      rxdata$stagedComments <- NULL
     }
-    rxdata$stagedComments <- readRDS(stagedCommentsRDS)
     return(df)
   }
 
@@ -496,6 +496,11 @@ server <- function(input, output, session) {
     loadComments()
   }
   loadAll()
+
+  ### interactive dataset
+
+  # rxdata$stagedData <- readRDS(stagedDataRDS)
+  # rxdata$stagedComments <- readRDS(stagedCommentsRDS)
 
   # rxdata$submittedData <- try(readRDS(submittedDataRDS))
   # rxdata$submittedComments <- try(readRDS(submittedCommentsRDS))
@@ -650,27 +655,27 @@ SampleDT <- reactive({paste0(strftime(input$date, "%Y-%m-%d"), " ", strftime(inp
 ### CONVERT MULIPLE SELECT INPUTS TO 1 STRING ####
 samplersRX <- reactive({
   req(input$sampler)
-  paste0(input$sampler, collapse = ";") %>% trimws()
+  paste(input$sampler, collapse = ";") %>% trimws()
   })
 wea48RX <- reactive({
   req(input$wea48)
-  paste0(input$wea48, collapse = ";") %>% trimws()
+  paste(input$wea48, collapse = ";") %>% trimws()
   })
 wea_nowRX <- reactive({
   req(input$wea_now)
-  paste0(input$wea_now, collapse = ";") %>% trimws()
+  paste(input$wea_now, collapse = ";") %>% trimws()
   })
 wat_appearRX <- reactive({
   req(input$wat_appear)
-  paste0(input$wat_appear, collapse = ";") %>% trimws()
+  paste(input$wat_appear, collapse = ";") %>% trimws()
   })
 erosionRX <- reactive({
   req(input$erosion)
-  paste0(input$erosion, collapse = ";") %>% trimws()
+  paste(input$erosion, collapse = ";") %>% trimws()
   })
 wat_odorRX <- reactive({
   req(input$wat_odor)
-  paste0(input$wat_odor, collapse = ";") %>% trimws()
+  paste(input$wat_odor, collapse = ";") %>% trimws()
   })
 
 
@@ -712,12 +717,12 @@ saveData <- function(data, csvFile, rdsFile) {
   # csvFile <- paste0("BRC_StagedData.csv") #come up with better name - like "BRC_StagedData_Apr2019_R1.csv"
     if(file.exists(csvFile)){
       write.table(x = data, file = csvFile,
-              row.names = FALSE, quote = TRUE, append = TRUE,
+              row.names = FALSE, quote = TRUE, na = "", append = TRUE,
               col.names = FALSE, qmethod = "d")
     } else {
       write.table(x = data, file = csvFile,
-              row.names = FALSE, col.names = col_names, quote = TRUE,
-              qmethod = "d", append = FALSE)
+              row.names = FALSE, col.names = col_names, na = "", quote = TRUE,
+              qmethod = "d", append = FALSE,)
     }
   # dt <- read.table(csvFile, stringsAsFactors = TRUE, header = T, sep = " ")
   # saveRDS(data.table(dt), rdsFile)
@@ -779,7 +784,7 @@ observeEvent(input$enter, {
 ###
 
 ### COMMENT MODAL ####
-comment_par_choices = c("General Comment", data_fields$dt_cols[data_fields$take_comments =="yes"])
+comment_par_choices <<- c("General Comment", data_fields$dt_cols[data_fields$take_comments =="yes"])
 
    observeEvent(input$add_comment, {
      # req(input$site, SampleDT())
@@ -877,7 +882,146 @@ observeEvent(input$submit_comment,{
 #   })
 
 
+### SUBMIT DATA SERVER LOGIC ####
 
+### Process DATA
+
+# Process Action Button
+output$process.UI <- renderUI({
+  req(staged_df())
+  actionButton(inputId = "process",
+               label = paste0("Process Staged Records"),
+               width = '500px')
+})
+
+# Run the function to process the data and return 2 dataframes and path as list
+dfs <- eventReactive(input$process,{
+  source("funs/process.R", local = T) # Hopefully this will overwrite functions as source changes...needs more testing
+  PROCESS()
+})
+
+# Extract each dataframe
+processedData <- reactive({
+  dfs()[[1]]
+})
+processedComments  <- reactive({
+  dfs()[[2]]
+})
+
+### Table Outputs
+
+# Processed WQ Table - Only make table if processing is successful
+output$table.process.data <- renderDataTable({
+  req(try(processedData()))
+  processedData() %>% datatable(editable = FALSE, rownames = FALSE,
+                              colnames = data_fields$dt_cols, selection = "single",
+                              options = list(searching = TRUE, lengthChange = TRUE))
+
+})
+
+# Processed Flag Table - Only make table if processing is successful
+output$table.process.comments <- renderDataTable({
+  req(try(processedComments()))
+  processedComments() %>% datatable(editable = FALSE, rownames = FALSE,
+                                    selection = "single",
+                                    options = list(searching = TRUE, lengthChange = TRUE))
+})
+
+# Text for Process Data Error or Successful
+# process.status <- reactive({
+#   if(processedData()){
+#     " "
+#   } else if(inherits(try(df.wq()), "try-error")){
+#     geterrmessage()
+#   } else {
+#     paste0('The records were successfully processed')
+#   }
+# })
+observeEvent(input$process, {
+  show('submit')
+  # show('table.process.wq')
+  # show('table.process.flag')
+})
+
+# Import Action Button - Will only be shown when a file is processed successfully
+output$submit.UI <- renderUI({
+  req(dfs())
+  req(try(staged_df()))
+  actionButton(inputId = "submit",
+               label = paste("Submit Staged Records"),
+               width = '500px')
+})
+
+# Import Data - Run import_data function
+observeEvent(input$submit, {
+  source("funs/dropB.R", local = T)
+  out <- tryCatch(SUBMIT_CSV(zone = user_zone),
+                  error=function(cond) {
+                    message(paste("There was an error, records not submitted...\n", cond))
+                    return(NA)
+                  },
+                  warning=function(cond) {
+                    message(paste("Submittal process completed with warnings...\n", cond))
+                    return(NULL)
+                  },
+                  finally={
+                    message(paste("Submittal Process Complete"))
+                  }
+  )
+  ImportFailed <- any(class(out) == "error")
+
+  if (ImportFailed == TRUE){
+    print(paste0("Submittal Failed at ", Sys.time() ,". There was an error: "))
+    print(out)
+  } else {
+    print(paste0("Data Submittal Successful at ", Sys.time()))
+    NewCount <- actionCount() + 1
+    actionCount(NewCount)
+    print(paste0("Action Count was ", actionCount()))
+    # ImportEmail()
+  }
+})
+
+### Function to send ImportEmail
+ImportEmail <- function() {
+  out <- tryCatch(
+    message("Trying to send email"),
+    sendmail(from = paste0("<",useremail,">"),
+             to = distro1(),
+             subject = paste0("New monitoring data have been submitted to the BRC Coordinator"),
+             msg = paste0(app_user," has submitted ", nrow(submittedData()), " new record(s) for review and import to the BRCWQDM database."),
+             control=list(smtpServer=MS))
+    ,
+    error=function(cond) {
+      message(paste("User cannot connect to SMTP Server, cannot send email", cond))
+      return(NA)
+    },
+    warning=function(cond) {
+      message(paste("Send mail function caused a warning, but was completed successfully", cond))
+      return(NULL)
+    },
+    finally={
+      message(paste("Submittal email was sent successfully"))
+    }
+  )
+  return(out)
+}
+
+# Hide import button and tables when import button is pressed (So one cannot double import same file)
+observeEvent(input$submit, {
+  hide('submit')
+  #hide('table.process.wq')
+  #hide('table.process.flag')
+})
+
+# Add text everytime successful import
+observeEvent(input$submit, {
+  insertUI(
+    selector = "#submit",
+    where = "afterEnd",
+    ui = h4(paste("Successful submittal of", nrow(processedData()), "record(s) to the BRC Coordinator"))
+  )
+})
 
   observeEvent(input$save_changes,{
     removeModal() # Save does not work here?

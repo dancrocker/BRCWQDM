@@ -129,9 +129,9 @@ editableDTUI <- function(id) {
 #     )
 #   })
 #
-#   # commenter_choices <- reactive({
-#   #  c(df()[input$origTable_rows_selected,][4], app_user)
-#   # })
+  # commenter_choices <- reactive({
+  #  c(df()[input$origTable_rows_selected,][4], app_user)
+  # })
 #
 #   commenter_choices <- app_user
 #   # print the selected indices
