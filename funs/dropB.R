@@ -46,13 +46,13 @@ rm(data)
 SUBMIT_CSV <- function(zone, drop_path = "/BRCWQDM/Submitted_Data_Staging"){
  ### Args for interactive testing
   ### Need to add some error handling here
-  zone <- "Mid-Reach"
+  # zone <- "Mid-Reach"
   # drop_path <-  "BRCWQDM/Submitted_Data_Staging"
   ### Upload the data first
   csv <- stagedDataCSV
   if(file.exists(csv)){
   fn <- paste0(zone,"_SubmittedData_",today(),".csv")
-  file.copy(csv,fn, R = TRUE)
+  file.copy(csv,fn, overwrite = TRUE)
   ### First check and see if it was already submitted
   # drop_exists(path = drop_path, dtoken = drop_auth(rdstoken = tokenpath))
   drop_upload(file = fn, path = drop_path, mode = "overwrite",
@@ -82,12 +82,33 @@ SUBMIT_CSV <- function(zone, drop_path = "/BRCWQDM/Submitted_Data_Staging"){
   return(print("File uploaded to Dropbox successful"))
 }
 
-
-ARCHIVE_CSV <- function(){
-
-  drop_move(from_path = , to_path = , dtoken = drop_auth(rdstoken = tokenpath) )
-
+GET_SUBMITTED_DATA <- function(){
+  ### List Drop Box files ####
+  dropb_root_dir <- config[12]
+  safe_dir_check <- purrr::safely(drop_dir, otherwise = FALSE, quiet = TRUE)
+  dir_listing <- safe_dir_check(path = paste0(dropb_root_dir, "/Submitted_Data_Staging"), recursive = FALSE, dtoken = drop_auth(rdstoken = tokenpath))
+  files <- dir_listing$result["name"] %>% unlist()
+  local_data_dir <- paste0(config[1],"Data/SubmittedData")
+  if(files %>%  length() %>% as.numeric() > 0){
+    ### Check if we already have the submitted files locally
+   if(all(files %in% list.files(submittedDataDir))){
+     print("All submitted files found on Dropbox were previously downloaded")
+    } else {
+      paths <- unlist(dir_listing$result["path_display"])
+      ### Save all submitted csv files to Local Data Cache ####
+      lapply(paths, drop_download, local_path = local_data_dir, overwrite = TRUE,
+           dtoken =  drop_auth(rdstoken = tokenpath))
+    }
+  } else {
+    print("There were no submitted files found on Dropbox")
+  }
 }
+
+# ARCHIVE_CSV <- function(){
+#
+#   drop_move(from_path = , to_path = , dtoken = drop_auth(rdstoken = tokenpath))
+#
+# }
 
 
   # sitesRDS <- paste0(remote_data_dir,"sites_db.rds")

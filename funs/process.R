@@ -29,9 +29,20 @@ df_data[df_data == "NULL"] <- "Not Recorded"
 
 ### Perform any other checks on data here:
 
+
+### Overwrite the csv with the updates:
+write.table(x = df_data, file = stagedDataCSV,
+            row.names = FALSE, na = "", quote = TRUE,
+            qmethod = "d", append = FALSE)
+
 ### NOW PROCESS COMMENTS ####
 df_comments <-read.table(stagedCommentsCSV, stringsAsFactors = FALSE, header = T,  sep = " " , na.strings = "NA")
+### Do any manipulations needed here...
 
+### Overwrite the csv with the updates:
+write.table(x = df_comments, file = stagedCommentsCSV,
+            row.names = FALSE, na = "", quote = TRUE,
+            qmethod = "d", append = FALSE)
 
 dfs <- list()
 dfs$data <- df_data

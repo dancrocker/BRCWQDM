@@ -9,23 +9,20 @@
 
 ### TO DO ####
 # Login credentials?
-# dashboard panel?
 ### Add login page (password Input- login provides the following:
   # FC- Name - Region - site and volunteer lists should get filtered automatically
   # PC - gets access to all sites and volunteers, can see hidden modules and access to import button
 # Should submitted records be in tidy format? or non-tidy - for archive -
 # non-tidy format will preserve nulls, whereas tidy format will not
-# Process button - needs to perform error checks, reformat, then send email,
-# with excel and .rds file attached
-# Need an email account (non-personal) for sending emails via R (UN and PW go in config)
-# Add comment button for each data entry subsection - for depth make show when not recorded is selected
-# Add replicate chemical samples - one comment button for all chemical samples
-# Finish modal for adding comment - observe action button submit - save comments to separate csv and rds file
-# Split Staged Data Preview so that comments appear to the right
 # In other data add a button for attach photo - similar to comment - Add photo name, parameter number, photo credit
 #       is selectize input where Field Monitor is default - but can type in other name.
 #       Photo is logged and a csvFile is generated
-#
+# Add save button to submitted data page (for edits)
+# Add process and import UI to server (use WIT at template)
+# Update select input after import on submitted data tab - so file selector updates
+# Add comment modal button for submitted comments
+# When datatable modules are empty- disable buttons or remove entirely and display a helpful message
+
 ### Load Libraries ####
 ipak <- function(pkg){
   new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
@@ -53,13 +50,13 @@ user_zone <<- config[13]
 ### CSV Files ####
 stagedDataCSV <<- paste0(dataDir,"StagedData/BRC_StagedData.csv")
 stagedCommentsCSV <<- paste0(dataDir,"StagedData/BRC_StagedComments.csv")
-submittedDataDir <<- paste0(dataDir,"SubmittedData/")
+submittedDataDir <<- paste0(dataDir,"SubmittedData")
 
 ### RDS FILES ####
 rdsFiles <- paste0(dataDir,"rdsFiles/")
 stagedDataRDS <- paste0(rdsFiles,"stagedData.rds")
 stagedCommentsRDS <- paste0(rdsFiles,"stagedComments.rds")
-submitteddDataRDS <- paste0(rdsFiles,"submittedData.rds")
+submittedDataRDS <- paste0(rdsFiles,"submittedData.rds")
 submittedCommentsRDS <- paste0(rdsFiles,"submittedComments.rds")
 
 ### RDS DATABASE FILES ####
@@ -423,13 +420,107 @@ ui <-tagList(
            column(2, imageOutput("brc_logo3", height = 80), align = "left"),
            column(8,  h2("These Records Have Been Submitted", align = "center")),
            column(2, imageOutput("zap_logo3", height = 80), align = "right")
-         )
-        # fluidRow(
-        #   column(12,
-        #     # DT_OUT_UI("mod_submittedData")
-        #   )
-        # )
-    ),
+        ),
+        fluidRow(
+          column(12,
+                 tags$head(tags$style(HTML('
+                                              .modal-lg {
+                                              width: 1200px;
+                                              }
+                                              '))),
+                 uiOutput("selectFile_ui"),
+                 br(),
+                 tabsetPanel(
+                   tabPanel("SUBMITTED DATA", type = "pills",
+                            fluidRow(
+                              column(6,
+                                     ### This is to adjust the width of pop up "showmodal()" for DT modify table
+                                     tags$head(tags$style(HTML('
+
+                                              .modal-lg {
+                                              width: 1200px;
+                                              }
+                                              '))),
+                                     helpText("Note: Remember to save any edits/deletions!"),
+                                     # br(),
+                                     ### tags$head() is to customize the download button
+                                     tags$head(tags$style(".butt{background-color:#222f5b;} .butt{color: #e6ebef;}")),
+                                     useShinyalert(),
+                                     actionButton(inputId = "SaveSubmittedData",label = "Save", width = "245px", class="butt"),
+                                     editableDTUI("submittedDataDT")
+                              ),
+                              column(6,
+                                     verbatimTextOutput("rec_comments2")
+                              )
+                            )
+                   ), # END DATA tp
+                   tabPanel("SUBMITTED COMMENTS", type = "pills",
+                            fluidRow(
+                              column(6,
+                                     ### This is to adjust the width of pop up "showmodal()" for DT modify table
+                                     tags$head(tags$style(HTML('
+
+                                              .modal-lg {
+                                              width: 1200px;
+                                              }
+                                              '))),
+                                     helpText("Note: Remember to save any edits/deletions!"),
+                                     # br(),
+                                     ### tags$head() is to customize the download button
+                                     tags$head(tags$style(".butt{background-color:#222f5b;} .butt{color: #e6ebef;}")),
+                                     useShinyalert(),
+                                     actionButton(inputId = "SaveSubmittedComments",label = "Save", width = "245px", class="butt"),
+                                     # downloadButton("Trich_csv", "Download in CSV", class="butt"),
+                                     # Set up shinyalert
+                                     editableDTUI("submittedCommentsDT")
+                              )
+                            )
+                   ), # End tp
+                   tabPanel("PROCESS & IMPORT", type = "pills",
+                            fluidRow(
+                              column(12,
+                                     h4("Make sure all data has been checked over for accuracy. Click the 'PROCESS' button \n
+                                        when you are ready to proceed. During processing the data will be checked for errors and anomalies.\n
+                                        If no problems are found then you may import the database.")
+                              )
+                            ),
+                            fluidRow(
+                              column(6,
+                                     wellPanel(
+                                       strong(h4("Process submitted records:")),
+                                       br(),
+                                       uiOutput("process2.UI"),
+                                       br(),
+                                       h4(textOutput("text.process2.status"))
+                                     )
+                              ),
+                              column(6,
+                                     wellPanel(
+                                       strong(h4("Import processed submitted records to the database:")),
+                                       br(),
+                                       uiOutput("import.UI"),
+                                       br(),
+                                       uiOutput("text.import.status")
+                                     )
+                              )
+                            ),
+                            fluidRow(
+                              column(12,
+                                     tabsetPanel(
+                                       tabPanel("Processed Data",
+                                                dataTableOutput("table.process2.data")
+                                       ),
+                                       tabPanel("Processed Comments",
+                                                dataTableOutput("table.process2.comments")
+                                       ) # End Tab Panel
+                                     ) # End Tabset Panel
+                              ) # End Col
+                            ) # End Fluid row
+                   ) # End TabPanel
+          ) # End Tabset Panel
+        ) #End Col
+        ) # End FR
+    ), # End Tab Panel
   ### MORE TAB ####
   navbarMenu("More",
     tabPanel("ANALYSIS",
@@ -490,11 +581,79 @@ server <- function(input, output, session) {
     return(df)
   }
 
-  # readRDS(stagedCommentsRDS)
+  GET_SUBMITTED_DATA()
+
+# TO DO   ####
+  # loadSubmitted <- function(){
+    # Download submitted data from dropbox
+    # data <- GET_SUBMITTED_DATA()
+    # Read files into dataframes
+    # Isolate by Region and Date and allow dropdown selection
+    # Select one Region and Date at a time
+    # Data and comments get pulled into editable tables
+    # Can review and edit
+    # Press Process  -
+    # preview Processed Data
+    # Import button -- goes to db
+    # Imported files get moved from submitted to Archive on Dropbox
+    # Imported files get moved from submitted to Archive Locally
+    # Emails generated
+    # Dropdown menu is updated so those files are not there (Run update select input)
+    # Repeat process for all submitted files (should only be 3 per month)
+    # submittedFileNum <- list.files(submittedDataDir) %>% length()
+    # if(submittedFileNum >0){
+    #   dataFiles <- list.files(submittedDataDir, pattern = "*Data*", full.names = TRUE)
+    #   commentFiles <- list.files(submittedDataDir, pattern = "*Comments*", full.names = FALSE)
+
+    #   data <- read.table(submittedDataCSV, stringsAsFactors = FALSE, header = T,  sep = " " , na.strings = "NA")
+    #   df <- data_csv2df(data, data_fields) ### saves RDS file as data.frame
+    #   saveRDS(df, stagedDataRDS)
+    #   rxdata$stagedData <- readRDS(stagedDataRDS)
+    # } else {
+    #   df <- NULL
+    #   rxdata$stagedData <- NULL
+    # }
+    # return(df)
+  # }
+
+
+
+ #  submittedFile_choices <- reactive({
+ #    submittedFileNum <- list.files(submittedDataDir) %>% length() %>% as.numeric()
+ #    if(submittedFileNum >0){
+ #      dataFiles <- list.files(submittedDataDir, pattern = "*Data*", full.names = TRUE)
+ #      names(dataFiles) <- list.files(submittedDataDir, pattern = "*Data*", full.names = FALSE) %>%
+ #        str_replace_all("_SubmittedData_"," ") %>% str_replace_all(".csv","")
+ #      dataFiles
+ #    } else{
+ #      NULL
+ #    }
+ #  })
+ # comment_file <- str_replace(dataFiles,"Data","Comments")
+
+  fileChoices <- reactive({
+      if(submittedFileNum >0){
+        dataFiles <- list.files(submittedDataDir, pattern = "*Data*", full.names = TRUE)
+        names(dataFiles) <- list.files(submittedDataDir, pattern = "*Data*", full.names = FALSE) %>%
+          str_replace_all("_SubmittedData_"," ") %>% str_replace_all(".csv","")
+        dataFiles
+      } else{
+        NULL
+      }
+    })
+
+    # SelectFile UI
+    output$selectFile_ui <- renderUI({
+      # req(current_rating())
+      selectInput("selectFile", label = "Choose submitted data to process and import",
+                  choices = c("", fileChoices()), selected = "" , multiple = FALSE)
+    })
+
   loadAll <- function(){
     loadData()
     loadComments()
   }
+
   loadAll()
 
   ### interactive dataset
@@ -520,17 +679,39 @@ server <- function(input, output, session) {
                           inputwidth = reactive(170),
                           edit_cols = CommentEditCols)
 
-  # submitted_df <- callModule(editableDT, "submittedDataDT",
-  #                         data = reactive(rxdata$submittedData),
-  #                         rxdata = "submittedData",
-  #                         inputwidth = reactive(170),
-  #                         edit_cols = DataEditCols)
-  #
-  # submitted_comments <- callModule(editableDT, "submittedCommentsDT",
-  #                               data = reactive(rxdata$submittedComments),
-  #                               rxdata = "submittedComments",
-  #                               inputwidth = reactive(170),
-  #                               edit_cols = CommentEditCols)
+  submitted_df <- callModule(editableDT, "submittedDataDT",
+                          data = reactive(rxdata$submittedData),
+                          rxdata = "submittedData",
+                          inputwidth = reactive(170),
+                          edit_cols = DataEditCols)
+
+  submitted_comments <- callModule(editableDT, "submittedCommentsDT",
+                                data = reactive(rxdata$submittedComments),
+                                rxdata = "submittedComments",
+                                inputwidth = reactive(170),
+                                edit_cols = CommentEditCols)
+
+
+
+
+
+  observeEvent(input$selectFile, {
+    req(input$selectFile != "")
+    data_csv <- dataFiles <- list.files(submittedDataDir, pattern = "*Data*", full.names = TRUE)
+    data_csv <- input$selectFile
+    comment_csv <- str_replace(data_csv,"_SubmittedData_","_SubmittedComments_")
+# BOOKMARK1 ####
+    data <- read.table(data_csv, stringsAsFactors = FALSE, header = T,  sep = " " , na.strings = "NA")
+    df <- data_csv2df(data, data_fields) ### saves RDS file as data.frame
+    saveRDS(df, submittedDataRDS)
+    rxdata$submittedData <- readRDS(submittedDataRDS)
+
+    data <- read.table(comment_csv, stringsAsFactors = FALSE, header = T,  sep = " " , na.strings = "NA")
+    df <- comm_csv2df(data, comment_fields) ### saves RDS file as data.frame
+    saveRDS(df, submittedCommentsRDS)
+    rxdata$submittedComments <- readRDS(submittedCommentsRDS)
+  })
+
 
 ### OTHER/NOT RECORDED ACTIONS ####
   shinyjs::hide("comm_P01")
@@ -722,7 +903,7 @@ saveData <- function(data, csvFile, rdsFile) {
     } else {
       write.table(x = data, file = csvFile,
               row.names = FALSE, col.names = col_names, na = "", quote = TRUE,
-              qmethod = "d", append = FALSE,)
+              qmethod = "d", append = FALSE)
     }
   # dt <- read.table(csvFile, stringsAsFactors = TRUE, header = T, sep = " ")
   # saveRDS(data.table(dt), rdsFile)
@@ -811,13 +992,31 @@ comment_par_choices <<- c("General Comment", data_fields$dt_cols[data_fields$tak
     csv <- staged_df()
     names(csv) <- data_fields$shiny_input
     #### overwrite table as well ... write.table
-    write.table(x = csv, file = stagedDataCSV,
+    write.table(x = csv, file = ,
                 row.names = FALSE, col.names = TRUE, quote = TRUE,
                 qmethod = "d", append = FALSE)
     # saveRDS(object = staged_df(), stagedDataRDS)
     loadData()
     shinyalert(title = "Saved!", type = "success")
   })
+
+   observeEvent(input$SaveSubmittedData,{
+     csv <- submitted_df() ### This is the current state of DT
+     names(csv) <- data_fields$shiny_input # Change col names back to csv format
+     ### Set the file name
+     file <- input$selectFile
+     #### overwrite table as well ... write.table
+     write.table(x = csv, file = file,
+                 row.names = FALSE, col.names = TRUE, quote = TRUE,
+                 qmethod = "d", append = FALSE)
+    ### Read the updated table back and refresh the DT
+     data <- read.table(file, stringsAsFactors = FALSE, header = T,  sep = " " , na.strings = "NA")
+     df <- data_csv2df(data, data_fields) ### saves RDS file as data.frame
+     saveRDS(df, submittedDataRDS)
+     rxdata$submittedData <- readRDS(submittedDataRDS)
+
+     shinyalert(title = "Saved!", type = "success")
+   })
 
    ### save to RDS and CSV ####
    observeEvent(input$SaveStagedComments,{
@@ -828,7 +1027,28 @@ comment_par_choices <<- c("General Comment", data_fields$dt_cols[data_fields$tak
                  row.names = FALSE, col.names = TRUE, quote = TRUE,
                  qmethod = "d", append = FALSE)
      # saveRDS(object = staged_(), stagedDataRDS)
-     loadComments()
+     ### Read the updated table back and refresh the DT
+     data <- read.table(file, stringsAsFactors = FALSE, header = T,  sep = " " , na.strings = "NA")
+     df <- data_csv2df(data, data_fields) ### saves RDS file as data.frame
+     saveRDS(df, submittedDataRDS)
+     rxdata$submittedData <- readRDS(submittedDataRDS)
+     shinyalert(title = "Saved!", type = "success")
+   })
+
+
+   ### save to RDS and CSV ####
+   observeEvent(input$SaveSubmittedComments,{
+     csv <- submitted_comments()
+     names(csv) <- comment_fields$shiny_input
+     file <- str_replace(input$selectFile, "_SubmittedData_","_SubmittedComments_")
+     #### overwrite table as well ... write.table
+     write.table(x = csv, file = file , row.names = FALSE, col.names = TRUE, quote = TRUE,
+                 qmethod = "d", append = FALSE)
+     ### Read the updated table back and refresh the DT
+     data <- read.table(file, stringsAsFactors = FALSE, header = T,  sep = " " , na.strings = "NA")
+     df <- comm_csv2df(data, comment_fields) ### saves RDS file as data.frame
+     saveRDS(df, submittedCommentsRDS)
+     rxdata$submittedComments <- readRDS(submittedCommentsRDS)
      shinyalert(title = "Saved!", type = "success")
    })
 
@@ -1006,6 +1226,26 @@ ImportEmail <- function() {
   )
   return(out)
 }
+
+### SUBMITTED DATA ####
+
+# Need to decide how this will work  -
+# For coordinators is there a need to see the data submitted within the app - this data is archived as csvs
+# For Program Manager - need to be able to see and edit submitted data before importing -
+# Need to pull submitted records from Dropbox (They will be csv files)
+
+# Convert to dataframes and display through mod_editDT module
+# Need a way to add comments to specific records
+# Another process button and an import button
+
+
+
+
+
+
+
+
+
 
 # Hide import button and tables when import button is pressed (So one cannot double import same file)
 observeEvent(input$submit, {
