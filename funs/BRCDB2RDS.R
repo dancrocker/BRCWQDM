@@ -12,7 +12,7 @@ config <- read.csv(paset0(wdir,"/BRC_config.csv", header = TRUE, stringsAsFactor
 config <- as.character(config$config_value)
 wdir <- config[1]
 ### Path to the synced database (change to config[i])
-db <- paste0(wdir,"/data/",config[5])
+paste0(config[1],"data/BRC_Database/",config[6])
 ### Make the db connection
 pool <- dbPool(drv = RSQLite::SQLite(), dbname = db)
 

@@ -53,11 +53,11 @@ stagedCommentsCSV <<- paste0(dataDir,"StagedData/BRC_StagedComments.csv")
 submittedDataDir <<- paste0(dataDir,"SubmittedData")
 
 ### RDS FILES ####
-rdsFiles <- paste0(dataDir,"rdsFiles/")
-stagedDataRDS <- paste0(rdsFiles,"stagedData.rds")
-stagedCommentsRDS <- paste0(rdsFiles,"stagedComments.rds")
-submittedDataRDS <- paste0(rdsFiles,"submittedData.rds")
-submittedCommentsRDS <- paste0(rdsFiles,"submittedComments.rds")
+rdsFiles <<- paste0(dataDir,"rdsFiles/")
+stagedDataRDS <<- paste0(rdsFiles,"stagedData.rds")
+stagedCommentsRDS <<- paste0(rdsFiles,"stagedComments.rds")
+submittedDataRDS <<- paste0(rdsFiles,"submittedData.rds")
+submittedCommentsRDS <<- paste0(rdsFiles,"submittedComments.rds")
 
 ### RDS DATABASE FILES ####
 ### These live on GH and can be updated periodically
@@ -116,6 +116,42 @@ depth_choices <<- c("","Gage (Staff Plate-feet)", "Ruler (inches)", "Not Recorde
 source(paste0(wdir, "/funs/csv2df.R"))
 source(paste0(wdir, "/funs/editableDT_modFuns.R"))
 source(paste0(wdir, "/mods/mod_editDT.R"))
+
+  app_user <<- config[2]
+  rxdata <<- reactiveValues()
+  loadData <<- function() {
+    if(file.exists(stagedDataCSV) == TRUE){
+      data <- read.table(stagedDataCSV, stringsAsFactors = FALSE, header = T,  sep = " " , na.strings = "NA")
+      df <- data_csv2df(data, data_fields) ### saves RDS file as data.frame
+      saveRDS(df, stagedDataRDS)
+      rxdata$stagedData <- readRDS(stagedDataRDS)
+    } else {
+      df <- NULL
+      rxdata$stagedData <- NULL
+    }
+    return(df)
+  }
+
+  loadComments <<- function() {
+    if(file.exists(stagedCommentsCSV) == TRUE){
+      data <- read.table(stagedCommentsCSV, stringsAsFactors = FALSE, sep = " " ,header = T)
+      df <- comm_csv2df(data, comment_fields) ### saves RDS file as data.frame
+      saveRDS(df, stagedCommentsRDS)
+      rxdata$stagedComments <- readRDS(stagedCommentsRDS)
+    } else {
+      df <- NULL
+      rxdata$stagedComments <- NULL
+    }
+    return(df)
+  }
+
+  loadAll <<- function(){
+    loadData()
+    loadComments()
+  }
+
+  loadAll()
+
 
 ### CSS ####
 appCSS <-   ".mandatory_star { color: red; }
@@ -288,7 +324,7 @@ ui <-tagList(
         bs_append(title = "OTHER SAMPLE INFORMATION", content =
                     wellPanel(fluidRow(
                       column(width = 4,
-                             actionButton("add_comment", "Add comment")
+                             actionButton("add_comment", "Add Comment")
                       ),
                       column(width = 4,
                              checkboxInput("photos","Photos associated with sampling event?")
@@ -374,7 +410,7 @@ ui <-tagList(
                     column(12,
                       h4("Make sure all data has been entered and checked over for accuracy. Click the 'PROCESS' button \n
                             when you are ready to proceed. During processing the data will be checked for errors and anomalies.\n
-                            If no problems are found then you may submit the data to the Program Coordinator for final QC and database import.")
+                            If no problems are found then you may submit the data to the Program Manager for final QC and database import.")
                     # actionButton(inputId = "process",label = "PROCESS", width = "200px", class="butt"),
                     # actionButton(inputId = "submit",label = "SUBMIT", width = "200px", class="butt"),
                     )
@@ -384,9 +420,9 @@ ui <-tagList(
                     wellPanel(
                         strong(h4("Process staged records:")),
                         br(),
-                        uiOutput("process.UI"),
+                        uiOutput("process1.UI"),
                         br(),
-                        h4(textOutput("text.process.status"))
+                        h4(textOutput("text.process1.status"))
                       )
                     ),
                     column(6,
@@ -403,10 +439,10 @@ ui <-tagList(
                     column(12,
                            tabsetPanel(
                              tabPanel("Processed Data",
-                                      dataTableOutput("table.process.data")
+                                      dataTableOutput("table.process1.data")
                              ),
                              tabPanel("Processed Comments",
-                                      dataTableOutput("table.process.comments")
+                                      dataTableOutput("table.process1.comments")
                              ) # End Tab Panel
                            ) # End Tabset Panel
                     ) # End Col
@@ -481,7 +517,7 @@ ui <-tagList(
                               column(12,
                                      h4("Make sure all data has been checked over for accuracy. Click the 'PROCESS' button \n
                                         when you are ready to proceed. During processing the data will be checked for errors and anomalies.\n
-                                        If no problems are found then you may import the database.")
+                                        If no problems are found then you may import the records to the database.")
                               )
                             ),
                             fluidRow(
@@ -553,33 +589,6 @@ ui <-tagList(
 ####################################################.
 
 server <- function(input, output, session) {
-  app_user <- config[2]
-  rxdata <- reactiveValues()
-  loadData <- function() {
-    if(file.exists(stagedDataCSV) == TRUE){
-      data <- read.table(stagedDataCSV, stringsAsFactors = FALSE, header = T,  sep = " " , na.strings = "NA")
-      df <- data_csv2df(data, data_fields) ### saves RDS file as data.frame
-      saveRDS(df, stagedDataRDS)
-      rxdata$stagedData <- readRDS(stagedDataRDS)
-    } else {
-      df <- NULL
-      rxdata$stagedData <- NULL
-    }
-    return(df)
-  }
-
-  loadComments <- function() {
-    if(file.exists(stagedCommentsCSV) == TRUE){
-      data <- read.table(stagedCommentsCSV, stringsAsFactors = FALSE, sep = " " ,header = T)
-      df <- comm_csv2df(data, comment_fields) ### saves RDS file as data.frame
-      saveRDS(df, stagedCommentsRDS)
-      rxdata$stagedComments <- readRDS(stagedCommentsRDS)
-    } else {
-      df <- NULL
-      rxdata$stagedComments <- NULL
-    }
-    return(df)
-  }
 
   GET_SUBMITTED_DATA()
 
@@ -632,29 +641,40 @@ server <- function(input, output, session) {
  # comment_file <- str_replace(dataFiles,"Data","Comments")
 
   fileChoices <- reactive({
-      if(submittedFileNum >0){
+      # if(submittedFileNum > 0){
         dataFiles <- list.files(submittedDataDir, pattern = "*Data*", full.names = TRUE)
         names(dataFiles) <- list.files(submittedDataDir, pattern = "*Data*", full.names = FALSE) %>%
           str_replace_all("_SubmittedData_"," ") %>% str_replace_all(".csv","")
         dataFiles
-      } else{
-        NULL
-      }
+      # } else{
+      #   NULL
+      # }
     })
 
     # SelectFile UI
     output$selectFile_ui <- renderUI({
       # req(current_rating())
-      selectInput("selectFile", label = "Choose submitted data to process and import",
+      selectInput("selectFile", label = "Choose submitted data to process and import:",
                   choices = c("", fileChoices()), selected = "" , multiple = FALSE)
     })
 
-  loadAll <- function(){
-    loadData()
-    loadComments()
-  }
+    # Update Select Input when a file saved imported (actually when the import button is pressed (successful or not))
+    observeEvent(input$SaveSubmittedData, {
+      updateSelectInput(session = session,
+                        inputId = "selectFile",
+                        label = "Choose submitted data to process and import:",
+                        choices = fileChoices(),
+                        selected = input$selectFile)
+    })
 
-  loadAll()
+    # Update Select Input when a file is imported (actually when the import button is pressed (successful or not))
+    observeEvent(input$import, {
+      updateSelectInput(session = session,
+                        inputId = "file",
+                        label = "Choose submitted data to process and import:",
+                        choices = fileChoices(),
+                        selected = input$selectFile)
+    })
 
   ### interactive dataset
 
@@ -669,38 +689,36 @@ server <- function(input, output, session) {
 
   staged_df <- callModule(editableDT, "stagedDataDT",
                    data = reactive(rxdata$stagedData),
-                   rxdata = "stagedData",
+                   data_name = "stagedData",
                    inputwidth = reactive(170),
                    edit_cols = DataEditCols)
 
   staged_comments <- callModule(editableDT, "stagedCommentsDT",
                           data = reactive(rxdata$stagedComments),
-                          rxdata = "stagedComments",
+                          # rxdata = "stagedComments",
+                          data_name = "stagedComments",
                           inputwidth = reactive(170),
                           edit_cols = CommentEditCols)
 
   submitted_df <- callModule(editableDT, "submittedDataDT",
                           data = reactive(rxdata$submittedData),
-                          rxdata = "submittedData",
+                          # rxdata = "submittedData",
+                          data_name = "submittedData",
                           inputwidth = reactive(170),
                           edit_cols = DataEditCols)
 
   submitted_comments <- callModule(editableDT, "submittedCommentsDT",
                                 data = reactive(rxdata$submittedComments),
-                                rxdata = "submittedComments",
+                                # rxdata = "submittedComments",
+                                data_name = "submittedComments",
                                 inputwidth = reactive(170),
                                 edit_cols = CommentEditCols)
 
-
-
-
-
   observeEvent(input$selectFile, {
     req(input$selectFile != "")
-    data_csv <- dataFiles <- list.files(submittedDataDir, pattern = "*Data*", full.names = TRUE)
-    data_csv <- input$selectFile
-    comment_csv <- str_replace(data_csv,"_SubmittedData_","_SubmittedComments_")
-# BOOKMARK1 ####
+    data_csv <<- input$selectFile
+    comment_csv <<- str_replace(data_csv,"_SubmittedData_","_SubmittedComments_")
+
     data <- read.table(data_csv, stringsAsFactors = FALSE, header = T,  sep = " " , na.strings = "NA")
     df <- data_csv2df(data, data_fields) ### saves RDS file as data.frame
     saveRDS(df, submittedDataRDS)
@@ -987,6 +1005,8 @@ comment_par_choices <<- c("General Comment", data_fields$dt_cols[data_fields$tak
       ))
      }
    })
+
+
   ### save to RDS and CSV ####
   observeEvent(input$SaveStagedData,{
     csv <- staged_df()
@@ -1014,7 +1034,6 @@ comment_par_choices <<- c("General Comment", data_fields$dt_cols[data_fields$tak
      df <- data_csv2df(data, data_fields) ### saves RDS file as data.frame
      saveRDS(df, submittedDataRDS)
      rxdata$submittedData <- readRDS(submittedDataRDS)
-
      shinyalert(title = "Saved!", type = "success")
    })
 
@@ -1034,7 +1053,6 @@ comment_par_choices <<- c("General Comment", data_fields$dt_cols[data_fields$tak
      rxdata$submittedData <- readRDS(submittedDataRDS)
      shinyalert(title = "Saved!", type = "success")
    })
-
 
    ### save to RDS and CSV ####
    observeEvent(input$SaveSubmittedComments,{
@@ -1085,64 +1103,65 @@ formatComment <- function(){
   # Need ability to edit comments?
 observeEvent(input$submit_comment,{
   saveComment(data = formatComment(), csvFile = stagedCommentsCSV, rdsFile = stagedCommentsRDS)
-      session$sendCustomMessage(
+  session$sendCustomMessage(
         message = 'Comment Submitted!')
   removeModal()
 })
 
 
-# observeEvent(input$save_dt, {
-#   write.table(x = tableData(), file = paste0(stagingDir,"/BRC_StagedData.csv"),
-#               row.names = FALSE, col.names = col_names, quote = TRUE,
-#               qmethod = "d", append = FALSE)
-#     session$sendCustomMessage(type = 'testmessage',
-#       message = 'Thank you for clicking')
-#     loadData()
-#     tableData()
-#   })
+### SUBMITTED DATA ####
+
+# Need to decide how this will work  -
+# For coordinators is there a need to see the data submitted within the app - this data is archived as csvs
+# For Program Manager - need to be able to see and edit submitted data before importing -
+# Need to pull submitted records from Dropbox (They will be csv files)
+
+# Convert to dataframes and display through mod_editDT module
+# Need a way to add comments to specific records
+# Another process button and an import button
 
 
-### SUBMIT DATA SERVER LOGIC ####
-
-### Process DATA
+########################################################################.
+###                           PROCESS/SUBMIT DATA                   ####
+########################################################################.
 
 # Process Action Button
-output$process.UI <- renderUI({
+output$process1.UI <- renderUI({
   req(staged_df())
-  actionButton(inputId = "process",
+  actionButton(inputId = "process1",
                label = paste0("Process Staged Records"),
                width = '500px')
 })
 
 # Run the function to process the data and return 2 dataframes and path as list
-dfs <- eventReactive(input$process,{
-  source("funs/process.R", local = T) # Hopefully this will overwrite functions as source changes...needs more testing
-  PROCESS()
+dfs <- eventReactive(input$process1,{
+  source("funs/processSubmit.R", local = T) # Hopefully this will overwrite functions as source changes...needs more testing
+  PROCESS1()
 })
 
 # Extract each dataframe
-processedData <- reactive({
+processedData1 <- reactive({
   dfs()[[1]]
 })
-processedComments  <- reactive({
+processedComments1  <- reactive({
   dfs()[[2]]
 })
 
 ### Table Outputs
 
 # Processed WQ Table - Only make table if processing is successful
-output$table.process.data <- renderDataTable({
-  req(try(processedData()))
-  processedData() %>% datatable(editable = FALSE, rownames = FALSE,
+output$table.process1.data <- renderDataTable({
+  req(try(processedData1()))
+  processedData1() %>% datatable(editable = FALSE, rownames = FALSE,
                               colnames = data_fields$dt_cols, selection = "single",
                               options = list(searching = TRUE, lengthChange = TRUE))
 
 })
 
 # Processed Flag Table - Only make table if processing is successful
-output$table.process.comments <- renderDataTable({
-  req(try(processedComments()))
-  processedComments() %>% datatable(editable = FALSE, rownames = FALSE,
+output$table.process1.comments <- renderDataTable({
+  req(try(processedComments1()))
+  processedComments1() %>% datatable(editable = FALSE, rownames = FALSE,
                                     selection = "single",
                                     options = list(searching = TRUE, lengthChange = TRUE))
 })
@@ -1157,7 +1176,7 @@ output$table.process.comments <- renderDataTable({
 #     paste0('The records were successfully processed')
 #   }
 # })
-observeEvent(input$process, {
+observeEvent(input$process1, {
   show('submit')
   # show('table.process.wq')
   # show('table.process.flag')
@@ -1202,13 +1221,15 @@ observeEvent(input$submit, {
   }
 })
 
+
+### Generalize this to work with both submit and import
 ### Function to send ImportEmail
-ImportEmail <- function() {
+ImportEmail <- function(to,subj,msg) {
   out <- tryCatch(
     message("Trying to send email"),
     sendmail(from = paste0("<",useremail,">"),
              to = distro1(),
-             subject = paste0("New monitoring data have been submitted to the BRC Coordinator"),
+             subject = paste0("New monitoring data have been submitted to the BRC Program Manager"),
              msg = paste0(app_user," has submitted ", nrow(submittedData()), " new record(s) for review and import to the BRCWQDM database."),
              control=list(smtpServer=MS))
     ,
@@ -1227,26 +1248,6 @@ ImportEmail <- function() {
   return(out)
 }
 
-### SUBMITTED DATA ####
-
-# Need to decide how this will work  -
-# For coordinators is there a need to see the data submitted within the app - this data is archived as csvs
-# For Program Manager - need to be able to see and edit submitted data before importing -
-# Need to pull submitted records from Dropbox (They will be csv files)
-
-# Convert to dataframes and display through mod_editDT module
-# Need a way to add comments to specific records
-# Another process button and an import button
-
-
-
-
-
-
-
-
-
-
 # Hide import button and tables when import button is pressed (So one cannot double import same file)
 observeEvent(input$submit, {
   hide('submit')
@@ -1259,13 +1260,186 @@ observeEvent(input$submit, {
   insertUI(
     selector = "#submit",
     where = "afterEnd",
-    ui = h4(paste("Successful submittal of", nrow(processedData()), "record(s) to the BRC Coordinator"))
+    ui = h4(paste("Successful submittal of", nrow(processedData1()), "record(s) to the BRC Program Manager"))
   )
 })
 
   observeEvent(input$save_changes,{
     removeModal() # Save does not work here?
   })
+
+########################################################################.
+###                   PROCESS/IMPORT SUBMITTED DATA                 ####
+########################################################################.
+
+# Process Action Button
+  output$process2.UI <- renderUI({
+    req(input$selectFile)
+    actionButton(inputId = "process2",
+                 label = "Process records from the selected file",
+                 width = '500px')
+  })
+
+  # Run the function to process the data and return 2 dataframes and path as list
+  dfs <- eventReactive(input$process2,{
+    source("funs/processImport.R", local = T) # Hopefully this will overwrite functions as source changes...needs more testing
+    PROCESS2(file = input$selectFile)
+  })
+
+  # Extract each dataframe
+  # n is numerical
+  df_data_n <- reactive({
+    dfs()[[1]]
+  })
+  # t is text
+  df_data_t  <- reactive({
+    dfs()[[2]]
+  })
+  # c is comments
+  df_data_c  <- reactive({
+    dfs()[[3]]
+  })
+
+  # Last File to be Processed
+  file.processed2 <- eventReactive(input$process2, {
+    input$selectFile
+  })
+
+  # Text for Process Data Error or Successful
+  process.status2 <- reactive({
+    if(input$selectFile != file.processed2()){
+      " "
+    }else if(inherits(try(dfs()), "try-error")){
+      geterrmessage()
+    }else{
+      paste0('The file was successfully processed')
+    }
+  })
+
+
+  # Text Output
+  output$text.process2.status <- renderText({process.status2()})
+
+  # Show import button and tables when process button is pressed
+  # Use of req() later will limit these to only show when process did not create an error)
+  observeEvent(input$process2, {
+    show('import')
+    # show('table.process.wq')
+    # show('table.process.flag')
+  })
+
+  ### Import Data
+
+  # Import Action Button - Will only be shown when a file is processed successfully
+  output$import.UI <- renderUI({
+    # req(try(df.wq()))
+    actionButton(inputId = "import",
+                 label = paste("Import", file.processed2(), "Data"),
+                 width = '500px')
+  })
+
+  # Import Data - Run import_data function
+  observeEvent(input$import, {
+    source("funs/processImport.R", local = T)
+    out <- tryCatch(IMPORT_DATA(df.wq = df.wq(),
+                                df.flags = df.flags(),
+                                path = path(),
+                                file = input$file,
+                                filename.db = filename.db(),
+                                processedfolder = processedfolder(),
+                                ImportTable = ImportTable(),
+                                ImportFlagTable = ImportFlagTable())
+                    ,
+                    error=function(cond) {
+                      message(paste("There was an error, data not imported...\n", cond))
+                      return(NA)
+                    },
+                    warning=function(cond) {
+                      message(paste("Import process completed with warnings...\n", cond))
+                      return(NULL)
+                    },
+                    finally={
+                      message(paste("Import Process Complete"))
+                    }
+    )
+    ImportFailed <- any(class(out) == "error")
+
+    if (ImportFailed == TRUE){
+      print(paste0("Import Failed at ", Sys.time() ,". There was an error: "))
+      print(out)
+    } else {
+      print(paste0("Data Import Successful at ", Sys.time()))
+      NewCount <- actionCount() + 1
+      actionCount(NewCount)
+      print(paste0("Action Count was ", actionCount()))
+      ImportEmail()
+    }
+  })
+
+  ### Function to send ImportEmail
+  ImportEmail <- function() {
+    out <- tryCatch(
+      message("Trying to send email"),
+      sendmail(from = paste0("<",useremail,">"),
+               to = distro1(),
+               subject = paste0("New Data has been Imported to a ", userlocation," Database"),
+               msg = paste0(username," has imported ", nrow(df.wq()), " new record(s) for the dataset: ",
+                            input$datatype, " | Filename = ", input$file),
+               control=list(smtpServer=MS))
+      ,
+      error=function(cond) {
+        message(paste("User cannot connect to SMTP Server, cannot send email", cond))
+        return(NA)
+      },
+      warning=function(cond) {
+        message(paste("Send mail function caused a warning, but was completed successfully", cond))
+        return(NULL)
+      },
+      finally={
+        message(paste("Import email was sent successfully"))
+      }
+    )
+    return(out)
+  }
+
+  # Hide import button and tables when import button is pressed (So one cannot double import same file)
+  observeEvent(input$import, {
+    hide('import')
+    #hide('table.process.wq')
+    #hide('table.process.flag')
+  })
+
+  # Create a delayed reactive to trigger input file change update after import
+  ### THIS GETS TRIGGERED TOO QUICKLY - NEEDS TO TRIGGER AFTER INPUT$IMPORT IS CLICKED, NOT ON A TIMER
+  # import.delay <- reactive({
+  #   # Delay reactive invalidation (in milliseconds)
+  #   invalidateLater(10000, session)
+  #   input$import
+  # })
+
+  # Add text everytime successful import
+  observeEvent(input$import, {
+    insertUI(
+      selector = "#import",
+      where = "afterEnd",
+      ui = h4(paste("Successful import of", nrow(df.wq()), "record(s) in", input$file, "to", input$datatype, "Database"))
+    )
+  })
+
+  ### Table Outputs
+
+  # Processed WQ Table - Only make table if processing is successful
+  output$table.process2.data <- renderDataTable({
+    req(try(df.wq()))
+    df.wq()
+  })
+
+  # Processed Flag Table - Only make table if processing is successful
+  output$table.process2.comments <- renderDataTable({
+    req(try(df.flags()))
+    df.flags()
+  })
+
 
 ### IMAGES ####
 

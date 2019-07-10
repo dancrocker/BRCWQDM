@@ -14,13 +14,13 @@
 # Processed data frames will display below the action buttons
 # Any data errors will display and prevent data submit button
 
-PROCESS <- function(){
+PROCESS1 <- function(){
 ### Read the staged data and comments from the csv
 df_data <- read.table(stagedDataCSV, stringsAsFactors = FALSE, header = T,  sep = " " , na.strings = "NA")
-summary(df_data)
-
+# Which columns have numeric data?
+num_cols <- table_fields$shiny_input[table_fields$col_type == "numeric"]
 ### Convert empty numeric records to  -999999
-df_data <- df_data %>% mutate_if(is.numeric, ~replace(., is.na(.), -999999))
+df_data <- df_data %>% mutate_at(num_cols, ~replace(., is.na(.), -999999))
 
 ### Convert all blanks, NA, and NULLs to "Not Recorded"
 df_data[is.na(df_data)] <- "Not Recorded"
@@ -50,4 +50,6 @@ dfs$comments <- df_comments
 
 return(dfs)
 }
+
+
 

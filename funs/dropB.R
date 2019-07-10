@@ -1,6 +1,7 @@
 ### Functions to interface with Dropbox ####
 
 library(rdrop2)
+httr::set_config(httr::config(http_version = 0))
 ### Get Token - only need once, then saved locally -DONE
 # drop_auth()
 ### Save the Token to an object - DONE
@@ -63,9 +64,9 @@ SUBMIT_CSV <- function(zone, drop_path = "/BRCWQDM/Submitted_Data_Staging"){
   } else {
     print("There were no data to upload!")
   }
+  csv <- stagedCommentsCSV
 
   ### Upload the Comments
-  csv <- stagedCommentsCSV
   if(file.exists(csv)){
   fn <- paste0(zone,"_SubmittedComments_",today(),".csv")
   file.copy(csv,fn,overwrite = TRUE)
@@ -85,9 +86,11 @@ SUBMIT_CSV <- function(zone, drop_path = "/BRCWQDM/Submitted_Data_Staging"){
 GET_SUBMITTED_DATA <- function(){
   ### List Drop Box files ####
   dropb_root_dir <- config[12]
-  safe_dir_check <- purrr::safely(drop_dir, otherwise = FALSE, quiet = TRUE)
-  dir_listing <- safe_dir_check(path = paste0(dropb_root_dir, "/Submitted_Data_Staging"), recursive = FALSE, dtoken = drop_auth(rdstoken = tokenpath))
-  files <- dir_listing$result["name"] %>% unlist()
+  safe_dir_check <- purrr::safely(drop_dir, otherwise = FALSE, quiet = FALSE)
+  # dir_listing <- safe_dir_check(path = paste0(dropb_root_dir, "/Submitted_Data_Staging"), recursive = FALSE, dtoken = drop_auth(rdstoken = tokenpath))
+  files <- drop_dir(path = paste0(dropb_root_dir, "/Submitted_Data_Staging"), recursive = FALSE, dtoken = drop_auth(rdstoken = tokenpath))
+  # files <- dir_listing$result["name"] %>% unlist()
+  files <- files$name
   local_data_dir <- paste0(config[1],"Data/SubmittedData")
   if(files %>%  length() %>% as.numeric() > 0){
     ### Check if we already have the submitted files locally
