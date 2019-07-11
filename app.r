@@ -578,7 +578,9 @@ ui <-tagList(
     tabPanel("INSTRUCTIONS",
       fluidRow(column(12,
                   h2("Instructions and Data Processing Workflow", align = "center"),
-                  h4("blah.. blah blah...", align = "left"))) ### Perhaps this should be a markdown doc
+                  verbatimTextOutput("instructions")
+      )
+      )            ### Perhaps this should be a markdown doc
     )
   ) # End navbar page
 )
@@ -1443,6 +1445,14 @@ observeEvent(input$submit, {
     req(try(df.flags()))
     df.flags()
   })
+
+### INSTRUCTION ####
+    output$instructions <- renderText({
+      paste0("1. Starting on the DATA ENTRY page enter field and lab results within each data section.\n",
+      "2. You will not be allowed to enter the data record until the required fields are entered (red asterisk).\n",
+      "3. More to come...working on this next")
+    })
+
 
 
 ### IMAGES ####
