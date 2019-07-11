@@ -87,7 +87,7 @@ GET_SUBMITTED_DATA <- function(){
   ### List Drop Box files ####
   dropb_root_dir <- config[12]
   safe_dir_check <- purrr::safely(drop_dir, otherwise = FALSE, quiet = FALSE)
-  # dir_listing <- safe_dir_check(path = paste0(dropb_root_dir, "/Submitted_Data_Staging"), recursive = FALSE, dtoken = drop_auth(rdstoken = tokenpath))
+  dir_listing <- safe_dir_check(path = paste0(dropb_root_dir, "/Submitted_Data_Staging"), recursive = FALSE, dtoken = drop_auth(rdstoken = tokenpath))
   files <- drop_dir(path = paste0(dropb_root_dir, "/Submitted_Data_Staging"), recursive = FALSE, dtoken = drop_auth(rdstoken = tokenpath))
   # files <- dir_listing$result["name"] %>% unlist()
   files <- files$name
@@ -99,7 +99,7 @@ GET_SUBMITTED_DATA <- function(){
     } else {
       paths <- unlist(dir_listing$result["path_display"])
       ### Save all submitted csv files to Local Data Cache ####
-      lapply(paths, drop_download, local_path = local_data_dir, overwrite = TRUE,
+      lapply(paths, drop_download, local_path = local_data_dir, overwrite = FALSE,
            dtoken =  drop_auth(rdstoken = tokenpath))
     }
   } else {

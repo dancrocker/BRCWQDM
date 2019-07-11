@@ -1006,18 +1006,22 @@ comment_par_choices <<- c("General Comment", data_fields$dt_cols[data_fields$tak
      }
    })
 
-
   ### save to RDS and CSV ####
   observeEvent(input$SaveStagedData,{
     csv <- staged_df()
     names(csv) <- data_fields$shiny_input
     #### overwrite table as well ... write.table
-    write.table(x = csv, file = ,
+    write.table(x = csv, file = stagedDataCSV,
                 row.names = FALSE, col.names = TRUE, quote = TRUE,
                 qmethod = "d", append = FALSE)
-    # saveRDS(object = staged_df(), stagedDataRDS)
-    loadData()
-    shinyalert(title = "Saved!", type = "success")
+    # loadData()
+    # shinyalert(title = "Saved!", type = "success")
+     ### Read the updated table back and refresh the DT
+     data <- read.table(stagedDataCSV, stringsAsFactors = FALSE, header = T,  sep = " " , na.strings = "NA")
+     df <- data_csv2df(data, data_fields) ### saves RDS file as data.frame
+     saveRDS(df, stagedDataRDS)
+     rxdata$stagedData <- readRDS(stagedDataRDS)
+     shinyalert(title = "Saved!", type = "success")
   })
 
    observeEvent(input$SaveSubmittedData,{
@@ -1047,10 +1051,10 @@ comment_par_choices <<- c("General Comment", data_fields$dt_cols[data_fields$tak
                  qmethod = "d", append = FALSE)
      # saveRDS(object = staged_(), stagedDataRDS)
      ### Read the updated table back and refresh the DT
-     data <- read.table(file, stringsAsFactors = FALSE, header = T,  sep = " " , na.strings = "NA")
-     df <- data_csv2df(data, data_fields) ### saves RDS file as data.frame
-     saveRDS(df, submittedDataRDS)
-     rxdata$submittedData <- readRDS(submittedDataRDS)
+     data <- read.table(stagedCommentsCSV, stringsAsFactors = FALSE, header = T,  sep = " " , na.strings = "NA")
+     df <- comm_csv2df(data, comment_fields) ### saves RDS file as data.frame
+     saveRDS(df, stagedCommentsRDS)
+     rxdata$stagedComments <- readRDS(stagedCommentsRDS)
      shinyalert(title = "Saved!", type = "success")
    })
 
@@ -1070,7 +1074,7 @@ comment_par_choices <<- c("General Comment", data_fields$dt_cols[data_fields$tak
      shinyalert(title = "Saved!", type = "success")
    })
 
-  saveComment <- function(data,csvFile,rdsFile) {
+  saveComment <- function(data, csvFile, rdsFile) {
          if(file.exists(file.path(csvFile))){
            write.table(x = data, file = csvFile,
                        row.names = FALSE, quote = TRUE, append = TRUE,

@@ -182,7 +182,12 @@ observeEvent(input$add_comment_mod, {
 
 formatComment_mod <- function(){
   if(input$FM_comment == TRUE){
-    commenter <- df()[input$origTable_rows_selected, 3]
+    commenter <- switch(data_name,
+              "stagedData" = df()[input$origTable_rows_selected, 3],
+              "stagedComments" = df()[input$origTable_rows_selected, 4],
+              "submittedData" = df()[input$origTable_rows_selected, 3],
+              "submittedComments" = df()[input$origTable_rows_selected, 4]
+    )
   } else {
     commenter <- app_user
   }
@@ -212,7 +217,8 @@ observeEvent(input$save_comment,{
   )
 
   saveComment_mod(data = formatComment_mod(), csvFile = csv, rdsFile = rds)
-  session$sendCustomMessage("handler1", message = 'Comment Saved!')
+  shinyalert(title = "Comment Saved!", type = "success")
+  # session$sendCustomMessage("handler1", message = 'Comment Saved!')
   removeModal()
 })
 
