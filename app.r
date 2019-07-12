@@ -44,7 +44,7 @@ print(paste0("BRCWQDM App lauched at ", Sys.time()))
 ### Set Directories ####
 wdir <- getwd()
 ### Local Data Directory ####
-dataDir <<- file.path(paste0(config[1],"Data/"))
+dataDir <<- paste0(config[1],"Data/")
 app_user <<- config[2]
 user_zone <<- config[13]
 ### CSV Files ####
@@ -1077,7 +1077,7 @@ comment_par_choices <<- c("General Comment", data_fields$dt_cols[data_fields$tak
    })
 
   saveComment <- function(data, csvFile, rdsFile) {
-         if(file.exists(file.path(csvFile))){
+         if(file.exists(csvFile)){
            write.table(x = data, file = csvFile,
                        row.names = FALSE, quote = TRUE, append = TRUE,
                        col.names = FALSE, qmethod = "d")
