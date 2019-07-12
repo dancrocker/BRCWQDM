@@ -214,9 +214,9 @@ dfs <- list()
 return(dfs)
 }
 
-dfs <- PROCESS_DATA(recs)
+dfs_to_import <- PROCESS2(file = file)
 
-IMPORT_DATA <- function(dfs){
+IMPORT_DATA <- function(dfs_to_import){
 
 ### Make the db connection
 pool <- dbPool(drv = RSQLite::SQLite(), dbname = db)
@@ -249,13 +249,13 @@ poolClose(pool)
 
 
 # Move the processed raw data file to the processed folder
+
   # processed_subdir <- paste0("/", max(year(df.wq$SampleDateTime))) # Raw data archived by year, subfolders = Year
   # processed_dir <- paste0(processedfolder, processed_subdir)
   # file.rename(path, paste0(processed_dir,"/", file))
 
 # Generate new RDS files from database and write to DropBox shared folder or email?
 
-  return("Import Successful")
+  return(dfs)
 }
 
-IMPORT_DATA(dfs)

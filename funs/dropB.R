@@ -44,7 +44,7 @@ list2env(data ,.GlobalEnv)
 rm(data)
 }
 
-SUBMIT_CSV <- function(zone, drop_path = "/BRCWQDM/Submitted_Data_Staging"){
+SUBMIT_CSV <- function(zone, drop_path = "BRCWQDM/Submitted_Data_Staging"){
  ### Args for interactive testing
   ### Need to add some error handling here
   # zone <- "Mid-Reach"
@@ -99,7 +99,7 @@ GET_SUBMITTED_DATA <- function(){
     } else {
       paths <- unlist(dir_listing$result["path_display"])
       ### Save all submitted csv files to Local Data Cache ####
-      lapply(paths, drop_download, local_path = local_data_dir, overwrite = FALSE,
+      lapply(paths, drop_download, local_path = local_data_dir, overwrite = TRUE,
            dtoken =  drop_auth(rdstoken = tokenpath))
     }
   } else {
