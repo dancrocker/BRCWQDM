@@ -94,24 +94,53 @@ GET_SUBMITTED_DATA <- function(){
   local_data_dir <- paste0(config[1],"Data/SubmittedData")
   if(files %>%  length() %>% as.numeric() > 0){
     ### Check if we already have the submitted files locally
-   if(all(files %in% list.files(submittedDataDir))){
-     print("All submitted files found on Dropbox were previously downloaded")
+       if(all(files %in% list.files(submittedDataDir))){
+         print("All submitted files found on Dropbox were previously downloaded")
+        } else {
+          paths <- unlist(dir_listing$result["path_display"])
+          ### At least one submitted file is not already downloaded - download the missing ones
+          for (i in seq_along(paths)) {
+           fn <- str_replace(paths[[i]],"/BRCWQDM/Submitted_Data_Staging/","")
+            if (!fn %in% list.files(local_data_dir,full.names = F)) {
+              drop_download(path = paths[[i]], local_path = local_data_dir, overwrite = FALSE,
+                 dtoken =  drop_auth(rdstoken = tokenpath))
+            } # End If
+          } # End Loop
+        } # End else
     } else {
-      paths <- unlist(dir_listing$result["path_display"])
-      ### Save all submitted csv files to Local Data Cache ####
-      lapply(paths, drop_download, local_path = local_data_dir, overwrite = TRUE,
-           dtoken =  drop_auth(rdstoken = tokenpath))
-    }
-  } else {
     print("There were no submitted files found on Dropbox")
   }
 }
 
-# ARCHIVE_CSV <- function(){
-#
-#   drop_move(from_path = , to_path = , dtoken = drop_auth(rdstoken = tokenpath))
-#
-# }
+ARCHIVE_SUBMITTED_DATA <- function(data_file){
+ ### List Drop Box files ####
+# data_file <- input$selectFile # in shiny app
+# data_file <- "Mid-Reach_SubmittedData_2019-07-11.csv"
+comment_file <- str_replace(data_file,"_SubmittedData_","_SubmittedComments_")
+
+dropb_root_dir <- config[12]
+# From/To paths
+
+data_from_path <-  paste0(dropb_root_dir, "/Submitted_Data_Staging/", data_file)
+comment_from_path <- paste0(dropb_root_dir, "/Submitted_Data_Staging/", comment_file)
+data_to_path <-  paste0(dropb_root_dir, "/Imported_Data_Archive/", data_file)
+comment_to_path <-   paste0(dropb_root_dir, "/Imported_Data_Archive/", comment_file)
+
+safe_dir_check <- purrr::safely(drop_dir, otherwise = FALSE, quiet = FALSE)
+dir_listing <- safe_dir_check(path = paste0(dropb_root_dir, "/Submitted_Data_Staging"), recursive = FALSE, dtoken = drop_auth(rdstoken = tokenpath))
+files <- drop_dir(path = paste0(dropb_root_dir, "/Submitted_Data_Staging"), recursive = FALSE, dtoken = drop_auth(rdstoken = tokenpath))
+
+if (comment_from_path %in% files$path_display) {
+drop_move(from_path = data_from_path, to_path = data_to_path, dtoken = drop_auth(rdstoken = tokenpath))
+print(paste0("The data csv file '", data_file, "'  was moved to the Imported Data Archive folder"))
+}
+
+if (comment_from_path %in% files$path_display) {
+drop_move(from_path = comment_from_path,  to_path = comment_to_path, dtoken = drop_auth(rdstoken = tokenpath))
+print(paste0("The comment csv file '", comment_file, "'  was moved to the Imported Data Archive folder"))
+}
+
+} # end function
 
 
   # sitesRDS <- paste0(remote_data_dir,"sites_db.rds")

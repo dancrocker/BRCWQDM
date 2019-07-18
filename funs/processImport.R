@@ -63,21 +63,29 @@ data_text_db <- dbReadTable(pool, "data_text")
 data_comments_db <- dbReadTable(pool, "data_comments")
 
 poolClose(pool)
+
 ### LOAD STAGED DATA ####
 # eventually data should be passed in from shiny app.r
 
-PROCESS2 <- function(file){
-data_csv <- paste0(submittedDataDir,"/Mid-Reach_SubmittedData_2019-06-20.csv")
-# data_csv <- input$selectFile
+PROCESS2 <- function(data_file){
+# data_file <- input$selectFile # in shiny app
+# data_file <- "Mid-Reach_SubmittedData_2019-07-17.csv"
+data_csv <- data_file
 comment_csv <- str_replace(data_csv,"_SubmittedData_","_SubmittedComments_")
+# print(data_csv)
+# print(comment_csv)
+
+data_fn <-  str_replace(data_csv, paste0(submittedDataDir,"/"), "")
+comment_fn <- str_replace(comment_csv, paste0(submittedDataDir,"/"), "")
+
+# print(data_fn)
+# print(comment_fn)
 
 df_data <- read.table(data_csv, stringsAsFactors = FALSE, header = T,  sep = " " , na.strings = "NA")
 df_comments <- read.table(comment_csv, stringsAsFactors = FALSE, header = T,  sep = " " , na.strings = "NA")
 ### Make the db connection
 pool <- dbPool(drv = RSQLite::SQLite(), dbname = db)
-onStop(function() {
-  poolClose(pool)
-})
+
 ### DB TBL COL ORDERS ####
 col_data_num <- names(data_num_db)
 col_data_text <- names(data_text_db)
@@ -86,28 +94,28 @@ col_trans_log <- names(trans_log_db)
 
 ### Get last transaction ID from trans_log
 lastTransLogID <- trans_log_db$ID %>% max() %>% as.numeric()
-if(is.na(last_trans_log_ID)) {
-  last_trans_log_ID <- 0
+if(is.infinite(lastTransLogID)) {
+  lastTransLogID <- 0
 }
 ### Get the last nueric data ID
 lastNumID <- data_num_db$ID %>% max() %>% as.numeric()
-if(!is.finite(lastNumID)){
+if(is.infinite(lastNumID)){
   lastNumID <-  0
 }
 ### Get the last text data ID
 lastTextID <- data_text_db$ID %>% max() %>% as.numeric()
-if(!is.finite(lastTextID)){
+if(is.infinite(lastTextID)){
   lastTextID <-  0
 }
 ### Get the last comment data ID
 lastCommentID <- data_comments_db$ID %>% max() %>% as.numeric()
-if(!is.finite(lastCommentID)){
+if(is.infinite(lastCommentID)){
   lastCommentID <-  0
 }
 
 ### Get the last sample event ID - the new SEID starts at lastSEID + 1
 lastSEID <- data_num_db$SEID %>% max() %>% as.numeric()
-if(!is.finite(lastSEID)){
+if(is.infinite(lastSEID)){
   lastSEID <-  0
 }
 
@@ -160,10 +168,10 @@ data_n <- data_n %>%
 ###                           DATA_T                                ####
 ########################################################################.
 
-data_t <- data[data$PARAMETER %in% text_pars, c("SEID","PARAMETER","RESULT")]
+data_t <- data[data$PARAMETER %in% text_pars, c("SEID","SITE_BRC_CODE","DATE_TIME","PARAMETER","RESULT", "UNIQUE_ID")]
 data_t <- data_t %>%
   arrange(SEID, PARAMETER) %>%
-  mutate("ID" = lastTextID + row_number()) %>%
+   mutate("ID" = lastTextID + row_number()) %>%
   select(col_data_text)
 
 ########################################################################.
@@ -181,9 +189,11 @@ data_c$PARAMETER[data_c$PARAMETER != "General Comment"] <- parameters_db$PARAMET
 if(data_c$PARAMETER[is.na(data_c$PARAMETER)] %>% length() %>%  as.numeric() > 0){
   stop("There are non-matching shiny-objects or parameter names that need to be resolved before proceeding!")
 }
+
+join_data <- distinct(data[,c("DATE","SITE_BRC_CODE","SEID")])
 # Bring in SEID from data using a join, add ID col, reduce cols to DB cols and rename
 data_c <- data_c %>%
-  left_join(data, by = c("SITE" = "SITE_BRC_CODE", "DATE", "PARAMETER")) %>%
+  left_join(join_data, by = c("SITE" = "SITE_BRC_CODE", "DATE")) %>%
   dplyr::rename("COMMENT_TEXT" = "COMMENT") %>%
   arrange(SEID, PARAMETER) %>%
   mutate("ID" = lastCommentID + row_number()) %>%
@@ -199,7 +209,7 @@ trans_log <- data %>%
   select("SEID","IMPORTED_BY","IMPORT_DATE") %>%
   distinct() %>%
   arrange(SEID) %>%
-  mutate("ID" = last_trans_log_ID + row_number()) %>%
+  mutate("ID" = lastTransLogID + row_number()) %>%
   select(col_trans_log)
 
 
@@ -211,51 +221,66 @@ dfs <- list()
   dfs$data_c <- data_c
   dfs$trans_log <- trans_log
 
+  poolClose(pool)
+
 return(dfs)
 }
 
-dfs_to_import <- PROCESS2(file = file)
+# dfs_to_import <- PROCESS2(data_file =  "Mid-Reach_SubmittedData_2019-07-17.csv")
 
-IMPORT_DATA <- function(dfs_to_import){
+IMPORT_DATA <- function(dfs){
+data_file <- input$selectFile
+
+data_csv <- data_file
+comment_csv <- str_replace(data_csv,"_SubmittedData_","_SubmittedComments_")
+# print(data_csv)
+# print(comment_csv)
+
+data_fn <-  str_replace(data_csv, paste0(submittedDataDir,"/"), "")
+comment_fn <- str_replace(comment_csv, paste0(submittedDataDir,"/"), "")
+
 
 ### Make the db connection
 pool <- dbPool(drv = RSQLite::SQLite(), dbname = db)
 
-dbWithTransaction(con, {
-    dbWriteTable(pool, DBdataNumTbl, value = dfs$data_n, append = TRUE)
-    dbWriteTable(pool, DBdataTextTbl, value = dfs$data_t, append = TRUE)
+poolWithTransaction(pool, function(conn) {
+   dbWriteTable(pool, DBdataNumTbl, value = dfs$data_n, append = TRUE)
+   dbWriteTable(pool, DBdataTextTbl, value = dfs$data_t, append = TRUE)
     dbWriteTable(pool, DBdataCommentTbl, value = dfs$data_c, append = TRUE)
     dbWriteTable(pool, DBtransLog, value = dfs$trans_log, append = TRUE)
   })
 
-
-
-# Write db files to Dropbox
+# Move submitted csv files to archived folder
 
 newDataNum <- dbReadTable(pool, DBdataNumTbl)
 newDataText <- dbReadTable(pool, DBdataTextTbl)
 newDataComment <- dbReadTable(pool, DBdataCommentTbl)
 
-# saveRDS(newDataNum, file = config[?])
-# saveRDS(newDataText, file = config[?])
+# Regenerate staged RDS files after successful import... note - include a button in app to
+# regenerate rds files in the event of manual db updates
 
-
-
+# saveRDS(data_n, file = config[1])
+# saveRDS(newDataText, file = config[1])
 
 # Send email notice
-
 poolClose(pool)
 
-
-
-# Move the processed raw data file to the processed folder
-
-  # processed_subdir <- paste0("/", max(year(df.wq$SampleDateTime))) # Raw data archived by year, subfolders = Year
-  # processed_dir <- paste0(processedfolder, processed_subdir)
-  # file.rename(path, paste0(processed_dir,"/", file))
-
-# Generate new RDS files from database and write to DropBox shared folder or email?
-
-  return(dfs)
+# Move the submitted data files into the Imported data folder
+# first create the dir if it doesn't exisit
+if (!dir.exists(paste0(dataDir, "Imported_Data/"))){
+  dir.create(paste0(dataDir, "Imported_Data/"))
 }
+
+#### Move the submitted data and comment files to the archive folder ####
+if(file.exists(data_csv)){
+file.rename(data_csv, paste0(dataDir,"Imported_Data/",data_fn))
+}
+if (file.exists(comment_csv)){
+file.rename(comment_csv, paste0(dataDir,"Imported_Data/",comment_fn))
+}
+
+} # End function
+
+
+
 

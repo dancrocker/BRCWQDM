@@ -165,7 +165,8 @@ labelMandatory <- function(label) {
     span("*", class = "mandatory_star")
   )
 }
-actionCount <- reactiveVal(0)
+SubmitActionCount <- reactiveVal(0)
+ImportActionCount <-  reactiveVal(0)
 ### End Global Scope ####
 ### NOTES FOR UI AND SERVER ####
     # User enters records in form
@@ -450,7 +451,7 @@ ui <-tagList(
                 ) # End TabPanel
          )
   ),# End Tab Panel
-  ### SUBMITTED RECORDS TAB ####
+    ### SUBMITTED RECORDS TAB ####
     tabPanel("SUBMITTED DATA",
         fluidRow(
            column(2, imageOutput("brc_logo3", height = 80), align = "left"),
@@ -543,12 +544,18 @@ ui <-tagList(
                             fluidRow(
                               column(12,
                                      tabsetPanel(
-                                       tabPanel("Processed Data",
-                                                dataTableOutput("table.process2.data")
+                                       tabPanel("Processed Numeric Data",
+                                                dataTableOutput("table.process2.data_n")
+                                       ),
+                                       tabPanel("Processed Text Data",
+                                                dataTableOutput("table.process2.data_t")
                                        ),
                                        tabPanel("Processed Comments",
-                                                dataTableOutput("table.process2.comments")
-                                       ) # End Tab Panel
+                                                dataTableOutput("table.process2.data_c")
+                                       ),
+                                       tabPanel("Processed Transaction Log",
+                                                dataTableOutput("table.process2.trans_log")
+                                       )  # End Tab Panel
                                      ) # End Tabset Panel
                               ) # End Col
                             ) # End Fluid row
@@ -1196,7 +1203,9 @@ output$submit.UI <- renderUI({
                width = '500px')
 })
 
-# Import Data - Run import_data function
+########################################################################.
+###                         SUBMIT DATA                             ####
+########################################################################.
 observeEvent(input$submit, {
   source("funs/dropB.R", local = T)
   out <- tryCatch(SUBMIT_CSV(zone = user_zone),
@@ -1219,9 +1228,9 @@ observeEvent(input$submit, {
     print(out)
   } else {
     print(paste0("Data Submittal Successful at ", Sys.time()))
-    NewCount <- actionCount() + 1
-    actionCount(NewCount)
-    print(paste0("Action Count was ", actionCount()))
+    NewCount <- SubmitActionCount() + 1
+    SubmitActionCount(NewCount)
+    print(paste0("Submit Action Count was ", SubmitActionCount()))
     # ImportEmail()
   }
 })
@@ -1229,7 +1238,7 @@ observeEvent(input$submit, {
 
 ### Generalize this to work with both submit and import
 ### Function to send ImportEmail
-ImportEmail <- function(to,subj,msg) {
+SubmitEmail <- function(to,subj,msg) {
   out <- tryCatch(
     message("Trying to send email"),
     sendmail(from = paste0("<",useremail,">"),
@@ -1288,7 +1297,7 @@ observeEvent(input$submit, {
   # Run the function to process the data and return 2 dataframes and path as list
   dfs_to_import <- eventReactive(input$process2,{
     source("funs/processImport.R", local = T) # Hopefully this will overwrite functions as source changes...needs more testing
-    PROCESS2(file = input$selectFile)
+    PROCESS2(data_file = input$selectFile)
   })
 
   # Extract each dataframe
@@ -1304,28 +1313,51 @@ observeEvent(input$submit, {
   df_data_c  <- reactive({
     dfs_to_import()[[3]]
   })
-
-    df_data_trans_log  <- reactive({
+ # transaction log
+  df_data_trans_log  <- reactive({
     dfs_to_import()[[4]]
   })
-
 
   # Last File to be Processed
   file.processed2 <- eventReactive(input$process2, {
     input$selectFile
   })
 
+    ### Table Outputs
+
+  # Processed Data Num Table - Only make table if processing is successful
+  output$table.process2.data_n <- renderDataTable({
+    req(try(df_data_n()))
+    df_data_n()
+  })
+
+  # Processed Data Text Table - Only make table if processing is successful
+  output$table.process2.data_t <- renderDataTable({
+    req(try(df_data_t()))
+    df_data_t()
+  })
+
+    # Processed Data Comments Table - Only make table if processing is successful
+  output$table.process2.data_c <- renderDataTable({
+    req(try(df_data_c()))
+    df_data_c()
+  })
+    # Processed Transaction Log Table - Only make table if processing is successful
+  output$table.process2.trans_log <- renderDataTable({
+    req(try(df_data_trans_log()))
+    df_data_trans_log()
+  })
+
   # Text for Process Data Error or Successful
   process.status2 <- reactive({
     if(input$selectFile != file.processed2()){
       " "
-    }else if(inherits(try(dfs()), "try-error")){
+    }else if(inherits(try(dfs_to_import()), "try-error")){
       geterrmessage()
     }else{
-      paste0('The file was successfully processed')
+      paste0('The file was successfully processed!')
     }
   })
-
 
   # Text Output
   output$text.process2.status <- renderText({process.status2()})
@@ -1344,73 +1376,67 @@ observeEvent(input$submit, {
   output$import.UI <- renderUI({
     # req(try(df.wq()))
     actionButton(inputId = "import",
-                 label = paste("Import", file.processed2(), "Data"),
+                 label = paste("Import", str_replace(input$selectFile, paste0(submittedDataDir,"/"), ""), "Data"),
                  width = '500px')
   })
+########################################################################.
+###                             IMPORT DATA                        ####
+########################################################################.
+  observeEvent(input$import, {
+    source("funs/processImport.R", local = T)
+    out <- tryCatch(IMPORT_DATA(dfs_to_import()),
+                    error=function(cond) {
+                      message(paste("There was an error, data not imported...\n", cond))
+                      return(NA)
+                    },
+                    warning=function(cond) {
+                      message(paste("Import process completed with warnings...\n", cond))
+                      return(NULL)
+                    },
+                    finally={
+                      message(paste("Import Process Complete"))
+                    }
+    )
+    ImportFailed <- any(class(out) == "error")
 
-  # Import Data - Run import_data function
-  # observeEvent(input$import, {
-  #   source("funs/processImport.R", local = T)
-  #   out <- tryCatch(IMPORT_DATA(df.wq = df.wq(),
-  #                               df.flags = df.flags(),
-  #                               path = path(),
-  #                               file = input$file,
-  #                               filename.db = filename.db(),
-  #                               processedfolder = processedfolder(),
-  #                               ImportTable = ImportTable(),
-  #                               ImportFlagTable = ImportFlagTable())
-  #                   ,
-  #                   error=function(cond) {
-  #                     message(paste("There was an error, data not imported...\n", cond))
-  #                     return(NA)
-  #                   },
-  #                   warning=function(cond) {
-  #                     message(paste("Import process completed with warnings...\n", cond))
-  #                     return(NULL)
-  #                   },
-  #                   finally={
-  #                     message(paste("Import Process Complete"))
-  #                   }
-  #   )
-  #   ImportFailed <- any(class(out) == "error")
-  #
-  #   if (ImportFailed == TRUE){
-  #     print(paste0("Import Failed at ", Sys.time() ,". There was an error: "))
-  #     print(out)
-  #   } else {
-  #     print(paste0("Data Import Successful at ", Sys.time()))
-  #     NewCount <- actionCount() + 1
-  #     actionCount(NewCount)
-  #     print(paste0("Action Count was ", actionCount()))
-  #     ImportEmail()
-  #   }
-  # })
-  #
-  # ### Function to send ImportEmail
-  # ImportEmail <- function() {
-  #   out <- tryCatch(
-  #     message("Trying to send email"),
-  #     sendmail(from = paste0("<",useremail,">"),
-  #              to = distro1(),
-  #              subject = paste0("New Data has been Imported to a ", userlocation," Database"),
-  #              msg = paste0(username," has imported ", nrow(df.wq()), " new record(s) for the dataset: ",
-  #                           input$datatype, " | Filename = ", input$file),
-  #              control=list(smtpServer=MS))
-  #     ,
-  #     error=function(cond) {
-  #       message(paste("User cannot connect to SMTP Server, cannot send email", cond))
-  #       return(NA)
-  #     },
-  #     warning=function(cond) {
-  #       message(paste("Send mail function caused a warning, but was completed successfully", cond))
-  #       return(NULL)
-  #     },
-  #     finally={
-  #       message(paste("Import email was sent successfully"))
-  #     }
-  #   )
-  #   return(out)
-  # }
+    if (ImportFailed == TRUE){
+      print(paste0("Import Failed at ", Sys.time() ,". There was an error: "))
+      print(out)
+    } else {
+      print(paste0("Data Import Successful at ", Sys.time()))
+      NewCount <- ImportActionCount() + 1
+      ImportActionCount(NewCount)
+      print(paste0("Import Action Count was ", ImportActionCount()))
+      ARCHIVE_SUBMITTED_DATA(data_file = input$selectFile)
+      # ImportEmail()
+    }
+  })
+
+  ### Function to send ImportEmail
+  ImportEmail <- function() {
+    out <- tryCatch(
+      message("Trying to send email"),
+      sendmail(from = paste0("<",useremail,">"),
+               to = distro1(),
+               subject = paste0("New Data has been Imported to a ", userlocation," Database"),
+               msg = paste0(username," has imported ", nrow(df.wq()), " new record(s) for the dataset: ",
+                            input$datatype, " | Filename = ", input$file),
+               control=list(smtpServer=MS))
+      ,
+      error=function(cond) {
+        message(paste("User cannot connect to SMTP Server, cannot send email", cond))
+        return(NA)
+      },
+      warning=function(cond) {
+        message(paste("Send mail function caused a warning, but was completed successfully", cond))
+        return(NULL)
+      },
+      finally={
+        message(paste("Import email was sent successfully!"))
+      }
+    )
+    return(out)
+  }
 
   # Hide import button and tables when import button is pressed (So one cannot double import same file)
   observeEvent(input$import, {
@@ -1428,27 +1454,13 @@ observeEvent(input$submit, {
   # })
 
   # Add text everytime successful import
-  # observeEvent(input$import, {
-  #   insertUI(
-  #     selector = "#import",
-  #     where = "afterEnd",
-  #     ui = h4(paste("Successful import of", nrow(df.wq()), "record(s) in", input$file, "to", input$datatype, "Database"))
-  #   )
-  # })
-
-  ### Table Outputs
-
-  # Processed WQ Table - Only make table if processing is successful
-  # output$table.process2.data <- renderDataTable({
-  #   req(try(df.wq()))
-  #   df.wq()
-  # })
-  #
-  # # Processed Flag Table - Only make table if processing is successful
-  # output$table.process2.comments <- renderDataTable({
-  #   req(try(df.flags()))
-  #   df.flags()
-  # })
+  observeEvent(input$import, {
+    insertUI(
+      selector = "#import",
+      where = "afterEnd",
+      ui = h4(paste("Successful import of '", str_replace(input$selectFile, paste0(submittedDataDir,"/"), ""), "' to the BRCWQDM Database!"))
+    )
+  })
 
 ### INSTRUCTION ####
     output$instructions <- renderText({

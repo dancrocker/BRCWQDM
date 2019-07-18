@@ -1,9 +1,14 @@
 library(sendmailR)
 
-
-
 #set working directory
 setwd(config[1])
+
+# Senders email:
+from_name <- app_user
+from_name <- "Mike Sperry" ### Testing line - delete when in actual use
+
+people_db$EMAIL[people_db$FULL_NAME == from_name]
+
 
 #####send plain email
 
