@@ -11,7 +11,7 @@ library(mailR)
 library(lubridate)
 
 #set working directory
-setwd(config[1])
+# setwd(config[1])
 
 ########################################################################.
 ###                       SUBMIT EMAIL                              ####
