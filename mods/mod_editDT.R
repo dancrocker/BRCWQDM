@@ -13,7 +13,6 @@
 ### MODULE UI ####
 
 editableDTUI <- function(id) {
-
   ns=NS(id)
   tagList(
   fluidPage(

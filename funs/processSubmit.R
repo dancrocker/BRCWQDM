@@ -35,7 +35,7 @@ write.table(x = df_data, file = stagedDataCSV,
             row.names = FALSE, na = "", quote = TRUE,
             qmethod = "d", append = FALSE)
 
-### NOW PROCESS COMMENTS ####
+### PROCESS COMMENTS ####
 df_comments <-read.table(stagedCommentsCSV, stringsAsFactors = FALSE, header = T,  sep = " " , na.strings = "NA")
 ### Do any manipulations needed here...
 

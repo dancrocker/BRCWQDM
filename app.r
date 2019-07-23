@@ -94,23 +94,27 @@ comm_col_names <<- comment_fields$shiny_input
 ### Select Option Choices ####
 ### All selection dependent lists need to go in server
 ### These lists are static
+sites_db <- sites_db %>%
+  arrange(WATERBODY_NAME)
 sites <- sites_db$BRC_CODE
-names(sites) <- paste0(sites_db$SITE_NAME, " - ", sites_db$BRC_CODE)
-sites <<- sites[order(names(sites))]
-samplers <<- sort(unique(assignments_db$NAME[assignments_db$YEAR == year(Sys.Date())]))
+names(sites) <- paste0(sites_db$WATERBODY_NAME, " - ", sites_db$SITE_NAME, " (", sites_db$BRC_CODE, ")")
 
-wea_choices <<- c("","Storm (heavy rain)", "Rain (steady rain)",
+samplers <<-  assignments_db %>%
+  filter(ROLE == "Field", YEAR ==  year(Sys.Date())) %>%
+  .$NAME
+
+wea_choices <<- c("Storm (heavy rain)", "Rain (steady rain)",
                  "Showers (intermittent rain)", "Overcast","Clear/Sunny", "Other","Not Recorded")
-wat_appear_choices <<- c("","Clear", "Milky", "Foamy", "Oily Sheen",
+wat_appear_choices <<- c("Clear", "Milky", "Foamy", "Oily Sheen",
                         "Dark Brown", "Greenish", "Orange", "Tea Color", "Other", "Not Recorded")
-wat_trash_choices <<- c("","None", "Light", "Medium", "Heavy", "Not Recorded")
-wat_odor_choices <<-c("","None", "Sewage", "Fishy", "Chlorine",
+wat_trash_choices <<- c("None", "Light", "Medium", "Heavy", "Not Recorded")
+wat_odor_choices <<-c("None", "Sewage", "Fishy", "Chlorine",
                      "Rotten Eggs", "Other", "Not Recorded")
-wat_NAV_choices <<- c("","None", "Light", "Medium", "Heavy", "Not Recorded")
-wat_clarity_choices <<- c("","Clear","Slightly Hazy","Cloudy","Opaque", "Not Recorded")
-wat_erosion_choices <<- c("","Undercut bank", "Slumping", "Erosional gullies in bank",
+wat_NAV_choices <<- c("None", "Light", "Medium", "Heavy", "Not Recorded")
+wat_clarity_choices <<- c("Clear","Slight","Medium","Heavy", "Not Recorded")
+wat_erosion_choices <<- c("Undercut bank", "Slumping", "Erosional gullies in bank",
                          "Bridge or building undermining", "No erosion", "Not Recorded")
-depth_choices <<- c("","Gage (Staff Plate-feet)", "Ruler (inches)", "Not Recorded", "No Datum")
+depth_choices <<- c("Gage (Staff Plate-feet)", "Ruler (inches)", "Not Recorded", "No Datum")
 
 ### SOURCE EXTERNAL SCRIPTS ####
 source(paste0(wdir, "/funs/csv2df.R"))
@@ -223,17 +227,19 @@ ui <-tagList(
                 wellPanel(fluidRow(
                   column(width = 12,
                     fluidRow(
-                      column(width = 4,
+                      column(width = 6,
                         selectInput("site", labelMandatory("Choose Sample Location:"), c("",sites), selected = "")
                       ),
-                      column(width = 3,
+                      column(width = 6,
                              selectInput("sampler", labelMandatory("Choose Sampler(s):"), multiple = T, choices = c("",samplers), selected = ""),
                              verbatimTextOutput("samplers_rx")
-                             ),
-                      column(width = 2,
+                             )
+                    ),
+                    fluidRow(
+                      column(width = 4,
                              dateInput("date", labelMandatory("Sample Date:"))
                       ),
-                      column(width = 3,
+                      column(width = 4,
                              timeInput("time", labelMandatory("Sample Starting Time (24-hr format):"), seconds = FALSE)
                       )
                     )
@@ -246,11 +252,11 @@ ui <-tagList(
                   column(width = 12,
                     fluidRow(
                       column(width = 3,
-                          selectInput("wea48", "Weather Last 48 Hours (P01):",
-                                         choices = wea_choices, multiple = T, selected = ""),
+                          checkboxGroupInput("wea48", "Weather Last 48 Hours (P01):", choices = wea_choices),
                           textAreaInput("comm_P01", labelMandatory("Comments for Weather Last 48 Hours (P01):"), placeholder = "Describe 'other'"),
-                          selectInput("wea_now", "Weather at time of sample (P02):",
-                                      choices = wea_choices, multiple = T , selected = ""),
+                          # selectInput("wea_now", "Weather at time of sample (P02):",
+                          #             choices = wea_choices, multiple = T , selected = ""),
+                          checkboxGroupInput("wea_now", "Weather at time of sample (P02):", choices = wea_choices),
                           textAreaInput("comm_P02", labelMandatory("Comments for Weather at time of Sample (P02):"), placeholder = "Describe 'other'"),
                           numericInput("temp_air","Ending Air Temperature (C) (P03):",
                                        value = NULL, min = -20, max = 40, step = 0.5),
@@ -258,23 +264,22 @@ ui <-tagList(
                                        value = NULL, min = 0, max = 30, step = 0.5)
                         ),
                         column(width = 3,
-                          selectInput("wat_trash", "Presence of Trash (P06.A):", choices = wat_trash_choices, selected = ""),
-                          textAreaInput("trash_descr", "Desription of Trash (P06.B):"),
-                          selectInput("erosion", "Stream bank/infrastructure erosion (P07.A):", choices = wat_erosion_choices, multiple = T, selected = ""),
-                          textAreaInput("comm_P07", labelMandatory("Comments for Erosion (P07.A):"), placeholder = "Describe 'other'"),
-                          textAreaInput("erosion_change", "Changes to erosion from last month (P07.B):")
-                        ),
-                        column(width = 3,
-                          selectInput("wat_appear", "Water Appearance (P05):", choices = wat_appear_choices, multiple = T, selected = ""),
+                          checkboxGroupInput("wat_appear", "Water Appearance (P05):", choices = wat_appear_choices),
                           textAreaInput("comm_P05", labelMandatory("Comments for Water Appearance (P05):"), placeholder = "Describe 'other'"),
-                          selectInput("wat_odor", "Water Odor (P08):", choices = wat_odor_choices, multiple = T, selected = ""),
-                          textAreaInput("comm_P08", labelMandatory("Comments for Water Odor (P08):"), placeholder = "Describe 'other'"),
-                          selectInput("wat_nav", "Nuisance Aquatic Vegetation (NAV) (P09.A):", choices = wat_NAV_choices, multiple = F, selected = ""),
-                          textAreaInput("wat_nav_descr", "NAV Comments (P09.B):")
-
+                          checkboxGroupInput("wat_trash", "Presence of Trash (P06.A):", choices = wat_trash_choices),
+                          textAreaInput("trash_descr", "Desription of Trash (P06.B):")
                         ),
                         column(width = 3,
-                          selectInput("wat_clarity", "Water Clarity (P10)", choices = wat_clarity_choices, selected = ""),
+                          checkboxGroupInput("erosion", "Stream bank/infrastructure erosion (P07.A):", choices = wat_erosion_choices),
+                          textAreaInput("comm_P07", labelMandatory("Comments for Erosion (P07.A):"), placeholder = "Describe 'other'"),
+                          textAreaInput("erosion_change", "Changes to erosion from last month (P07.B):"),
+                          checkboxGroupInput("wat_odor", "Water Odor (P08):", choices = wat_odor_choices),
+                          textAreaInput("comm_P08", labelMandatory("Comments for Water Odor (P08):"), placeholder = "Describe 'other'")
+                        ),
+                        column(width = 3,
+                          radioButtons("wat_nav", "Nuisance Aquatic Vegetation (NAV) (P09.A):", choices = wat_NAV_choices),
+                          textAreaInput("wat_nav_descr", "NAV Comments (P09.B):"),
+                          checkboxGroupInput("wat_clarity", "Water Clarity (P10)", choices = wat_clarity_choices),
                           numericInput("lab_turb","Lab Turbidity (NTU) (P11.A):", value = NULL, min = 0, max = 2500, step = 0.5),
                           numericInput("lab_turb_rep","Lab Turbidity Replicate (NTU) (P11.B):", value = NULL, min = 0, max = 2500, step = 0.5)
                         )
@@ -288,7 +293,8 @@ ui <-tagList(
                   column(width = 12,
                     fluidRow(
                       column(width = 4,
-                        selectInput("depth_type", "Type of depth measurement (D01):", choices = depth_choices)),
+                        radioButtons("depth_type", "Type of depth measurement (D01):",
+                                     choiceNames = depth_choices, choiceValues = depth_choices, selected = "No Datum")),
                       column(width = 4,
                         uiOutput("depth")
                       )
@@ -1495,5 +1501,4 @@ session$onSessionEnded(function() {
 } # END SERVER FUNCTION ####
 
 shinyApp(ui = ui, server = server)
-
 

@@ -1,51 +1,102 @@
-library(sendmailR)
+################################### HEADER ###################################
+#  TITLE: sendEmail.R
+#  DESCRIPTION: Script to send emails using mailR package
+#  AUTHOR(S): Dan Crocker
+#  DATE LAST UPDATED: July, 2019
+#  GIT REPO:
+#  R version 3.4.4 (2018-03-15)  x86_64
+##############################################################################.
+
+library(mailR)
+library(lubridate)
 
 #set working directory
 setwd(config[1])
 
-# Senders email:
-from_name <- app_user
-from_name <- "Mike Sperry" ### Testing line - delete when in actual use
+########################################################################.
+###                       SUBMIT EMAIL                              ####
+########################################################################.
 
-people_db$EMAIL[people_db$FULL_NAME == from_name]
+### Function to send email when data is submitted to program coordinator
+### distro needs to be program coordinator and field coordinator submitting file (user)
 
+submitEmail <- function(){
 
-#####send plain email
+  yr <- year(Sys.Date())
 
-from <- config[4]
-to <- ""
-subject <- "Testing scripted email"
-body <- "Just testing this method out"
-mailControl=list(smtpServer=" smtp.gmail.com")
+  # Get program coordinator name
+  pc <- filter(assignments_db, YEAR == yr,
+               ROLE == "Program Coordinator") %>%
+    .$NAME
+  # Get program coordinator email
+  pc_email <- people_db$EMAIL[people_db$FULL_NAME == pc]
 
-sendmail(from=from,to=to,subject=subject,msg=body,control=mailControl)
+  # Person submitting data name
+  from_name <- app_user
+  # Person submitting data email address
+  from_email <- people_db$EMAIL[people_db$FULL_NAME == from_name]
+  # Sending email acct
+  sender <- config[4]
+  # Recipients
+  distro <- c(from_email, people_db$EMAIL[41]) %>% unique() # Need to add ST here once app is live
+  # Msg subject
+  subj <- "New BRC water quality data has been submitted"
+  # Msg body
+  bod <- paste0(from_name, " has just submitted data for review and entry into the BRCWQDM Database.")
 
-#####send same email with attachment
+  # Send the message
+  send.mail(from = paste0("<", sender, ">"),
+            to =paste0(distro),
+            subject = subj,
+            body = bod,
+            smtp = list(host.name = "smtp.gmail.com", port = 465,
+                        user.name = config[4],
+                        passwd = config[5], ssl = TRUE),
+            authenticate = TRUE,
+            send = TRUE)
 
-#needs full path if not in working directory
-attachmentPath <- ""
+} # End function
 
-#same as attachmentPath if using working directory
-attachmentName <- "BRC_Data_2019-04-04.csv"
+########################################################################.
+###                          IMPORT EMAIL                           ####
+########################################################################.
 
-#key part for attachments, put the body and the mime_part in a list for msg
-attachmentObject <- mime_part(x=attachmentPath,name=attachmentName)
-bodyWithAttachment <- list(body,attachmentObject)
+### Function to send email when data is imported to database
+### distro needs to be db admin, program coordinator, and 3 field coordinator
 
-sendmail(from=from,to=to,subject=subject,msg=bodyWithAttachment,control=mailControl)
+importEmail <- function(){
 
-### mailR Method ####
+  yr <- year(Sys.Date())
 
-#install.packages("mailR")
-library(mailR)
-sender <- "your_email@gmail.com"
-recipients <- c("recipient_email@gmail.com")
-send.mail(from = sender,
-          to = recipients,
-          subject = "Test mail from Rstudio",
-          body = "Test email body",
-          smtp = list(host.name = "smtp.gmail.com", port = 465,
-                      user.name = "your_email@gmail.com",
-                      passwd = "your_email_password", ssl = TRUE),
-          authenticate = TRUE,
-          send = TRUE)
+  # Get program coordinator name
+  pc <- filter(assignments_db, YEAR == yr,
+               ROLE == "Program Coordinator") %>%
+    .$NAME
+  # Get program coordinator email
+  pc_email <- people_db$EMAIL[people_db$FULL_NAME == pc]
+
+  # Person submitting data name
+  from_name <- app_user
+  # Person submitting data email address
+  from_email <- people_db$EMAIL[people_db$FULL_NAME == from_name]
+  # Sending email acct
+  sender <- config[4]
+  # Recipients
+  distro <- c(from_email, people_db$EMAIL[41]) %>% unique() # Need to add ST here once app is live
+  # Msg subject
+  subj <- "New water quality data added to the BRCWQDM Database"
+  # Msg body
+  bod <- paste0(from_name, " has just imported new data to the BRCWQDM Database.")
+
+  # Send the message
+  send.mail(from = paste0("<", sender, ">"),
+            to =paste0(distro),
+            subject = subj,
+            body = bod,
+            smtp = list(host.name = "smtp.gmail.com", port = 465,
+                        user.name = config[4],
+                        passwd = config[5], ssl = TRUE),
+            authenticate = TRUE,
+            send = TRUE)
+
+} # End function
