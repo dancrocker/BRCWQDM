@@ -120,6 +120,7 @@ depth_choices <<- c("Gage (Staff Plate-feet)", "Ruler (inches)", "Not Recorded",
 source(paste0(wdir, "/funs/csv2df.R"))
 source(paste0(wdir, "/funs/editableDT_modFuns.R"))
 source(paste0(wdir, "/mods/mod_editDT.R"))
+source(paste0(wdir, "/funs/sendEmail.R"))
 
   app_user <<- config[2]
   rxdata <<- reactiveValues()
@@ -1227,9 +1228,9 @@ observeEvent(input$submit, {
                     message(paste("Submittal Process Complete"))
                   }
   )
-  ImportFailed <- any(class(out) == "error")
+  submitFailed <- any(class(out) == "error")
 
-  if (ImportFailed == TRUE){
+  if (submitFailed == TRUE){
     print(paste0("Submittal Failed at ", Sys.time() ,". There was an error: "))
     print(out)
   } else {
@@ -1237,7 +1238,7 @@ observeEvent(input$submit, {
     NewCount <- SubmitActionCount() + 1
     SubmitActionCount(NewCount)
     print(paste0("Submit Action Count was ", SubmitActionCount()))
-    # ImportEmail()
+    # submitEmail()
   }
 })
 
