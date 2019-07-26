@@ -15,7 +15,7 @@ library("magrittr")
 library("pool")
 library("dbplyr")
 
-GET_RDS <- function(){
+MAKE_DB_RDS <- function(){
 #Read config file
 config <- read.csv(paste0(app_dir,"BRC_config.csv"), header = TRUE, stringsAsFactors = FALSE)
 config <- as.character(config$config_value)
@@ -38,4 +38,10 @@ saveRDS(people_db, paste0(config[1],"Data/rdsFiles/people_db.rds"))
 saveRDS(parameters_db, paste0(config[1],"Data/rdsFiles/parameters_db.rds"))
 saveRDS(assignments_db, paste0(config[1],"Data/rdsFiles/assignments_db.rds"))
 
+# Upload the rds files to
+UPLOAD_RDS()
+
+return("Database RDS files successfully generated and uploaded to Dropbox")
 } # End function
+
+MAKE_DB_RDS()

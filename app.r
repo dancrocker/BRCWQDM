@@ -33,7 +33,8 @@ ipak <- function(pkg){
 
 packages <- c("shiny","shinyjs", "shinyFiles", "shinyTime", "shinyalert","shinydashboard","rmarkdown", "knitr", "tidyselect", "lubridate",
               "plotly", "leaflet", "RColorBrewer", "devtools", "data.table", "DT", "scales", "stringr", "shinythemes", "ggthemes",
-              "dplyr" , "httr", "tibble", "bsplus", "readxl", "miniUI", "rstudioapi", "rdrop2", "readr", "purrr", "htmlwidgets", "ggplot2")
+              "dplyr" , "httr", "tibble", "bsplus", "readxl", "miniUI", "rstudioapi", "rdrop2", "readr", "purrr", "htmlwidgets", "ggplot2",
+              "ppol", "readr")
 ipak(packages)
 
 # loadData()
@@ -573,13 +574,32 @@ ui <-tagList(
     ), # End Tab Panel
   ### MORE TAB ####
   navbarMenu("More",
-    tabPanel("ANALYSIS",
+    tabPanel("DATABASE",
         fluidRow(
            column(2, imageOutput("brc_logo4", height = 80), align = "left"),
            column(8,  h2("Data Analysis", align = "center")),
            column(2, imageOutput("zap_logo4", height = 80), align = "right")
-         )
-    ),
+         ),
+        fluidRow(
+          column(12,
+                 wellPanel(
+                   strong(h4("BRCWQDM DATABASE TABLES")),
+                   br()
+                 ),
+                 tabsetPanel(
+                   tabPanel("Numeric Data",
+                            dataTableOutput("table.db.data_n")
+                   ),
+                   tabPanel("Text Data",
+                            dataTableOutput("table.db.data_t")
+                   ),
+                   tabPanel("Comments",
+                            dataTableOutput("table.db.data_c")
+                   )
+                 )  # End Tab Panel
+          ) # End Col
+        ) # End Fluid row
+    ), # End Tab Panel
     ### REPORTS TAB ####
     tabPanel("REPORTS",
         fluidRow(

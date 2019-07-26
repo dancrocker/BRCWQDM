@@ -239,7 +239,6 @@ comment_csv <- str_replace(data_csv,"_SubmittedData_","_SubmittedComments_")
 data_fn <-  str_replace(data_csv, paste0(submittedDataDir,"/"), "")
 comment_fn <- str_replace(comment_csv, paste0(submittedDataDir,"/"), "")
 
-
 ### Make the db connection
 pool <- dbPool(drv = RSQLite::SQLite(), dbname = db)
 
@@ -250,22 +249,25 @@ poolWithTransaction(pool, function(conn) {
     dbWriteTable(pool, DBtransLog, value = dfs$trans_log, append = TRUE)
   })
 
-# Move submitted csv files to archived folder
-
-newDataNum <- dbReadTable(pool, DBdataNumTbl)
-newDataText <- dbReadTable(pool, DBdataTextTbl)
-newDataComment <- dbReadTable(pool, DBdataCommentTbl)
-
 # Regenerate staged RDS files after successful import... note - include a button in app to
 # regenerate rds files in the event of manual db updates
 
-# saveRDS(data_n, file = config[1])
-# saveRDS(newDataText, file = config[1])
+# Read updated tables from database
+newDataNum <- dbReadTable(pool, DBdataNumTbl)
+newDataText <- dbReadTable(pool, DBdataTextTbl)
+newDataComment <- dbReadTable(pool, DBdataCommentTbl)
+# Save them in RDS folder in project directory
+saveRDS(newDataNum, file = paste0(config[1],"Data/rdsFiles/data_num_db"))
+saveRDS(newDataText, file = paste0(config[1],"Data/rdsFiles/data_text_db"))
+saveRDS(newDataComment, file = paste0(config[1],"Data/rdsFiles/data_comment_db"))
 
-# Send email notice
+# Close the pool
 poolClose(pool)
 
-# Move the submitted data files into the Imported data folder
+# Push rds files up to dropbox
+UPLOAD_DB_DATA_RDS()
+
+# Move the submitted data csv files into the Imported data folder (local)
 # first create the dir if it doesn't exisit
 if (!dir.exists(paste0(dataDir, "Imported_Data/"))){
   dir.create(paste0(dataDir, "Imported_Data/"))
