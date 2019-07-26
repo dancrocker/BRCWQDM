@@ -7,8 +7,8 @@
 #  R version 3.4.4 (2018-03-15)  x86_64
 ##############################################################################.
 
-library(mailR)
-library(lubridate)
+# library(mailR)
+# library(lubridate)
 
 #set working directory
 # setwd(config[1])
