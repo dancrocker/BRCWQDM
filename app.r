@@ -34,7 +34,7 @@ ipak <- function(pkg){
 packages <- c("shiny","shinyjs", "shinyFiles", "shinyTime", "shinyalert","shinydashboard","rmarkdown", "knitr", "tidyselect", "lubridate",
               "plotly", "leaflet", "RColorBrewer", "devtools", "data.table", "DT", "scales", "stringr", "shinythemes", "ggthemes",
               "dplyr" , "httr", "tibble", "bsplus", "readxl", "miniUI", "rstudioapi", "rdrop2", "readr", "purrr", "htmlwidgets", "ggplot2",
-              "ppol", "readr")
+              "pool", "mailR")
 ipak(packages)
 
 # loadData()
