@@ -112,6 +112,27 @@ GET_SUBMITTED_DATA <- function(){
   }
 }
 
+GET_DATABASE_DATA <- function(){
+  ### List Drop Box files ####
+  dropb_root_dir <- config[12]
+  safe_dir_check <- purrr::safely(drop_dir, otherwise = FALSE, quiet = FALSE)
+  dir_listing <- safe_dir_check(path = paste0(dropb_root_dir, "/DB_Tables_RDS"), recursive = FALSE, dtoken = drop_auth(rdstoken = tokenpath))
+  files <- drop_dir(path = paste0(dropb_root_dir, "/DB_Tables_RDS"), recursive = FALSE, dtoken = drop_auth(rdstoken = tokenpath))
+  # files <- dir_listing$result["name"] %>% unlist()
+  files <- files$name
+  local_data_dir <- paste0(config[1],"Data/rdsFiles")
+  if(files %>% length() %>% as.numeric() > 0){
+          paths <- unlist(dir_listing$result["path_display"])
+
+          for (i in seq_along(paths)) {
+              drop_download(path = paths[[i]], local_path = local_data_dir, overwrite = TRUE,
+                 dtoken =  drop_auth(rdstoken = tokenpath))
+          } # End Loop
+  } else {
+    print("There were no database files found on Dropbox")
+  }
+}
+
 ARCHIVE_SUBMITTED_DATA <- function(data_file){
  ### List Drop Box files ####
 # data_file <- input$selectFile # in shiny app
@@ -173,20 +194,18 @@ UPLOAD_DB_DATA_RDS <- function(){
 dropb_root_dir <- config[12]
 drop_path <- "BRCWQDM/DB_Tables_RDS"
 
-  sitesRDS <- paste0(config[1],"Data/rdsFiles/sites_db.rds")
-  peopleRDS <- paste0(config[1],"Data/rdsFiles/people_db.rds")
-  parametersRDS <- paste0(config[1],"Data/rdsFiles/parameters_db.rds")
-  assignmentsRDS <- paste0(config[1],"Data/rdsFiles/assignments_db.rds")
+data_num_rds <-  paste0(config[1],"Data/rdsFiles/data_num_db")
+data_text_rds <- paste0(config[1],"Data/rdsFiles/data_text_db")
+data_comment_rds <-  paste0(config[1],"Data/rdsFiles/data_comment_db")
 
-  drop_upload(file = sitesRDS, path = drop_path, mode = "overwrite",
+  drop_upload(file = data_num_rds, path = drop_path, mode = "overwrite",
               verbose = TRUE, dtoken = drop_auth(rdstoken = tokenpath))
-  drop_upload(file = peopleRDS, path = drop_path, mode = "overwrite",
+  drop_upload(file = data_text_rds, path = drop_path, mode = "overwrite",
               verbose = TRUE, dtoken = drop_auth(rdstoken = tokenpath))
-  drop_upload(file = parametersRDS, path = drop_path, mode = "overwrite",
+  drop_upload(file = data_comment_rds, path = drop_path, mode = "overwrite",
               verbose = TRUE, dtoken = drop_auth(rdstoken = tokenpath))
-  drop_upload(file = assignmentsRDS, path = drop_path, mode = "overwrite",
-              verbose = TRUE, dtoken = drop_auth(rdstoken = tokenpath))
-return("RDS files successfully copied to Dropbox")
+
+return("Data RDS files successfully copied to Dropbox")
 }
 
 

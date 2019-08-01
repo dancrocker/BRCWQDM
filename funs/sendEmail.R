@@ -7,8 +7,8 @@
 #  R version 3.4.4 (2018-03-15)  x86_64
 ##############################################################################.
 
-# library(mailR)
-# library(lubridate)
+library(mailR)
+library(lubridate)
 
 #set working directory
 # setwd(config[1])
@@ -72,6 +72,11 @@ importEmail <- function(){
   pc <- filter(assignments_db, YEAR == yr,
                ROLE == "Program Coordinator") %>%
     .$NAME
+
+  fc <- filter(assignments_db, YEAR == yr,
+               ROLE == "Field Coordinator") %>%
+    .$NAME
+
   # Get program coordinator email
   pc_email <- people_db$EMAIL[people_db$FULL_NAME == pc]
 

@@ -249,6 +249,9 @@ poolWithTransaction(pool, function(conn) {
     dbWriteTable(pool, DBtransLog, value = dfs$trans_log, append = TRUE)
   })
 
+########################################################################.
+###                  SAVE RDS FILES LOCALLY                         ####
+########################################################################.
 # Regenerate staged RDS files after successful import... note - include a button in app to
 # regenerate rds files in the event of manual db updates
 
@@ -256,24 +259,26 @@ poolWithTransaction(pool, function(conn) {
 newDataNum <- dbReadTable(pool, DBdataNumTbl)
 newDataText <- dbReadTable(pool, DBdataTextTbl)
 newDataComment <- dbReadTable(pool, DBdataCommentTbl)
-# Save them in RDS folder in project directory
-saveRDS(newDataNum, file = paste0(config[1],"Data/rdsFiles/data_num_db"))
-saveRDS(newDataText, file = paste0(config[1],"Data/rdsFiles/data_text_db"))
-saveRDS(newDataComment, file = paste0(config[1],"Data/rdsFiles/data_comment_db"))
 
 # Close the pool
 poolClose(pool)
 
-# Push rds files up to dropbox
+# Save them in RDS folder in project directory (This is only so they can be uploaded to Dropbox)
+saveRDS(newDataNum, file = paste0(config[1],"Data/rdsFiles/data_num_db.rds"))
+saveRDS(newDataText, file = paste0(config[1],"Data/rdsFiles/data_text_db.rds"))
+saveRDS(newDataComment, file = paste0(config[1],"Data/rdsFiles/data_comment_db.rds"))
+
+### UPLOAD uRDS FILES TO DROPBOX ####
 UPLOAD_DB_DATA_RDS()
 
-# Move the submitted data csv files into the Imported data folder (local)
-# first create the dir if it doesn't exisit
+### ARCHIVE SUBMITTED CSV FILES ####
+
+### first create the dir if it doesn't exisit
 if (!dir.exists(paste0(dataDir, "Imported_Data/"))){
   dir.create(paste0(dataDir, "Imported_Data/"))
 }
 
-#### Move the submitted data and comment files to the archive folder ####
+### Move the submitted data and comment files to the archive folder ####
 if(file.exists(data_csv)){
 file.rename(data_csv, paste0(dataDir,"Imported_Data/",data_fn))
 }

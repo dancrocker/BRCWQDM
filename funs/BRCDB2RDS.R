@@ -37,11 +37,11 @@ saveRDS(sites_db, paste0(config[1],"Data/rdsFiles/sites_db.rds"))
 saveRDS(people_db, paste0(config[1],"Data/rdsFiles/people_db.rds"))
 saveRDS(parameters_db, paste0(config[1],"Data/rdsFiles/parameters_db.rds"))
 saveRDS(assignments_db, paste0(config[1],"Data/rdsFiles/assignments_db.rds"))
-
+source("funs/dropB.R")
 # Upload the rds files to
 UPLOAD_RDS()
 
 return("Database RDS files successfully generated and uploaded to Dropbox")
 } # End function
 
-MAKE_DB_RDS()
+# MAKE_DB_RDS()

@@ -34,7 +34,7 @@ ipak <- function(pkg){
 packages <- c("shiny","shinyjs", "shinyFiles", "shinyTime", "shinyalert","shinydashboard","rmarkdown", "knitr", "tidyselect", "lubridate",
               "plotly", "leaflet", "RColorBrewer", "devtools", "data.table", "DT", "scales", "stringr", "shinythemes", "ggthemes",
               "dplyr" , "httr", "tibble", "bsplus", "readxl", "miniUI", "rstudioapi", "rdrop2", "readr", "purrr", "htmlwidgets", "ggplot2",
-              "pool") #"mailR"
+              "pool", "mailR")
 ipak(packages)
 
 # loadData()
@@ -60,10 +60,14 @@ stagedCommentsRDS <<- paste0(rdsFiles,"stagedComments.rds")
 submittedDataRDS <<- paste0(rdsFiles,"submittedData.rds")
 submittedCommentsRDS <<- paste0(rdsFiles,"submittedComments.rds")
 
+### Database Data RDS - updated each time data is imported
+data_n_RDS <- paste0(rdsFiles,"data_num_db.rds")
+data_t_RDS <- paste0(rdsFiles,"data_text_db.rds")
+data_c_RDS <- paste0(rdsFiles,"data_comment_db.rds")
 ### RDS DATABASE FILES ####
-### These live on GH and can be updated periodically
-remote_data_dir <- paste0(getwd(),"/data/")
 
+remote_data_dir <- paste0(getwd(),"/data/")
+### Periodic updates - supporting tables
 sitesRDS <- paste0(remote_data_dir,"sites_db.rds")
 peopleRDS <- paste0(remote_data_dir,"people_db.rds")
 parametersRDS <- paste0(remote_data_dir,"parameters_db.rds")
@@ -97,9 +101,9 @@ comm_col_names <<- comment_fields$shiny_input
 ### These lists are static
 sites_db <- sites_db %>%
   arrange(WATERBODY_NAME)
-sites <- sites_db$BRC_CODE
+sites <<- sites_db$BRC_CODE
 names(sites) <- paste0(sites_db$WATERBODY_NAME, " - ", sites_db$SITE_NAME, " (", sites_db$BRC_CODE, ")")
-
+sites <<- sites
 samplers <<-  assignments_db %>%
   filter(ROLE == "Field", YEAR ==  year(Sys.Date())) %>%
   .$NAME
@@ -122,6 +126,8 @@ source(paste0(wdir, "/funs/csv2df.R"))
 source(paste0(wdir, "/funs/editableDT_modFuns.R"))
 source(paste0(wdir, "/mods/mod_editDT.R"))
 source(paste0(wdir, "/funs/sendEmail.R"))
+source(paste0(wdir, "/mods/mod_add_comment.R"))
+source(paste0(wdir, "/mods/mod_map.R"))
 
   app_user <<- config[2]
   rxdata <<- reactiveValues()
@@ -233,8 +239,7 @@ ui <-tagList(
                         selectInput("site", labelMandatory("Choose Sample Location:"), c("",sites), selected = "")
                       ),
                       column(width = 6,
-                             selectInput("sampler", labelMandatory("Choose Sampler(s):"), multiple = T, choices = c("",samplers), selected = ""),
-                             verbatimTextOutput("samplers_rx")
+                             selectInput("sampler", labelMandatory("Choose Sampler(s):"), multiple = T, choices = c("",samplers), selected = "")
                              )
                     ),
                     fluidRow(
@@ -263,7 +268,8 @@ ui <-tagList(
                           numericInput("temp_air","Ending Air Temperature (C) (P03):",
                                        value = NULL, min = -20, max = 40, step = 0.5),
                           numericInput("temp_wat", "Ending Water Temperature (C) (P04):",
-                                       value = NULL, min = 0, max = 30, step = 0.5)
+                                       value = NULL, min = 0, max = 30, step = 0.5),
+                          ADD_COMMENT_UI("add_comment_physical")
                         ),
                         column(width = 3,
                           checkboxGroupInput("wat_appear", "Water Appearance (P05):", choices = wat_appear_choices),
@@ -296,13 +302,17 @@ ui <-tagList(
                     fluidRow(
                       column(width = 4,
                         radioButtons("depth_type", "Type of depth measurement (D01):",
-                                     choiceNames = depth_choices, choiceValues = depth_choices, selected = "No Datum")),
+                                     choiceNames = depth_choices, choiceValues = depth_choices, selected = "No Datum")
+                      ),
                       column(width = 4,
                         uiOutput("depth")
-                      )
-                    )
-                  ) #End col
-                )) # End Well Panel and FR
+                      ),
+                      column(width = 4,
+                              ADD_COMMENT_UI("add_comment_depth")
+                      ) # End Col
+                  )
+                  ))#End FR
+                ) # End Well Panel
         ) %>%
         bs_set_opts(panel_type = "primary", use_heading_link = TRUE) %>%
         bs_append(title = "CHEMICAL PARAMETERS", content =
@@ -311,7 +321,8 @@ ui <-tagList(
                         fluidRow(
                           column(width = 3,
                             numericInput("do","Dissolved Oxyen (mg/L) (C01):", value = NULL, min = 0, max = 25),
-                            numericInput("o2","Oxygen Saturation (%) (C02):", value = NULL, min = 0, max = 100, step = 1)
+                            numericInput("o2","Oxygen Saturation (%) (C02):", value = NULL, min = 0, max = 100, step = 1),
+                            ADD_COMMENT_UI("add_comment_chemical")
                             ),
                           column(width = 3,
                              numericInput("no3","Nitrate (mg/L)(C03.A):", value = NULL, min = 0, max = 20),
@@ -574,6 +585,7 @@ ui <-tagList(
     ), # End Tab Panel
   ### MORE TAB ####
   navbarMenu("More",
+    ### DATABASE TAB ####
     tabPanel("DATABASE",
         fluidRow(
            column(2, imageOutput("brc_logo4", height = 80), align = "left"),
@@ -588,24 +600,37 @@ ui <-tagList(
                  ),
                  tabsetPanel(
                    tabPanel("Numeric Data",
-                            dataTableOutput("table.db.data_n")
+                            dataTableOutput("data_num_db")
                    ),
                    tabPanel("Text Data",
-                            dataTableOutput("table.db.data_t")
+                            dataTableOutput("data_text_db")
                    ),
                    tabPanel("Comments",
-                            dataTableOutput("table.db.data_c")
+                            dataTableOutput("data_comment_db")
                    )
                  )  # End Tab Panel
           ) # End Col
         ) # End Fluid row
     ), # End Tab Panel
+    ### MAP TAB ####
+    tabPanel("MAP",
+        fluidRow(
+           column(2, imageOutput("brc_logo5", height = 80), align = "left"),
+           column(8,  h2("BRC Water Quality Sampling Sites", align = "center")),
+           column(2, imageOutput("zap_logo5", height = 80), align = "right")
+         ),
+        fluidRow(
+          column(12,
+                 BRCMAP_UI("brc_map")
+          )
+        )
+    ),
     ### REPORTS TAB ####
     tabPanel("REPORTS",
         fluidRow(
-           column(2, imageOutput("brc_logo5", height = 80), align = "left"),
+           column(2, imageOutput("brc_logo6", height = 80), align = "left"),
            column(8,  h2("Reports", align = "center")),
-           column(2, imageOutput("zap_logo5", height = 80), align = "right")
+           column(2, imageOutput("zap_logo6", height = 80), align = "right")
          )
     ),
     ### INSTRUCTIONS TAB ####
@@ -627,6 +652,7 @@ ui <-tagList(
 server <- function(input, output, session) {
 
   GET_SUBMITTED_DATA()
+  GET_DATABASE_DATA()
 
 # TO DO   ####
   # loadSubmitted <- function(){
@@ -676,6 +702,7 @@ server <- function(input, output, session) {
  #  })
  # comment_file <- str_replace(dataFiles,"Data","Comments")
 
+
   fileChoices <- reactive({
       # if(submittedFileNum > 0){
         dataFiles <- list.files(submittedDataDir, pattern = "*Data*", full.names = TRUE)
@@ -706,10 +733,18 @@ server <- function(input, output, session) {
     # Update Select Input when a file is imported (actually when the import button is pressed (successful or not))
     observeEvent(input$import, {
       updateSelectInput(session = session,
-                        inputId = "file",
+                        inputId = "selectFile",
                         label = "Choose submitted data to process and import:",
-                        choices = fileChoices(),
-                        selected = input$selectFile)
+                        choices = fileChoices()
+                      )
+    })
+
+     observeEvent(input$submit, {
+      updateSelectInput(session = session,
+                        inputId = "selectFile",
+                        label = "Choose submitted data to process and import:",
+                        choices = fileChoices()
+                        )
     })
 
   ### interactive dataset
@@ -785,7 +820,7 @@ observeEvent(input$wea48, {
 })
 observeEvent(input$wea48, {
   if("Not Recorded" %in% input$wea48){
-      updateSelectInput(session, "wea48",
+      updateCheckboxGroupInput(session, "wea48",
       selected = "Not Recorded"
     )
   }
@@ -801,7 +836,7 @@ observeEvent(input$wea_now, {
 })
 observeEvent(input$wea_now, {
   if("Not Recorded" %in% input$wea_now){
-      updateSelectInput(session, "wea_now",
+     updateCheckboxGroupInput(session, "wea_now",
       selected = "Not Recorded"
     )
   }
@@ -818,7 +853,7 @@ observeEvent(input$wat_appear, {
 })
 observeEvent(input$wat_appear, {
   if("Not Recorded" %in% input$wat_appear){
-      updateSelectInput(session, "wat_appear",
+      updateCheckboxGroupInput(session, "wat_appear",
       selected = "Not Recorded"
     )
   }
@@ -835,7 +870,7 @@ observeEvent(input$erosion, {
 })
 observeEvent(input$erosion, {
   if("Not Recorded" %in% input$erosion){
-      updateSelectInput(session, "erosion",
+     updateCheckboxGroupInput(session, "erosion",
       selected = "Not Recorded"
     )
   }
@@ -852,7 +887,7 @@ observeEvent(input$wat_odor, {
 })
 observeEvent(input$wat_odor, {
   if("Not Recorded" %in% input$wat_odor){
-      updateSelectInput(session, "wat_odor",
+     updateCheckboxGroupInput(session, "wat_odor",
       selected = "Not Recorded"
     )
   }
@@ -860,7 +895,7 @@ observeEvent(input$wat_odor, {
 ###
 observeEvent(input$wat_clarity, {
   if("Not Recorded" %in% input$wat_clarity){
-      updateSelectInput(session, "wat_clarity",
+      updateCheckboxGroupInput(session, "wat_clarity",
       selected = "Not Recorded"
     )
   }
@@ -877,6 +912,10 @@ observe({
 
   # enable/disable the enter button
   shinyjs::toggleState(id = "enter", condition = mandatoryFilled)
+  # shinyjs::toggleState(id = "add_comment_depth", condition = mandatoryFilled)
+  # shinyjs::toggleState(id = "add_comment_physical", condition = mandatoryFilled)
+  # shinyjs::toggleState(id = "add_comment_chemical", condition = mandatoryFilled)
+
 })
 ### STAGED DATA CREATION ####
 # stagedData <- eventReactive(input$enter,{
@@ -913,10 +952,14 @@ wat_odorRX <- reactive({
   paste(input$wat_odor, collapse = ";") %>% trimws()
   })
 
+depth_typeRX <- reactive({
+  req(input$depth_type)
+  input$depth_type
+  })
 
 output$depth <- renderUI({
-  req(input$depth_type %in% c("Ruler (inches)", "Gage (Staff Plate-feet)"))
-  switch(input$depth_type,
+  req(depth_typeRX() %in% c("Ruler (inches)", "Gage (Staff Plate-feet)"))
+  switch(depth_typeRX(),
          "Gage (Staff Plate-feet)" = numericInput("depth_meas","Water Depth (feet) (D02):",
                                      value = NULL, min = 0, max = , step = 0.01),
          "Ruler (inches)" = numericInput("depth_meas","Ruler Water Depth (Decimal Inches) (D02):",
@@ -1258,32 +1301,27 @@ observeEvent(input$submit, {
     NewCount <- SubmitActionCount() + 1
     SubmitActionCount(NewCount)
     print(paste0("Submit Action Count was ", SubmitActionCount()))
-    # submitEmail()
+    submitEmail()
+    # updateSelectInput()
   }
 })
 
 
 ### Generalize this to work with both submit and import
 ### Function to send ImportEmail
-SubmitEmail <- function(to,subj,msg) {
+SubmitEmail <- function() {
   out <- tryCatch(
-    message("Trying to send email"),
-    sendmail(from = paste0("<",useremail,">"),
-             to = distro1(),
-             subject = paste0("New monitoring data have been submitted to the BRC Program Coordinator"),
-             msg = paste0(app_user," has submitted ", nrow(submittedData()), " new record(s) for review and import to the BRCWQDM database."),
-             control=list(smtpServer=MS))
-    ,
+   submitEmail(),
     error=function(cond) {
-      message(paste("User cannot connect to SMTP Server, cannot send email", cond))
+      message(paste("There was an error with the submit email function, cannot send email", cond))
       return(NA)
     },
     warning=function(cond) {
-      message(paste("Send mail function caused a warning, but was completed successfully", cond))
+      message(paste("Submit mail function caused a warning, but was completed successfully", cond))
       return(NULL)
     },
     finally={
-      message(paste("Submittal email was sent successfully"))
+      message(paste("Submit email was sent successfully"))
     }
   )
   return(out)
@@ -1375,6 +1413,27 @@ observeEvent(input$submit, {
     df_data_trans_log()
   })
 
+  ### DATABASE PAGE ####
+data_n_db <- readRDS(data_n_RDS)
+data_t_db <- readRDS(data_t_RDS)
+data_c_db <- readRDS(data_c_RDS)
+
+  output$data_num_db <- renderDataTable({
+    req(try(data_n_db))
+    data_n_db
+  })
+
+    output$data_text_db <- renderDataTable({
+    req(try(data_t_db))
+    data_t_db
+  })
+
+    output$data_comment_db <- renderDataTable({
+    req(try(data_c_db))
+    data_c_db
+  })
+
+
   # Text for Process Data Error or Successful
   process.status2 <- reactive({
     if(input$selectFile != file.processed2()){
@@ -1435,27 +1494,21 @@ observeEvent(input$submit, {
       ImportActionCount(NewCount)
       print(paste0("Import Action Count was ", ImportActionCount()))
       ARCHIVE_SUBMITTED_DATA(data_file = input$selectFile)
-      # ImportEmail()
+      ImportEmail()
     }
   })
 
   ### Function to send ImportEmail
   ImportEmail <- function() {
     out <- tryCatch(
-      message("Trying to send email"),
-      sendmail(from = paste0("<",useremail,">"),
-               to = distro1(),
-               subject = paste0("New Data has been Imported to a ", userlocation," Database"),
-               msg = paste0(username," has imported ", nrow(df.wq()), " new record(s) for the dataset: ",
-                            input$datatype, " | Filename = ", input$file),
-               control=list(smtpServer=MS))
+      importEmail()
       ,
       error=function(cond) {
-        message(paste("User cannot connect to SMTP Server, cannot send email", cond))
+        message(paste("There was an error with the Import email function, cannot send email", cond))
         return(NA)
       },
       warning=function(cond) {
-        message(paste("Send mail function caused a warning, but was completed successfully", cond))
+        message(paste("Import email function caused a warning, but was completed successfully", cond))
         return(NULL)
       },
       finally={
@@ -1496,7 +1549,23 @@ observeEvent(input$submit, {
       "3. More to come...working on this next")
     })
 
+callModule(ADD_COMMENT, "add_comment_physical",
+           input_section = "physical",
+           site = input$site,
+           comment_date = input$date,
+           sampler = samplersRX)
+callModule(ADD_COMMENT, "add_comment_depth",
+           input_section = "depth",
+           site = input$site,
+           comment_date = input$date,
+           sampler = samplersRX)
+callModule(ADD_COMMENT, "add_comment_chemical",
+           input_section = "chemical",
+           site = input$site,
+           comment_date = input$date,
+           sampler = samplersRX)
 
+callModule(BRCMAP, "brc_map", sitelist = sites_db)
 
 ### IMAGES ####
 
@@ -1511,7 +1580,8 @@ observeEvent(input$submit, {
   output$zap_logo4 <- renderImage({list(src = "www/zap_logo.gif", width= "76", height= "59")}, deleteFile = FALSE)
   output$brc_logo5 <- renderImage({list(src = "www/BRC_logo_River.jpg", width= "160", height= "80")}, deleteFile = FALSE)
   output$zap_logo5 <- renderImage({list(src = "www/zap_logo.gif", width= "76", height= "59")}, deleteFile = FALSE)
-
+  output$brc_logo <- renderImage({list(src = "www/BRC_logo_River.jpg", width= "160", height= "80")}, deleteFile = FALSE)
+  output$zap_logo6 <- renderImage({list(src = "www/zap_logo.gif", width= "76", height= "59")}, deleteFile = FALSE)
 ### SESSION END ####
 # Code to stop app when browser session window closes
 session$onSessionEnded(function() {
