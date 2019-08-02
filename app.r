@@ -1580,7 +1580,7 @@ callModule(BRCMAP, "brc_map", sitelist = sites_db)
   output$zap_logo4 <- renderImage({list(src = "www/zap_logo.gif", width= "76", height= "59")}, deleteFile = FALSE)
   output$brc_logo5 <- renderImage({list(src = "www/BRC_logo_River.jpg", width= "160", height= "80")}, deleteFile = FALSE)
   output$zap_logo5 <- renderImage({list(src = "www/zap_logo.gif", width= "76", height= "59")}, deleteFile = FALSE)
-  output$brc_logo <- renderImage({list(src = "www/BRC_logo_River.jpg", width= "160", height= "80")}, deleteFile = FALSE)
+  output$brc_logo6 <- renderImage({list(src = "www/BRC_logo_River.jpg", width= "160", height= "80")}, deleteFile = FALSE)
   output$zap_logo6 <- renderImage({list(src = "www/zap_logo.gif", width= "76", height= "59")}, deleteFile = FALSE)
 ### SESSION END ####
 # Code to stop app when browser session window closes
