@@ -86,8 +86,8 @@ last_update <- Sys.Date()
 ### Date and Time and any other QC'd values need to come from reactive elements
 # wdir
 table_fields <<- readr::read_csv(paste0(wdir,"/data/table_fields.csv"))
-data_fields <<- table_fields[1:30,]
-comment_fields <<- table_fields[31:35,]
+data_fields <<- table_fields[1:31,]
+comment_fields <<- table_fields[32:36,]
 
 ### DATA FIELDS ####
 fieldsASIS <<- data_fields$shiny_input[data_fields$as_is == "yes"]
@@ -240,14 +240,17 @@ ui <-tagList(
                       ),
                       column(width = 6,
                              selectInput("sampler", labelMandatory("Choose Sampler(s):"), multiple = T, choices = c("",samplers), selected = "")
-                             )
+                      )
                     ),
                     fluidRow(
                       column(width = 4,
-                             dateInput("date", labelMandatory("Sample Date:"))
+                        dateInput("date", labelMandatory("Sample Date:"))
                       ),
-                      column(width = 4,
-                             timeInput("time", labelMandatory("Sample Starting Time (24-hr format):"), seconds = FALSE)
+                      column(width = 3,
+                        timeInput("time", labelMandatory("Sample Starting Time (24-hr format):"), seconds = FALSE)
+                      ),
+                      column(width = 2,
+                        numericInput("lab_num", "Lab Record#:", value = NULL, min = 1, max =50, step = 1)
                       )
                     )
                   ) #End col
@@ -635,6 +638,11 @@ ui <-tagList(
     ),
     ### INSTRUCTIONS TAB ####
     tabPanel("INSTRUCTIONS",
+      fluidRow(
+           column(2, imageOutput("brc_logo7", height = 80), align = "left"),
+           column(8,  h2("BRC Water Quality Sampling Sites", align = "center")),
+           column(2, imageOutput("zap_logo7", height = 80), align = "right")
+         ),
       fluidRow(column(12,
                   h2("Instructions and Data Processing Workflow", align = "center"),
                   verbatimTextOutput("instructions")
@@ -718,7 +726,7 @@ server <- function(input, output, session) {
     output$selectFile_ui <- renderUI({
       # req(current_rating())
       selectInput("selectFile", label = "Choose submitted data to process and import:",
-                  choices = c("", fileChoices()), selected = "" , multiple = FALSE)
+                  choices = c("", fileChoices()), selected = "" , multiple = FALSE, width = "400px")
     })
 
     # Update Select Input when a file saved imported (actually when the import button is pressed (successful or not))
@@ -1582,6 +1590,9 @@ callModule(BRCMAP, "brc_map", sitelist = sites_db)
   output$zap_logo5 <- renderImage({list(src = "www/zap_logo.gif", width= "76", height= "59")}, deleteFile = FALSE)
   output$brc_logo6 <- renderImage({list(src = "www/BRC_logo_River.jpg", width= "160", height= "80")}, deleteFile = FALSE)
   output$zap_logo6 <- renderImage({list(src = "www/zap_logo.gif", width= "76", height= "59")}, deleteFile = FALSE)
+  output$brc_logo7 <- renderImage({list(src = "www/BRC_logo_River.jpg", width= "160", height= "80")}, deleteFile = FALSE)
+  output$zap_logo7 <- renderImage({list(src = "www/zap_logo.gif", width= "76", height= "59")}, deleteFile = FALSE)
+
 ### SESSION END ####
 # Code to stop app when browser session window closes
 session$onSessionEnded(function() {

@@ -1,4 +1,5 @@
 "shiny_input","dt_cols","col_type","col_input","input_mult","editable","pcode","take_comments","choices","input_width","as_is","input_section"
+"lab_num","Lab Sample No.","numeric","numericInput",,"yes",,"no",,120,"yes",
 "SampleDateTime","Date-Time","text","textInput",,"yes",,"no",,170,"no","event_main"
 "site","Site","factor","selectInput","no","yes",,"no","sites",350,"yes","event_main"
 "sampler","Samplers","factor","selectInput","yes","yes",,"no","samplers",200,"yes","event_main"

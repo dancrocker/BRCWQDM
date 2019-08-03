@@ -21,14 +21,14 @@ safe_dir_check <- purrr::safely(drop_dir, otherwise = FALSE, quiet = TRUE)
 dir_listing <- safe_dir_check(path = paste0(dropb_root_dir, "/AppFiles"), recursive = FALSE, dtoken = drop_auth(rdstoken = tokenpath))
 # dir_listing <- safe_dir_check(path = paste0(dropb_root_dir, "/Submitted_Data_Staging"), recursive = FALSE, dtoken = drop_auth(rdstoken = tokenpath))
 files <- dir_listing$result
-files$path_display
+# files$path_display
 #
 local_data_dir <- paste0(config[1],"Data/rdsFiles")
 
 # ### Save all database RDS files to Local Data Cache ####
-# lapply(files$path_display, drop_download, local_path = local_data_dir, overwrite = TRUE,
-#          dtoken =  drop_auth(rdstoken = tokenpath))
-files$path_display
+lapply(files$path_display, drop_download, local_path = local_data_dir, overwrite = TRUE,
+         dtoken =  drop_auth(rdstoken = tokenpath))
+# files$path_display
 ### Load rds files ####
 ### Make a list of all the .rds files using full path
 rds_files <- list.files(local_data_dir, full.names = TRUE , pattern = "\\.rds$")
