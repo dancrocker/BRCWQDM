@@ -49,8 +49,11 @@ onStop(function() {
   poolClose(pool)
 })
 
-# dbListTables(pool)
+### GET LATEST DATA FROM DATABASE ####
 
+#### NOTE - might change to local RDS files instead? ####
+
+# dbListTables(pool)
 # sites_db <- dbReadTable(pool, "sites")
 # people_db <- dbReadTable(pool, "people")
 parameters_db <- dbReadTable(pool, "parameters")

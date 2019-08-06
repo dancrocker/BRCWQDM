@@ -662,6 +662,16 @@ server <- function(input, output, session) {
   GET_SUBMITTED_DATA()
   GET_DATABASE_DATA()
 
+user_list <<- assignments_db %>%
+    filter(YEAR == year(Sys.Date()), ROLE %in% c("Field Coordinator","Program Coordinator", "App Developer")) %>%
+  .$NAME
+
+if(app_user %in% user_list){
+  print(paste0("App user '", app_user, "' verified!"))
+} else {
+  stop("App user '", app_user,"' cannot be verified - please contact the program coordinator and ensure your configuration file user name matches your role in the BRCWQDM database. ")
+}
+
 # TO DO   ####
   # loadSubmitted <- function(){
     # Download submitted data from dropbox
@@ -1552,9 +1562,48 @@ data_c_db <- readRDS(data_c_RDS)
 
 ### INSTRUCTION ####
     output$instructions <- renderText({
-      paste0("1. Starting on the DATA ENTRY page enter field and lab results within each data section.\n",
-      "2. You will not be allowed to enter the data record until the required fields are entered (red asterisk).\n",
-      "3. More to come...working on this next")
+      paste0(
+      "APPLICATION OVERVIEW:\n",
+        "      .\n",
+        "      .\n",
+        "      .\n",
+        "      .\n",
+      "DATA ENTRY:\n",
+      "1. Starting on the DATA ENTRY page enter field and lab results within each data section.\n",
+      "2. You will not be allowed to enter the complete data record until the required fields are entered (red asterisk).\n",
+      "3. Multiple selections are allowed for some fields.\n",
+      "4. If 'Not Recorded' is selected it will clear and prevent any other selections for that field. You must toggle off 'Not Recorded'\n",
+      "if you want to change your selection.\n",
+      "5. If 'Other' is selected you will be prompted to provided a comment for that parameter. This is required for all choices of 'Other'.\n",
+
+      "      .\n",
+        "      .\n",
+      "ADDING COMMENTS:\n",
+        "      .\n",
+        "      .\n",
+        "      .\n",
+        "      .\n",
+      "SUBMITTING ENTERED RECORDS:\n",
+        "      .\n",
+        "      .\n",
+        "      .\n",
+        "      .\n",
+            "SUBMITTING ENTERED RECORDS:\n",
+        "      .\n",
+        "      .\n",
+        "      .\n",
+        "      .\n",
+            "SUBMITTING ENTERED RECORDS:\n",
+        "      .\n",
+        "      .\n",
+        "      .\n",
+        "      .\n",
+            "SUBMITTING ENTERED RECORDS:\n",
+        "      .\n",
+        "      .\n",
+        "      .\n",
+        "      .\n",
+      "3. ")
     })
 
 callModule(ADD_COMMENT, "add_comment_physical",

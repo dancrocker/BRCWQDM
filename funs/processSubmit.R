@@ -17,18 +17,26 @@
 PROCESS1 <- function(){
 ### Read the staged data and comments from the csv
 df_data <- read.table(stagedDataCSV, stringsAsFactors = FALSE, header = T,  sep = " " , na.strings = "NA")
+
+t_fields <- table_fields %>%
+ filter(row_number() <= 31)
+
 # Which columns have numeric data?
-num_cols <- table_fields$shiny_input[table_fields$col_type == "numeric"]
+num_cols <- t_fields$shiny_input[t_fields$col_type == "numeric"]
+text_cols <- t_fields$shiny_input[t_fields$col_type %in% c("text","factor")]
+text_cols <- text_cols[text_cols != "photos"]
+
 ### Convert empty numeric records to  -999999
 df_data <- df_data %>% mutate_at(num_cols, ~replace(., is.na(.), -999999))
+df_data <- df_data %>% mutate_at(text_cols, ~str_replace(., "FALSE",  "Not Recorded"))
 
 ### Convert all blanks, NA, and NULLs to "Not Recorded"
+
 df_data[is.na(df_data)] <- "Not Recorded"
 df_data[df_data == ""] <- "Not Recorded"
 df_data[df_data == "NULL"] <- "Not Recorded"
 
 ### Perform any other checks on data here:
-
 
 ### Overwrite the csv with the updates:
 write.table(x = df_data, file = stagedDataCSV,
