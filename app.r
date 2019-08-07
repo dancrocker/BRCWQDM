@@ -32,7 +32,7 @@ ipak <- function(pkg){
 }
 
 packages <- c("shiny","shinyjs", "shinyFiles", "shinyTime", "shinyalert","shinydashboard","rmarkdown", "knitr", "tidyselect", "lubridate",
-              "plotly", "leaflet", "RColorBrewer", "devtools", "data.table", "DT", "scales", "stringr", "shinythemes", "ggthemes",
+              "plotly", "leaflet", "RColorBrewer", "devtools", "data.table", "DT", "scales", "stringr", "shinythemes", "ggthemes", "tidyr",
               "dplyr" , "httr", "tibble", "bsplus", "readxl", "miniUI", "rstudioapi", "rdrop2", "readr", "purrr", "htmlwidgets", "ggplot2",
               "pool", "mailR")
 ipak(packages)
@@ -288,7 +288,7 @@ ui <-tagList(
                           textAreaInput("comm_P08", labelMandatory("Comments for Water Odor (P08):"), placeholder = "Describe 'other'")
                         ),
                         column(width = 3,
-                          radioButtons("wat_nav", "Nuisance Aquatic Vegetation (NAV) (P09.A):", choices = wat_NAV_choices),
+                          radioButtons("wat_nav", "Nuisance Aquatic Vegetation (NAV) (P09.A):", choices = wat_NAV_choices, selected = character(0)),
                           textAreaInput("wat_nav_descr", "NAV Comments (P09.B):"),
                           checkboxGroupInput("wat_clarity", "Water Clarity (P10)", choices = wat_clarity_choices),
                           numericInput("lab_turb","Lab Turbidity (NTU) (P11.A):", value = NULL, min = 0, max = 2500, step = 0.5),
@@ -592,7 +592,7 @@ ui <-tagList(
     tabPanel("DATABASE",
         fluidRow(
            column(2, imageOutput("brc_logo4", height = 80), align = "left"),
-           column(8,  h2("Data Analysis", align = "center")),
+           column(8,  h2("BRC Water Quality Database", align = "center")),
            column(2, imageOutput("zap_logo4", height = 80), align = "right")
          ),
         fluidRow(
