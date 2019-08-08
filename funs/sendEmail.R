@@ -65,29 +65,24 @@ submitEmail <- function(){
 ### distro needs to be db admin, program coordinator, and 3 field coordinator
 
 importEmail <- function(){
-
   yr <- year(Sys.Date())
 
   # Get program coordinator name
   pc <- filter(assignments_db, YEAR == yr,
                ROLE == "Program Coordinator") %>%
     .$NAME
-
-  fc <- filter(assignments_db, YEAR == yr,
-               ROLE == "Field Coordinator") %>%
-    .$NAME
-
+  # Get field coordinator names
+  fc_email <- people_db$EMAIL[people_db$FULL_NAME %in% fc]
   # Get program coordinator email
   pc_email <- people_db$EMAIL[people_db$FULL_NAME == pc]
-
-  # Person submitting data name
+  # Person importing data name
   from_name <- app_user
   # Person submitting data email address
   from_email <- people_db$EMAIL[people_db$FULL_NAME == from_name]
   # Sending email acct
   sender <- config[4]
   # Recipients
-  distro <- c(from_email, people_db$EMAIL[41]) %>% unique() # Need to add ST here once app is live
+  distro <- c(from_email, pc_email, fc_email) %>% unique() # Need to add ST here once app is live
   # Msg subject
   subj <- "New water quality data added to the BRCWQDM Database"
   # Msg body

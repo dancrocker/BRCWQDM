@@ -72,17 +72,19 @@ poolClose(pool)
 
 PROCESS2 <- function(data_file){
 # data_file <- input$selectFile # in shiny app
-# data_file <- "Mid-Reach_SubmittedData_2019-07-17.csv"
+# data_file <- "Mid-Reach_SubmittedData_2019-08-07.csv"
 data_csv <- data_file
 comment_csv <- str_replace(data_csv,"_SubmittedData_","_SubmittedComments_")
 # print(data_csv)
 # print(comment_csv)
-
-data_fn <-  str_replace(data_csv, paste0(submittedDataDir,"/"), "")
-comment_fn <- str_replace(comment_csv, paste0(submittedDataDir,"/"), "")
-
+#
+# data_fn <-  str_replace(data_csv, paste0(submittedDataDir,"/"), "")
+# comment_fn <- str_replace(comment_csv, paste0(submittedDataDir,"/"), "")
+# submittedDataDir
 # print(data_fn)
 # print(comment_fn)
+# data_path <- paste0(submittedDataDir, "/", data_csv)
+# comment_path <- paste0(submittedDataDir, "/",  comment_csv)
 
 df_data <- read.table(data_csv, stringsAsFactors = FALSE, header = T,  sep = " " , na.strings = "NA")
 df_comments <- read.table(comment_csv, stringsAsFactors = FALSE, header = T,  sep = " " , na.strings = "NA")
@@ -125,6 +127,7 @@ if(is.infinite(lastSEID)){
 ### Transform staged data into tidy format
 data <- df_data %>%
   arrange(SampleDateTime) %>%
+  select(-lab_num) %>%
   mutate("SEID" = lastSEID + row_number()) %>%
   gather(key = "PARAMETER", value = "RESULT", 4:ncol(.)-1) %>%
   arrange(SampleDateTime, SEID, PARAMETER) %>%
