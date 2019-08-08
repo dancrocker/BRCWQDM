@@ -180,8 +180,7 @@ if(files$name %>% length() %>% as.numeric() > 0){ # There are db data rds files 
 
 ARCHIVE_SUBMITTED_DATA <- function(data_file){
  ### List Drop Box files ####
-# data_file <- input$selectFile # in shiny app
-# data_file <- "Mid-Reach_SubmittedData_2019-07-11.csv"
+data_file <- input$selectFile # in shiny app
 comment_file <- str_replace(data_file,"_SubmittedData_","_SubmittedComments_")
 
 dropb_root_dir <- config[12]
@@ -207,6 +206,9 @@ print(paste0("The comment csv file '", comment_file, "'  was moved to the Import
 }
 
 } # end function
+
+# Run function manually:
+# ARCHIVE_SUBMITTED_DATA(data_file = "Mid-Reach_SubmittedData_2019-08-07.csv")
 
 UPLOAD_RDS <- function(){
 ### This function will upload the database RDS files to Dropbox
