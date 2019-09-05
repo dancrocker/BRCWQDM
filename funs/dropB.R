@@ -2,7 +2,10 @@
 
 library(rdrop2)
 library(tibble)
+
+#EE This setting is very important - if not set then random connection errors occur
 httr::set_config(httr::config(http_version = 0))
+
 ### Get Token - only need once, then saved locally -DONE
 # drop_auth()
 ### Save the Token to an object - DONE
@@ -20,51 +23,53 @@ LOAD_DB_RDS <- function(){
 dropb_root_dir <- config[12]
 safe_dir_check <- purrr::safely(drop_dir, otherwise = FALSE, quiet = TRUE)
 dir_listing <- safe_dir_check(path = paste0(dropb_root_dir, "/AppFiles"), recursive = FALSE, dtoken = drop_auth(rdstoken = tokenpath))
+  if (FALSE %in% dir_listing$result) {
+  print("Dropbox connection failed trying to get data RDS files. Check internet connection and verify database RDS files have been uploaded to the correct location on dropbox")
+} else {
+  files <- dir_listing$result
+  local_data_dir <- paste0(config[1],"Data/rdsFiles")
+  # # Get info from dropbox RDS files:
+  rds_info_path <- paste0(local_data_dir,"/rds_info.rds")
+  dbox_rds_info <- tibble(`rds_file` = files$name, `timestamp` = files$server_modified)
+  paths <- files$path_display
 
-# dir_listing <- safe_dir_check(path = paste0(dropb_root_dir, "/Submitted_Data_Staging"), recursive = FALSE, dtoken = drop_auth(rdstoken = tokenpath))
-files <- dir_listing$result
-local_data_dir <- paste0(config[1],"Data/rdsFiles")
-# # Get info from dropbox RDS files:
-rds_info_path <- paste0(local_data_dir,"/rds_info.rds")
-dbox_rds_info <- tibble(`rds_file` = files$name, `timestamp` = files$server_modified)
-paths <- files$path_display
-
-### Save all updated database RDS files to Local Data Cache ####
-if(file.exists(rds_info_path)){ # File exists - compare each file - datestamp to the dropbox version, if drop
-  # box is newer - download and overwrite, if not, then skip
-  local_rds_info <- readRDS(rds_info_path)
-   for (i in seq_along(paths)) {
-     fn <- files$name[i]
-     ts <- files$server_modified[i]
-     if(local_rds_info$timestamp[local_rds_info$rds_file == fn] == ts){
-       print(paste0(fn, " already up to date, skipping download and moving to next file."))
-       next
-     } else {
-      print(paste0(fn, " out of date, downloading more recent version from Dropbox."))
-       drop_download(path = paths[i], local_path = local_data_dir, overwrite = TRUE,
-                 dtoken =  drop_auth(rdstoken = tokenpath))
-     } # End Else
-   } # End loop
+  ### Save all updated database RDS files to Local Data Cache ####
+  if(file.exists(rds_info_path)){ # File exists - compare each file - datestamp to the dropbox version, if drop
+    # box is newer - download and overwrite, if not, then skip
+    local_rds_info <- readRDS(rds_info_path)
+    for (i in seq_along(paths)) {
+      fn <- files$name[i]
+      ts <- files$server_modified[i]
+      if(local_rds_info$timestamp[local_rds_info$rds_file == fn] == ts){
+        print(paste0(fn, " already up to date, skipping download and moving to next file."))
+        next
+      } else {
+        print(paste0(fn, " out of date, downloading more recent version from Dropbox."))
+        drop_download(path = paths[i], local_path = local_data_dir, overwrite = TRUE,
+                      dtoken =  drop_auth(rdstoken = tokenpath))
+      } # End Else
+    } # End loop
     saveRDS(object = dbox_rds_info, file = rds_info_path)
-   } else { # rds info file does not exist, download all rds files (overwrite) as well as the rds info tibble
+  } else { # rds info file does not exist, download all rds files (overwrite) as well as the rds info tibble
     saveRDS(object = dbox_rds_info, file = rds_info_path)
     lapply(files$path_display, drop_download, local_path = local_data_dir, overwrite = TRUE,
-         dtoken =  drop_auth(rdstoken = tokenpath))
-   }
+           dtoken =  drop_auth(rdstoken = tokenpath))
+  }
 
-### Load rds files ####
-### Make a list of all the .rds files using full path
-rds_files <- list.files(local_data_dir, full.names = TRUE , pattern = "\\.rds$")
-### create an object that contains all of the rds files
-data <- lapply(rds_files, readRDS)
-### Make a list of the df names by eliminating extension from files
-df_names <- gsub(".rds", "", list.files(local_data_dir, pattern = "\\.rds$"))
-# name each df in the data object appropriately
-names(data) <- df_names
-### Extract each element of the data object into the global environment
-list2env(data ,.GlobalEnv)
-### Remove data
-rm(data)
+  ### Load rds files ####
+  ### Make a list of all the .rds files using full path
+  rds_files <- list.files(local_data_dir, full.names = TRUE , pattern = "\\.rds$")
+  ### create an object that contains all of the rds files
+  data <- lapply(rds_files, readRDS)
+  ### Make a list of the df names by eliminating extension from files
+  df_names <- gsub(".rds", "", list.files(local_data_dir, pattern = "\\.rds$"))
+  # name each df in the data object appropriately
+  names(data) <- df_names
+  ### Extract each element of the data object into the global environment
+  list2env(data ,.GlobalEnv)
+  ### Remove data
+  rm(data)
+}
 }
 
 SUBMIT_CSV <- function(zone, drop_path = "BRCWQDM/Submitted_Data_Staging"){
@@ -76,29 +81,31 @@ SUBMIT_CSV <- function(zone, drop_path = "BRCWQDM/Submitted_Data_Staging"){
   csv <- stagedDataCSV
   if(file.exists(csv)){
   fn <- paste0(zone,"_SubmittedData_",today(),".csv")
+  ### Overwrite filename so that it can be uploaded to dropbox
   file.copy(csv,fn, overwrite = TRUE)
   ### First check and see if it was already submitted
   # drop_exists(path = drop_path, dtoken = drop_auth(rdstoken = tokenpath))
   drop_upload(file = fn, path = drop_path, mode = "overwrite",
               verbose = TRUE, dtoken = drop_auth(rdstoken = tokenpath))
   ### Now move the submitted data to the submitted folder
-  file.rename(fn, paste0(submittedDataDir,fn))
+  file.rename(fn, paste0(submittedDataDir,"/",fn))
   file.remove(csv)
   } else {
-    print("There were no data to upload!")
+    print("There are no data to upload!")
   }
   csv <- stagedCommentsCSV
 
   ### Upload the Comments
-  if(file.exists(csv)){
+  if(file.exists(csv) & read.table(csv, stringsAsFactors = FALSE, header = T,  sep = " " , na.strings = "NA") %>% nrow() > 0) {
+
   fn <- paste0(zone,"_SubmittedComments_",today(),".csv")
-  file.copy(csv,fn,overwrite = TRUE)
+  file.copy(csv, fn, overwrite = TRUE)
   ### First check and see if it was already submitted
   # drop_exists(path = drop_path, dtoken = drop_auth(rdstoken = tokenpath))
   drop_upload(file = fn, path = drop_path, mode = "overwrite",
               verbose = TRUE, dtoken = drop_auth(rdstoken = tokenpath))
   ### Now move the submitted data to the submitted folder
-  file.rename(fn, paste0(submittedDataDir,fn))
+  file.rename(fn, paste0(submittedDataDir,"/",fn))
   file.remove(csv)
   } else {
     print("There were no comments to upload!")
@@ -106,11 +113,16 @@ SUBMIT_CSV <- function(zone, drop_path = "BRCWQDM/Submitted_Data_Staging"){
   return(print("File uploaded to Dropbox successful"))
 }
 
+# Submitted Data only fetched for Program Coordinator
 GET_SUBMITTED_DATA <- function(){
+if (user_role == "Program Coordinator"){
   ### List Drop Box files ####
   dropb_root_dir <- config[12]
   safe_dir_check <- purrr::safely(drop_dir, otherwise = FALSE, quiet = FALSE)
   dir_listing <- safe_dir_check(path = paste0(dropb_root_dir, "/Submitted_Data_Staging"), recursive = FALSE, dtoken = drop_auth(rdstoken = tokenpath))
+  if (FALSE %in% dir_listing$result) {
+    print("Dropbox connection failed trying to download submitted data csv files. Check internet connection and verify that csv files are on Dropbox in the correct location")
+    } else {
   files <- drop_dir(path = paste0(dropb_root_dir, "/Submitted_Data_Staging"), recursive = FALSE, dtoken = drop_auth(rdstoken = tokenpath))
   # files <- dir_listing$result["name"] %>% unlist()
   files <- files$name
@@ -132,7 +144,11 @@ GET_SUBMITTED_DATA <- function(){
         } # End else
     } else {
     print("There were no submitted files found on Dropbox")
+    }
   }
+} else {
+  print(paste0(app_user, " is not the Program Coordinator - submitted files not downloaded from Dropbox. User submitted files available locally"))
+}
 }
 
 GET_DATABASE_DATA <- function(){
@@ -140,75 +156,96 @@ GET_DATABASE_DATA <- function(){
   dropb_root_dir <- config[12]
   safe_dir_check <- purrr::safely(drop_dir, otherwise = FALSE, quiet = FALSE)
   dir_listing <- safe_dir_check(path = paste0(dropb_root_dir, "/DB_Tables_RDS"), recursive = FALSE, dtoken = drop_auth(rdstoken = tokenpath))
-  files <- dir_listing$result
+  if (FALSE %in% dir_listing$result) {
+    print("Dropbox connection failed trying to download database RDS files. Check internet connection and verify database RDS files have been uploaded to the correct location on dropbox")
+  } else {
+    files <- dir_listing$result
+    if(files$name %>% length() %>% as.numeric() > 0){ # There are db data rds files to get...
+    local_data_dir <- paste0(config[1],"Data/rdsFiles")
+    # # Get info from dropbox RDS files:
+    db_info_path <- paste0(local_data_dir,"/db_info.rds")
+    dbox_db_info <- tibble(`rds_file` = files$name, `timestamp` = files$server_modified)
+    paths <- files$path_display
 
-if(files$name %>% length() %>% as.numeric() > 0){ # There are db data rds files to get...
-  local_data_dir <- paste0(config[1],"Data/rdsFiles")
-  # # Get info from dropbox RDS files:
-  db_info_path <- paste0(local_data_dir,"/db_info.rds")
-  dbox_db_info <- tibble(`rds_file` = files$name, `timestamp` = files$server_modified)
-  paths <- files$path_display
-
-  ### Save all updated database RDS files to Local Data Cache ####
-  if(file.exists(db_info_path)){ # File exists - compare each file - datestamp to the dropbox version, if drop
-    # box is newer - download and overwrite, if not, then skip
-    local_rds_info <- readRDS(db_info_path)
-        for (i in seq_along(paths)) {
-          fn <- files$name[i]
-          ts <- files$server_modified[i]
-          if(local_rds_info$timestamp[local_rds_info$rds_file == fn] == ts){
-            print(paste0(fn, " already up to date, skipping download and moving to next file."))
-            next
-          } else {
-            print(paste0(fn, " out of date, downloading more recent version from Dropbox."))
-            drop_download(path = paths[i], local_path = local_data_dir, overwrite = TRUE,
-                          dtoken =  drop_auth(rdstoken = tokenpath))
-          } # End Else
-        } # End loop
-      saveRDS(object = dbox_db_info, file = db_info_path)
-    } else { # rds info file does not exist, download all rds files (overwrite) as well as the rds info tibble
-      saveRDS(object = dbox_db_info, file = db_info_path)
-      lapply(paths, drop_download, local_path = local_data_dir, overwrite = TRUE,
-             dtoken =  drop_auth(rdstoken = tokenpath))
-      print("No database file information available, downloading all files.")
-    }
+    ### Save all updated database RDS files to Local Data Cache ####
+    if(file.exists(db_info_path)){ # File exists - compare each file - datestamp to the dropbox version, if drop
+      # box is newer - download and overwrite, if not, then skip
+      local_rds_info <- readRDS(db_info_path)
+          for (i in seq_along(paths)) {
+            fn <- files$name[i]
+            ts <- files$server_modified[i]
+            if(local_rds_info$timestamp[local_rds_info$rds_file == fn] == ts){
+              print(paste0(fn, " already up to date, skipping download and moving to next file."))
+              next
+            } else {
+              print(paste0(fn, " out of date, downloading more recent version from Dropbox."))
+              drop_download(path = paths[i], local_path = local_data_dir, overwrite = TRUE,
+                            dtoken =  drop_auth(rdstoken = tokenpath))
+            } # End Else
+          } # End loop
+          saveRDS(object = dbox_db_info, file = db_info_path)
+      } else { # rds info file does not exist, download all rds files (overwrite) as well as the rds info tibble
+        saveRDS(object = dbox_db_info, file = db_info_path)
+        lapply(paths, drop_download, local_path = local_data_dir, overwrite = TRUE,
+               dtoken =  drop_auth(rdstoken = tokenpath))
+        print("No database file information available, downloading all files.")
+      }
   } else {
     print("There were no database rds files found on Dropbox")
+  }
   }
 } # End Function
 # GET_DATABASE_DATA()
 
 ARCHIVE_SUBMITTED_DATA <- function(data_file){
  ### List Drop Box files ####
-data_file <- input$selectFile # in shiny app
-comment_file <- str_replace(data_file,"_SubmittedData_","_SubmittedComments_")
+
+d_file <- str_replace(data_file, pattern = paste0(submittedDataDir,"/"),"")
+c_file <- str_replace(d_file,"_SubmittedData_","_SubmittedComments_")
 
 dropb_root_dir <- config[12]
 # From/To paths
 
-data_from_path <-  paste0(dropb_root_dir, "/Submitted_Data_Staging/", data_file)
-comment_from_path <- paste0(dropb_root_dir, "/Submitted_Data_Staging/", comment_file)
-data_to_path <-  paste0(dropb_root_dir, "/Imported_Data_Archive/", data_file)
-comment_to_path <-   paste0(dropb_root_dir, "/Imported_Data_Archive/", comment_file)
+data_from_path <-  paste0(dropb_root_dir, "/Submitted_Data_Staging/", d_file)
+comment_from_path <- paste0(dropb_root_dir, "/Submitted_Data_Staging/", c_file)
+data_to_path <-  paste0(dropb_root_dir, "/Imported_Data_Archive/", d_file)
+comment_to_path <-   paste0(dropb_root_dir, "/Imported_Data_Archive/", c_file)
+# print(data_from_path)
+# print(comment_from_path)
 
 safe_dir_check <- purrr::safely(drop_dir, otherwise = FALSE, quiet = FALSE)
 dir_listing <- safe_dir_check(path = paste0(dropb_root_dir, "/Submitted_Data_Staging"), recursive = FALSE, dtoken = drop_auth(rdstoken = tokenpath))
-files <- drop_dir(path = paste0(dropb_root_dir, "/Submitted_Data_Staging"), recursive = FALSE, dtoken = drop_auth(rdstoken = tokenpath))
+if (FALSE %in% dir_listing$result) {
+  showModal(modalDialog(
+    title = "Submitted file archive failure...",
+    HTML("<h4>Submitted data files on Dropbox could not be archived!<br/>
+         These files will have to be moved manually.</h4>")
+  ))
+  } else {
+  files <- drop_dir(path = paste0(dropb_root_dir, "/Submitted_Data_Staging"), recursive = FALSE, dtoken = drop_auth(rdstoken = tokenpath))
+  data_from_path
+  files$path_display
 
-if (comment_from_path %in% files$path_display) {
-drop_move(from_path = data_from_path, to_path = data_to_path, dtoken = drop_auth(rdstoken = tokenpath))
-print(paste0("The data csv file '", data_file, "'  was moved to the Imported Data Archive folder"))
-}
+    if (data_from_path %in% files$path_display) {
+      drop_move(from_path = data_from_path, to_path = data_to_path, dtoken = drop_auth(rdstoken = tokenpath))
+      print(paste0("The data csv file '", d_file, "'  was moved to the Imported Data Archive folder"))
+    } else {
+      print("The submitted data file on Dropbox was not found and could not be moved to the archive folder!")
+    }
 
-if (comment_from_path %in% files$path_display) {
-drop_move(from_path = comment_from_path,  to_path = comment_to_path, dtoken = drop_auth(rdstoken = tokenpath))
-print(paste0("The comment csv file '", comment_file, "'  was moved to the Imported Data Archive folder"))
-}
-
+    if (comment_from_path %in% files$path_display) {
+      drop_move(from_path = comment_from_path,  to_path = comment_to_path, dtoken = drop_auth(rdstoken = tokenpath))
+      print(paste0("The comment csv file '", c_file, "'  was moved to the Imported Data Archive folder"))
+    } else {
+      print("The submitted comment file on Dropbox was not found and could not be moved to the archive folder!")
+    }
+  }
 } # end function
 
 # Run function manually:
+### input$selectFile in shiny app enter SubmittedData filename to use manually
 # ARCHIVE_SUBMITTED_DATA(data_file = "Mid-Reach_SubmittedData_2019-08-07.csv")
+# data_file <-  "Mid-Reach_SubmittedData_2019-08-07.csv"
 
 UPLOAD_RDS <- function(){
 ### This function will upload the database RDS files to Dropbox
@@ -241,9 +278,19 @@ UPLOAD_DB_DATA_RDS <- function(){
 dropb_root_dir <- config[12]
 drop_path <- "BRCWQDM/DB_Tables_RDS"
 
-data_num_rds <-  paste0(config[1],"Data/rdsFiles/data_num_db.rds")
-data_text_rds <- paste0(config[1],"Data/rdsFiles/data_text_db.rds")
-data_comment_rds <-  paste0(config[1],"Data/rdsFiles/data_comment_db.rds")
+safe_dir_check <- purrr::safely(drop_dir, otherwise = FALSE, quiet = FALSE)
+dir_listing <- safe_dir_check(path = paste0(dropb_root_dir, "/DB_Tables_RDS"), recursive = FALSE, dtoken = drop_auth(rdstoken = tokenpath))
+  if (FALSE %in% dir_listing$result) {
+    showModal(modalDialog(
+      title = "Database data RDS file upload failed...",
+      HTML("<h4> New database data will not be available in the app. <br/>
+         Database data RDS file update will have to be done manually. Contact the app developer.</h4>")
+    ))
+  upload_msg <- "Database RDS files not uploaded to dropbox!"
+} else {
+  data_num_rds <-  paste0(config[1],"Data/rdsFiles/data_num_db.rds")
+  data_text_rds <- paste0(config[1],"Data/rdsFiles/data_text_db.rds")
+  data_comment_rds <-  paste0(config[1],"Data/rdsFiles/data_comment_db.rds")
 
   drop_upload(file = data_num_rds, path = drop_path, mode = "overwrite",
               verbose = TRUE, dtoken = drop_auth(rdstoken = tokenpath))
@@ -251,8 +298,9 @@ data_comment_rds <-  paste0(config[1],"Data/rdsFiles/data_comment_db.rds")
               verbose = TRUE, dtoken = drop_auth(rdstoken = tokenpath))
   drop_upload(file = data_comment_rds, path = drop_path, mode = "overwrite",
               verbose = TRUE, dtoken = drop_auth(rdstoken = tokenpath))
-
-return("Data RDS files successfully copied to Dropbox")
+  upload_msg <- "Data RDS files successfully copied to Dropbox"
+}
+return(upload_msg)
 }
 # UPLOAD_DB_DATA_RDS()
 

@@ -45,9 +45,9 @@ DBparTbl <- "parameters"
 ### Make the db connection
 pool <- dbPool(drv = RSQLite::SQLite(), dbname = db)
 
-onStop(function() {
-  poolClose(pool)
-})
+# onStop(function() {
+#   poolClose(pool)
+# })
 
 ### GET LATEST DATA FROM DATABASE ####
 
@@ -67,27 +67,21 @@ data_comments_db <- dbReadTable(pool, "data_comments")
 
 poolClose(pool)
 
-### LOAD STAGED DATA ####
-# eventually data should be passed in from shiny app.r
+### PROCESS SUBMITTED DATA ####
+
+data_file =  paste0(submittedDataDir,"/","Mid-Reach_SubmittedData_2019-09-05.csv")
 
 PROCESS2 <- function(data_file){
-# data_file <- input$selectFile # in shiny app
-# data_file <- "Mid-Reach_SubmittedData_2019-08-07.csv"
+
 data_csv <- data_file
 comment_csv <- str_replace(data_csv,"_SubmittedData_","_SubmittedComments_")
-# print(data_csv)
-# print(comment_csv)
-#
-# data_fn <-  str_replace(data_csv, paste0(submittedDataDir,"/"), "")
-# comment_fn <- str_replace(comment_csv, paste0(submittedDataDir,"/"), "")
-# submittedDataDir
-# print(data_fn)
-# print(comment_fn)
-# data_path <- paste0(submittedDataDir, "/", data_csv)
-# comment_path <- paste0(submittedDataDir, "/",  comment_csv)
 
 df_data <- read.table(data_csv, stringsAsFactors = FALSE, header = T,  sep = " " , na.strings = "NA")
-df_comments <- read.table(comment_csv, stringsAsFactors = FALSE, header = T,  sep = " " , na.strings = "NA")
+if (file.exists(comment_csv)){
+  df_comments <- read.table(comment_csv, stringsAsFactors = FALSE, header = T,  sep = " " , na.strings = "NA")
+} else {
+  df_comments <- NULL
+}
 ### Make the db connection
 pool <- dbPool(drv = RSQLite::SQLite(), dbname = db)
 
@@ -98,28 +92,28 @@ col_data_comments <- names(data_comments_db)
 col_trans_log <- names(trans_log_db)
 
 ### Get last transaction ID from trans_log
-lastTransLogID <- trans_log_db$ID %>% max() %>% as.numeric()
+lastTransLogID <- suppressWarnings(trans_log_db$ID %>% max() %>% as.numeric())
 if(is.infinite(lastTransLogID)) {
   lastTransLogID <- 0
 }
 ### Get the last nueric data ID
-lastNumID <- data_num_db$ID %>% max() %>% as.numeric()
+lastNumID <- suppressWarnings(data_num_db$ID %>% max() %>% as.numeric())
 if(is.infinite(lastNumID)){
   lastNumID <-  0
 }
 ### Get the last text data ID
-lastTextID <- data_text_db$ID %>% max() %>% as.numeric()
+lastTextID <- suppressWarnings(data_text_db$ID %>% max() %>% as.numeric())
 if(is.infinite(lastTextID)){
   lastTextID <-  0
 }
 ### Get the last comment data ID
-lastCommentID <- data_comments_db$ID %>% max() %>% as.numeric()
+lastCommentID <- suppressWarnings(data_comments_db$ID %>% max() %>% as.numeric())
 if(is.infinite(lastCommentID)){
   lastCommentID <-  0
 }
 
 ### Get the last sample event ID - the new SEID starts at lastSEID + 1
-lastSEID <- data_num_db$SEID %>% max() %>% as.numeric()
+lastSEID <- suppressWarnings(data_num_db$SEID %>% max() %>% as.numeric())
 if(is.infinite(lastSEID)){
   lastSEID <-  0
 }
@@ -137,10 +131,15 @@ data <- df_data %>%
          "IMPORTED_BY"= config[2]) %>%
   dplyr::rename("DATE_TIME" = SampleDateTime, "SITE_BRC_CODE" = site)
 
-# Eliminate NA and NULL?
 ### Convert the logical values to integers: 1=TRUE 0=False
 data$RESULT <- recode(data$RESULT, "TRUE" = "1", "FALSE" = "0")
 data$PARAMETER <- parameters_db$PARAMETER_NAME[match(data$PARAMETER,parameters_db$SHINY_OBJ)]
+
+### Filter out Null Replicates
+rep_pars <- parameters_db$PARAMETER_NAME[str_detect(parameters_db$PARAMETER_NAME, pattern = "Replicate")]
+
+data <- data %>%
+   filter(!(PARAMETER %in% rep_pars & RESULT != -999999))
 
 ### NA Parameters are those that don't match parameters table
 # QC check boxes mostly
@@ -191,21 +190,23 @@ if(!is.null(df_comments)){
 data_c <- df_comments
 data_c$PARAMETER[data_c$PARAMETER != "General Comment"] <- table_fields$shiny_input[match(data_c$PARAMETER[data_c$PARAMETER != "General Comment"], table_fields$dt_cols)]
 data_c$PARAMETER[data_c$PARAMETER != "General Comment"] <- parameters_db$PARAMETER_NAME[match(data_c$PARAMETER[data_c$PARAMETER != "General Comment"], parameters_db$SHINY_OBJ)]
-# at this point there should only be NAs for same # as GenComm
+# at this point there should onl|y be NAs for same # as GenComm
 if(data_c$PARAMETER[is.na(data_c$PARAMETER)] %>% length() %>%  as.numeric() > 0){
+  poolClose(pool)
   stop("There are non-matching shiny-objects or parameter names that need to be resolved before proceeding!")
 }
 
 join_data <- distinct(data[,c("DATE","SITE_BRC_CODE","SEID")])
 # Bring in SEID from data using a join, add ID col, reduce cols to DB cols and rename
 data_c <- data_c %>%
-  left_join(join_data, by = c("SITE" = "SITE_BRC_CODE", "DATE")) %>%
+  left_join(join_data, by = c("DATE", "SITE" = "SITE_BRC_CODE")) %>%
   dplyr::rename("COMMENT_TEXT" = "COMMENT") %>%
   arrange(SEID, PARAMETER) %>%
   mutate("ID" = lastCommentID + row_number()) %>%
   select(col_data_comments)
+
 } else {
-  df_comments <- NULL
+  data_c <- NULL
 }
 
 ########################################################################.
@@ -232,11 +233,11 @@ dfs <- list()
 return(dfs)
 }
 
-# dfs_to_import <- PROCESS2(data_file =  "Mid-Reach_SubmittedData_2019-07-17.csv")
+# dfs <- PROCESS2(data_file =  paste0(submittedDataDir,"/","Mid-Reach_SubmittedData_2019-09-04.csv"))
 
 IMPORT_DATA <- function(dfs){
 data_file <- input$selectFile
-
+# data_file <-  paste0(submittedDataDir,"/","Mid-Reach_SubmittedData_2019-09-04.csv")
 data_csv <- data_file
 comment_csv <- str_replace(data_csv,"_SubmittedData_","_SubmittedComments_")
 # print(data_csv)
@@ -249,11 +250,16 @@ comment_fn <- str_replace(comment_csv, paste0(submittedDataDir,"/"), "")
 pool <- dbPool(drv = RSQLite::SQLite(), dbname = db)
 
 poolWithTransaction(pool, function(conn) {
-   dbWriteTable(pool, DBdataNumTbl, value = dfs$data_n, append = TRUE)
-   dbWriteTable(pool, DBdataTextTbl, value = dfs$data_t, append = TRUE)
-    dbWriteTable(pool, DBdataCommentTbl, value = dfs$data_c, append = TRUE)
+    dbWriteTable(pool, DBdataNumTbl, value = dfs$data_n, append = TRUE)
+    dbWriteTable(pool, DBdataTextTbl, value = dfs$data_t, append = TRUE)
     dbWriteTable(pool, DBtransLog, value = dfs$trans_log, append = TRUE)
   })
+
+if (!is.null(dfs$data_c)){
+poolWithTransaction(pool, function(conn){
+    dbWriteTable(pool, DBdataCommentTbl, value = dfs$data_c, append = TRUE)
+})
+}
 
 ########################################################################.
 ###                  SAVE RDS FILES LOCALLY                         ####
@@ -274,10 +280,12 @@ saveRDS(newDataNum, file = paste0(config[1],"Data/rdsFiles/data_num_db.rds"))
 saveRDS(newDataText, file = paste0(config[1],"Data/rdsFiles/data_text_db.rds"))
 saveRDS(newDataComment, file = paste0(config[1],"Data/rdsFiles/data_comment_db.rds"))
 
-### UPLOAD uRDS FILES TO DROPBOX ####
+### UPLOAD RDS FILES TO DROPBOX ####
 UPLOAD_DB_DATA_RDS()
 
 ### ARCHIVE SUBMITTED CSV FILES ####
+
+### Now locally
 
 ### first create the dir if it doesn't exisit
 if (!dir.exists(paste0(dataDir, "Imported_Data/"))){
@@ -291,9 +299,9 @@ file.rename(data_csv, paste0(dataDir,"Imported_Data/",data_fn))
 if (file.exists(comment_csv)){
 file.rename(comment_csv, paste0(dataDir,"Imported_Data/",comment_fn))
 }
-
+return("Import completed with no errors.")
 } # End function
-
+# IMPORT_DATA(dfs)
 
 
 

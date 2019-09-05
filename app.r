@@ -33,10 +33,11 @@ ipak <- function(pkg){
 
 packages <- c("shiny","shinyjs", "shinyFiles", "shinyTime", "shinyalert","shinydashboard","rmarkdown", "knitr", "tidyselect", "lubridate",
               "plotly", "leaflet", "RColorBrewer", "devtools", "data.table", "DT", "scales", "stringr", "shinythemes", "ggthemes", "tidyr",
-              "dplyr" , "httr", "tibble", "bsplus", "readxl", "miniUI", "rstudioapi", "rdrop2", "readr", "purrr", "htmlwidgets", "ggplot2",
+              "dplyr", "magrittr", "httr", "tibble", "bsplus", "readxl", "miniUI", "rstudioapi", "rdrop2", "readr", "purrr", "htmlwidgets", "ggplot2",
               "pool", "mailR")
-ipak(packages)
-
+suppressPackageStartupMessages(
+  ipak(packages)
+)
 # loadData()
 
 print(paste0("BRCWQDM App lauched at ", Sys.time()))
@@ -85,9 +86,23 @@ last_update <- Sys.Date()
 ### AS IS fields require no manipulation and can go directly to outputs
 ### Date and Time and any other QC'd values need to come from reactive elements
 # wdir
-table_fields <<- readr::read_csv(paste0(wdir,"/data/table_fields.csv"))
-data_fields <<- table_fields[1:31,]
-comment_fields <<- table_fields[32:36,]
+table_fields <<- readr::read_csv(paste0(wdir,"/data/table_fields.csv"),col_types = cols(
+  shiny_input = col_character(),
+  dt_cols = col_character(),
+  col_type = col_character(),
+  col_input = col_character(),
+  input_mult = col_character(),
+  editable = col_character(),
+  pcode = col_character(),
+  take_comments = col_character(),
+  choices = col_character(),
+  input_width = col_double(),
+  as_is = col_character(),
+  input_section = col_character()
+))
+
+data_fields <<- table_fields[1:28,]
+comment_fields <<- table_fields[29:33,]
 
 ### DATA FIELDS ####
 fieldsASIS <<- data_fields$shiny_input[data_fields$as_is == "yes"]
@@ -262,11 +277,9 @@ ui <-tagList(
                   column(width = 12,
                     fluidRow(
                       column(width = 3,
-                          checkboxGroupInput("wea48", "Weather Last 48 Hours (P01):", choices = wea_choices),
+                          radioButtons("wea48", "Weather Last 48 Hours (P01):", choices = wea_choices, selected = character(0)),
                           textAreaInput("comm_P01", labelMandatory("Comments for Weather Last 48 Hours (P01):"), placeholder = "Describe 'other'"),
-                          # selectInput("wea_now", "Weather at time of sample (P02):",
-                          #             choices = wea_choices, multiple = T , selected = ""),
-                          checkboxGroupInput("wea_now", "Weather at time of sample (P02):", choices = wea_choices),
+                          radioButtons("wea_now", "Weather at time of sample (P02):", choices = wea_choices, selected = character(0)),
                           textAreaInput("comm_P02", labelMandatory("Comments for Weather at time of Sample (P02):"), placeholder = "Describe 'other'"),
                           numericInput("temp_air","Ending Air Temperature (C) (P03):",
                                        value = NULL, min = -20, max = 40, step = 0.5),
@@ -277,19 +290,16 @@ ui <-tagList(
                         column(width = 3,
                           checkboxGroupInput("wat_appear", "Water Appearance (P05):", choices = wat_appear_choices),
                           textAreaInput("comm_P05", labelMandatory("Comments for Water Appearance (P05):"), placeholder = "Describe 'other'"),
-                          checkboxGroupInput("wat_trash", "Presence of Trash (P06.A):", choices = wat_trash_choices),
-                          textAreaInput("trash_descr", "Desription of Trash (P06.B):")
+                          checkboxGroupInput("wat_trash", "Presence of Trash (P06):", choices = wat_trash_choices)
                         ),
                         column(width = 3,
-                          checkboxGroupInput("erosion", "Stream bank/infrastructure erosion (P07.A):", choices = wat_erosion_choices),
-                          textAreaInput("comm_P07", labelMandatory("Comments for Erosion (P07.A):"), placeholder = "Describe 'other'"),
-                          textAreaInput("erosion_change", "Changes to erosion from last month (P07.B):"),
+                          checkboxGroupInput("erosion", "Stream bank/infrastructure erosion (P07):", choices = wat_erosion_choices),
+                          textAreaInput("comm_P07", labelMandatory("Comments for Erosion (P07):"), placeholder = "Describe 'other'"),
                           checkboxGroupInput("wat_odor", "Water Odor (P08):", choices = wat_odor_choices),
                           textAreaInput("comm_P08", labelMandatory("Comments for Water Odor (P08):"), placeholder = "Describe 'other'")
                         ),
                         column(width = 3,
-                          radioButtons("wat_nav", "Nuisance Aquatic Vegetation (NAV) (P09.A):", choices = wat_NAV_choices, selected = character(0)),
-                          textAreaInput("wat_nav_descr", "NAV Comments (P09.B):"),
+                          radioButtons("wat_nav", "Nuisance Aquatic Vegetation (NAV) (P09):", choices = wat_NAV_choices, selected = character(0)),
                           checkboxGroupInput("wat_clarity", "Water Clarity (P10)", choices = wat_clarity_choices),
                           numericInput("lab_turb","Lab Turbidity (NTU) (P11.A):", value = NULL, min = 0, max = 2500, step = 0.5),
                           numericInput("lab_turb_rep","Lab Turbidity Replicate (NTU) (P11.B):", value = NULL, min = 0, max = 2500, step = 0.5)
@@ -347,13 +357,15 @@ ui <-tagList(
         bs_append(title = "OTHER SAMPLE INFORMATION", content =
                     wellPanel(fluidRow(
                       column(width = 4,
-                             actionButton("add_comment", "Add Comment")
+                             ADD_COMMENT_UI("add_comment_other")
                       ),
                       column(width = 4,
                              checkboxInput("photos","Photos associated with sampling event?")
+
                       ),
                       column(width = 4,
-                             actionButton("add_photo", "Add Photo")
+                             actionButton("add_photo", "Add Photo"),
+                             h4("This feature coming soon")
                       )
                     )
                 ) # End Well Panel
@@ -428,7 +440,7 @@ ui <-tagList(
                     )
                   )
                 ), # End tp
-                tabPanel("PROCESS & SUBMIT", type = "pills",
+                tabPanel("PROCESS & SUBMIT", value = 'process_submit', type = "pills",
                   fluidRow(
                     column(12,
                       h4("Make sure all data has been entered and checked over for accuracy. Click the 'PROCESS' button \n
@@ -489,100 +501,7 @@ ui <-tagList(
                                               '))),
                  uiOutput("selectFile_ui"),
                  br(),
-                 tabsetPanel(
-                   tabPanel("SUBMITTED DATA", type = "pills",
-                            fluidRow(
-                              column(6,
-                                     ### This is to adjust the width of pop up "showmodal()" for DT modify table
-                                     tags$head(tags$style(HTML('
-
-                                              .modal-lg {
-                                              width: 1200px;
-                                              }
-                                              '))),
-                                     helpText("Note: Remember to save any edits/deletions!"),
-                                     # br(),
-                                     ### tags$head() is to customize the download button
-                                     tags$head(tags$style(".butt{background-color:#222f5b;} .butt{color: #e6ebef;}")),
-                                     useShinyalert(),
-                                     actionButton(inputId = "SaveSubmittedData",label = "Save", width = "245px", class="butt"),
-                                     editableDTUI("submittedDataDT")
-                              ),
-                              column(6,
-                                     verbatimTextOutput("rec_comments2")
-                              )
-                            )
-                   ), # END DATA tp
-                   tabPanel("SUBMITTED COMMENTS", type = "pills",
-                            fluidRow(
-                              column(6,
-                                     ### This is to adjust the width of pop up "showmodal()" for DT modify table
-                                     tags$head(tags$style(HTML('
-
-                                              .modal-lg {
-                                              width: 1200px;
-                                              }
-                                              '))),
-                                     helpText("Note: Remember to save any edits/deletions!"),
-                                     # br(),
-                                     ### tags$head() is to customize the download button
-                                     tags$head(tags$style(".butt{background-color:#222f5b;} .butt{color: #e6ebef;}")),
-                                     useShinyalert(),
-                                     actionButton(inputId = "SaveSubmittedComments",label = "Save", width = "245px", class="butt"),
-                                     # downloadButton("Trich_csv", "Download in CSV", class="butt"),
-                                     # Set up shinyalert
-                                     editableDTUI("submittedCommentsDT")
-                              )
-                            )
-                   ), # End tp
-                   tabPanel("PROCESS & IMPORT", type = "pills",
-                            fluidRow(
-                              column(12,
-                                     h4("Make sure all data has been checked over for accuracy. Click the 'PROCESS' button \n
-                                        when you are ready to proceed. During processing the data will be checked for errors and anomalies.\n
-                                        If no problems are found then you may import the records to the database.")
-                              )
-                            ),
-                            fluidRow(
-                              column(6,
-                                     wellPanel(
-                                       strong(h4("Process submitted records:")),
-                                       br(),
-                                       uiOutput("process2.UI"),
-                                       br(),
-                                       h4(textOutput("text.process2.status"))
-                                     )
-                              ),
-                              column(6,
-                                     wellPanel(
-                                       strong(h4("Import processed submitted records to the database:")),
-                                       br(),
-                                       uiOutput("import.UI"),
-                                       br(),
-                                       uiOutput("text.import.status")
-                                     )
-                              )
-                            ),
-                            fluidRow(
-                              column(12,
-                                     tabsetPanel(
-                                       tabPanel("Processed Numeric Data",
-                                                dataTableOutput("table.process2.data_n")
-                                       ),
-                                       tabPanel("Processed Text Data",
-                                                dataTableOutput("table.process2.data_t")
-                                       ),
-                                       tabPanel("Processed Comments",
-                                                dataTableOutput("table.process2.data_c")
-                                       ),
-                                       tabPanel("Processed Transaction Log",
-                                                dataTableOutput("table.process2.trans_log")
-                                       )  # End Tab Panel
-                                     ) # End Tabset Panel
-                              ) # End Col
-                            ) # End Fluid row
-                   ) # End TabPanel
-          ) # End Tabset Panel
+                 uiOutput("submitted_data.UI")
         ) #End Col
         ) # End FR
     ), # End Tab Panel
@@ -659,69 +578,29 @@ ui <-tagList(
 
 server <- function(input, output, session) {
 
-  GET_SUBMITTED_DATA()
-  GET_DATABASE_DATA()
+### Download database rds files from dropbox ####
+GET_DATABASE_DATA()
 
+### Generate User list ####
 user_list <<- assignments_db %>%
     filter(YEAR == year(Sys.Date()), ROLE %in% c("Field Coordinator","Program Coordinator", "App Developer")) %>%
   .$NAME
 
+### Verify User ####
 if(app_user %in% user_list){
   print(paste0("App user '", app_user, "' verified!"))
 } else {
   stop("App user '", app_user,"' cannot be verified - please contact the program coordinator and ensure your configuration file user name matches your role in the BRCWQDM database. ")
 }
 
-# TO DO   ####
-  # loadSubmitted <- function(){
-    # Download submitted data from dropbox
-    # data <- GET_SUBMITTED_DATA()
-    # Read files into dataframes
-    # Isolate by Region and Date and allow dropdown selection
-    # Select one Region and Date at a time
-    # Data and comments get pulled into editable tables
-    # Can review and edit
-    # Press Process  -
-    # preview Processed Data
-    # Import button -- goes to db
-    # Imported files get moved from submitted to Archive on Dropbox
-    # Imported files get moved from submitted to Archive Locally
-    # Emails generated
-    # Dropdown menu is updated so those files are not there (Run update select input)
-    # Repeat process for all submitted files (should only be 3 per month)
-    # submittedFileNum <- list.files(submittedDataDir) %>% length()
-    # if(submittedFileNum >0){
-    #   dataFiles <- list.files(submittedDataDir, pattern = "*Data*", full.names = TRUE)
-    #   commentFiles <- list.files(submittedDataDir, pattern = "*Comments*", full.names = FALSE)
+### Set User Role ####
+user_role <<- filter(assignments_db, YEAR == year(Sys.Date()), NAME == app_user) %>% .$ROLE
+# user_role <<- "Field Coordinator"
 
-    #   data <- read.table(submittedDataCSV, stringsAsFactors = FALSE, header = T,  sep = " " , na.strings = "NA")
-    #   df <- data_csv2df(data, data_fields) ### saves RDS file as data.frame
-    #   saveRDS(df, stagedDataRDS)
-    #   rxdata$stagedData <- readRDS(stagedDataRDS)
-    # } else {
-    #   df <- NULL
-    #   rxdata$stagedData <- NULL
-    # }
-    # return(df)
-  # }
+### Download submitted data from dropbox ####
+GET_SUBMITTED_DATA()
 
-
-
- #  submittedFile_choices <- reactive({
- #    submittedFileNum <- list.files(submittedDataDir) %>% length() %>% as.numeric()
- #    if(submittedFileNum >0){
- #      dataFiles <- list.files(submittedDataDir, pattern = "*Data*", full.names = TRUE)
- #      names(dataFiles) <- list.files(submittedDataDir, pattern = "*Data*", full.names = FALSE) %>%
- #        str_replace_all("_SubmittedData_"," ") %>% str_replace_all(".csv","")
- #      dataFiles
- #    } else{
- #      NULL
- #    }
- #  })
- # comment_file <- str_replace(dataFiles,"Data","Comments")
-
-
-  fileChoices <- reactive({
+fileChoices <- function(){
       # if(submittedFileNum > 0){
         dataFiles <- list.files(submittedDataDir, pattern = "*Data*", full.names = TRUE)
         names(dataFiles) <- list.files(submittedDataDir, pattern = "*Data*", full.names = FALSE) %>%
@@ -730,39 +609,54 @@ if(app_user %in% user_list){
       # } else{
       #   NULL
       # }
-    })
+    }
 
-    # SelectFile UI
-    output$selectFile_ui <- renderUI({
-      # req(current_rating())
-      selectInput("selectFile", label = "Choose submitted data to process and import:",
-                  choices = c("", fileChoices()), selected = "" , multiple = FALSE, width = "400px")
+rxdata$fileChoices <- fileChoices()
+
+# SelectFile UI
+output$selectFile_ui <- renderUI({
+      if (user_role == "Program Coordinator"){
+      selectFile_lab <<-  "Choose submitted data to process and import:"
+      } else{
+      selectFile_lab <<- "Choose previously submitted data to view:"
+      }
+      selectInput("selectFile", label = selectFile_lab,
+                  choices = c("", rxdata$fileChoices), selected = "" , multiple = FALSE, width = "400px")
     })
 
     # Update Select Input when a file saved imported (actually when the import button is pressed (successful or not))
     observeEvent(input$SaveSubmittedData, {
       updateSelectInput(session = session,
                         inputId = "selectFile",
-                        label = "Choose submitted data to process and import:",
-                        choices = fileChoices(),
-                        selected = input$selectFile)
+                        label = selectFile_lab,
+                        choices = c("", rxdata$fileChoices),
+                        selected = "")
     })
 
     # Update Select Input when a file is imported (actually when the import button is pressed (successful or not))
+
+    observeEvent(input$import,{
+      rxdata$fileChoices <- fileChoices()
+    })
+
+    observeEvent( input$submit,{
+      rxdata$fileChoices <- fileChoices()
+    })
+
     observeEvent(input$import, {
-      updateSelectInput(session = session,
-                        inputId = "selectFile",
-                        label = "Choose submitted data to process and import:",
-                        choices = fileChoices()
-                      )
+     updateSelectInput(session = session,
+                       inputId = "selectFile",
+                       label = selectFile_lab,
+                       choices = c("", rxdata$fileChoices),
+                       selected = "")
     })
 
      observeEvent(input$submit, {
       updateSelectInput(session = session,
                         inputId = "selectFile",
-                        label = "Choose submitted data to process and import:",
-                        choices = fileChoices()
-                        )
+                        label = selectFile_lab,
+                        choices = c("",rxdata$fileChoices),
+                        selected = "")
     })
 
   ### interactive dataset
@@ -812,11 +706,14 @@ if(app_user %in% user_list){
     df <- data_csv2df(data, data_fields) ### saves RDS file as data.frame
     saveRDS(df, submittedDataRDS)
     rxdata$submittedData <- readRDS(submittedDataRDS)
-
+  if (file.exists(comment_csv)) {
     data <- read.table(comment_csv, stringsAsFactors = FALSE, header = T,  sep = " " , na.strings = "NA")
     df <- comm_csv2df(data, comment_fields) ### saves RDS file as data.frame
     saveRDS(df, submittedCommentsRDS)
     rxdata$submittedComments <- readRDS(submittedCommentsRDS)
+  } else {
+    print("There were no submitted comments associated with the submitted data file")
+  }
   })
 
 
@@ -930,10 +827,6 @@ observe({
 
   # enable/disable the enter button
   shinyjs::toggleState(id = "enter", condition = mandatoryFilled)
-  # shinyjs::toggleState(id = "add_comment_depth", condition = mandatoryFilled)
-  # shinyjs::toggleState(id = "add_comment_physical", condition = mandatoryFilled)
-  # shinyjs::toggleState(id = "add_comment_chemical", condition = mandatoryFilled)
-
 })
 ### STAGED DATA CREATION ####
 # stagedData <- eventReactive(input$enter,{
@@ -949,14 +842,14 @@ samplersRX <- reactive({
   req(input$sampler)
   paste(input$sampler, collapse = ";") %>% trimws()
   })
-wea48RX <- reactive({
-  req(input$wea48)
-  paste(input$wea48, collapse = ";") %>% trimws()
-  })
-wea_nowRX <- reactive({
-  req(input$wea_now)
-  paste(input$wea_now, collapse = ";") %>% trimws()
-  })
+# wea48RX <- reactive({
+#   req(input$wea48)
+#   paste(input$wea48, collapse = ";") %>% trimws()
+#   })
+# wea_nowRX <- reactive({
+#   req(input$wea_now)
+#   paste(input$wea_now, collapse = ";") %>% trimws()
+#   })
 wat_appearRX <- reactive({
   req(input$wat_appear)
   paste(input$wat_appear, collapse = ";") %>% trimws()
@@ -988,8 +881,7 @@ output$depth <- renderUI({
 ### FORM DATA ####
 formData <- reactive({
   data <- sapply(fieldsASIS, function(x) input[[x]])
-  data <- c(data, "SampleDateTime" = SampleDT(), "sampler" = samplersRX(),
-            wea48 = wea48RX(), wea_now = wea_nowRX(), wat_appear = wat_appearRX(),
+  data <- c(data, "SampleDateTime" = SampleDT(), "sampler" = samplersRX(), wat_appear = wat_appearRX(),
             erosion =  erosionRX(), wat_odor = wat_odorRX(), "Entered_By" = app_user)
   data <- data[col_names] %>% as.character()
   data <- t(data)
@@ -1081,27 +973,6 @@ observeEvent(input$enter, {
 
 ### COMMENT MODAL ####
 comment_par_choices <<- c("General Comment", data_fields$dt_cols[data_fields$take_comments =="yes"])
-
-   observeEvent(input$add_comment, {
-     # req(input$site, SampleDT())
-     if(input$site == ""| is.null(SampleDT())){
-       shinyalert("Oops!", "A site and Date must be selected to add a comment!.", type = "error")
-     } else {
-      showModal(modalDialog(
-        h3("ADD COMMENT..."),
-        "Add comment related to specific parameter or a general comment that applies to this sampling event.
-           You will be listed as the commenter, unless the box is checked to indicate that the comment is from the Field Monitor",
-        selectInput("comment_par", "Parameter Reference:", comment_par_choices),
-        textAreaInput("comment_text", label = NULL, placeholder = "Add comment here...", width = "100%"),
-        checkboxInput("FM_comment", "This is a comment from Field Monitor", value = F),
-        actionButton("submit_comment", "Submit Comment"),
-        easyClose = FALSE,
-        footer = tagList(
-          modalButton("Cancel")
-      )
-      ))
-     }
-   })
 
   ### save to RDS and CSV ####
   observeEvent(input$SaveStagedData,{
@@ -1209,8 +1080,137 @@ observeEvent(input$submit_comment,{
 })
 
 
-### SUBMITTED DATA ####
+### SUBMITTED DATA UI ####
 
+output$submitted_data.UI <- renderUI({
+if (user_role %in% c("Program Coordinator", "App Developer")){
+  tabsetPanel(
+    tabPanel("SUBMITTED DATA", type = "pills",
+             fluidRow(
+               column(6,
+                      ### This is to adjust the width of pop up "showmodal()" for DT modify table
+                      tags$head(tags$style(HTML('
+
+                                              .modal-lg {
+                                              width: 1200px;
+                                              }
+                                              '))),
+                      helpText("Note: Remember to save any edits/deletions!"),
+                      # br(),
+                      ### tags$head() is to customize the download button
+                      tags$head(tags$style(".butt{background-color:#222f5b;} .butt{color: #e6ebef;}")),
+                      useShinyalert(),
+                      actionButton(inputId = "SaveSubmittedData",label = "Save", width = "245px", class="butt"),
+                      editableDTUI("submittedDataDT")
+               ),
+               column(6,
+                      verbatimTextOutput("rec_comments2")
+               )
+             )
+    ), # END DATA tp
+    tabPanel("SUBMITTED COMMENTS", type = "pills",
+             fluidRow(
+               column(6,
+                      ### This is to adjust the width of pop up "showmodal()" for DT modify table
+                      tags$head(tags$style(HTML('
+
+                                              .modal-lg {
+                                              width: 1200px;
+                                              }
+                                              '))),
+                      helpText("Note: Remember to save any edits/deletions!"),
+                      # br(),
+                      ### tags$head() is to customize the download button
+                      tags$head(tags$style(".butt{background-color:#222f5b;} .butt{color: #e6ebef;}")),
+                      useShinyalert(),
+                      actionButton(inputId = "SaveSubmittedComments",label = "Save", width = "245px", class="butt"),
+                      # downloadButton("Trich_csv", "Download in CSV", class="butt"),
+                      # Set up shinyalert
+                      editableDTUI("submittedCommentsDT")
+               )
+             )
+    ), # End tp
+    tabPanel("PROCESS & IMPORT", type = "pills",
+             fluidRow(
+               column(12,
+                      h4("Make sure all data has been checked over for accuracy. Click the 'PROCESS' button \n
+                                        when you are ready to proceed. During processing the data will be checked for errors and anomalies.\n
+                                        If no problems are found then you may import the records to the database.")
+               )
+             ),
+             fluidRow(
+               column(6,
+                      wellPanel(
+                        strong(h4("Process submitted records:")),
+                        br(),
+                        uiOutput("process2.UI"),
+                        br(),
+                        h4(textOutput("text.process2.status"))
+                      )
+               ),
+               column(6,
+                      wellPanel(
+                        strong(h4("Import processed submitted records to the database:")),
+                        br(),
+                        uiOutput("import.UI"),
+                        br(),
+                        uiOutput("text.import.status")
+                      )
+               )
+             ),
+             fluidRow(
+               column(12,
+                      tabsetPanel(
+                        tabPanel("Processed Numeric Data",
+                                 dataTableOutput("table.process2.data_n")
+                        ),
+                        tabPanel("Processed Text Data",
+                                 dataTableOutput("table.process2.data_t")
+                        ),
+                        tabPanel("Processed Comments",
+                                 dataTableOutput("table.process2.data_c")
+                        ),
+                        tabPanel("Processed Transaction Log",
+                                 dataTableOutput("table.process2.trans_log")
+                        )  # End Tab Panel
+                      ) # End Tabset Panel
+               ) # End Col
+             ) # End Fluid row
+    ) # End TabPanel
+  ) # End TabSet Panel
+} else {
+   tabsetPanel(
+    tabPanel("SUBMITTED DATA", type = "pills",
+             fluidRow(
+               column(12,
+                      dataTableOutput("submitted_data_dt")
+               )
+             )
+    ), # END DATA tp
+    tabPanel("SUBMITTED COMMENTS", type = "pills",
+             fluidRow(
+               column(12,
+                dataTableOutput("submitted_comments_dt")
+               )
+             )
+    )
+  ) # End TabSet Panel
+}
+
+})
+
+
+output$submitted_data_dt <- renderDataTable(
+  rxdata$submittedData %>% datatable(editable = FALSE, rownames = FALSE,
+                              colnames = data_fields$dt_cols, selection = "single",
+                              options = list(searching = TRUE, lengthChange = TRUE))
+)
+
+output$submitted_comments_dt <- renderDataTable(
+  rxdata$submittedComments %>% datatable(editable = FALSE, rownames = FALSE,
+                                    selection = "single",
+                                    options = list(searching = TRUE, lengthChange = TRUE))
+)
 # Need to decide how this will work  -
 # For coordinators is there a need to see the data submitted within the app - this data is archived as csvs
 # For Program Manager - need to be able to see and edit submitted data before importing -
@@ -1239,12 +1239,13 @@ dfs <- eventReactive(input$process1,{
   PROCESS1()
 })
 
+
 # Extract each dataframe
 processedData1 <- reactive({
-  dfs()[[1]]
+  dfs()$data
 })
 processedComments1  <- reactive({
-  dfs()[[2]]
+  dfs()$comments
 })
 
 ### Table Outputs
@@ -1260,7 +1261,7 @@ output$table.process1.data <- renderDataTable({
 
 # Processed Flag Table - Only make table if processing is successful
 output$table.process1.comments <- renderDataTable({
-  req(try(processedComments1()))
+  req(try(!is.null(processedComments1())))
   processedComments1() %>% datatable(editable = FALSE, rownames = FALSE,
                                     selection = "single",
                                     options = list(searching = TRUE, lengthChange = TRUE))
@@ -1295,32 +1296,49 @@ output$submit.UI <- renderUI({
 ###                         SUBMIT DATA                             ####
 ########################################################################.
 observeEvent(input$submit, {
+  showModal(busyModal(msg = "Submitting data ..."))
   source("funs/dropB.R", local = T)
   out <- tryCatch(SUBMIT_CSV(zone = user_zone),
-                  error=function(cond) {
-                    message(paste("There was an error, records not submitted...\n", cond))
-                    return(NA)
+                  error = function(cond) {
+                      submit_err <<- paste("Submittal Failed - There was an error at ", Sys.time() ,
+                      "...\n ", cond)
+                      print(submit_err)
+                    return(1)
                   },
-                  warning=function(cond) {
-                    message(paste("Submittal process completed with warnings...\n", cond))
-                    return(NULL)
+                  warning = function(cond) {
+                    submit_err <<- paste("Submittal process completed with warnings...\n", cond)
+                    print(submit_err)
+                    return(2)
                   },
-                  finally={
+                  finally = {
                     message(paste("Submittal Process Complete"))
                   }
   )
-  submitFailed <- any(class(out) == "error")
+  # submitFailed <- is.na(out)
 
-  if (submitFailed == TRUE){
-    print(paste0("Submittal Failed at ", Sys.time() ,". There was an error: "))
-    print(out)
-  } else {
+  if (out == 1){
+     removeModal()
+      print(submit_err)
+      submit_msg <<- paste0(submit_err, "\n... Check log file and review submitted data files and existing database records.")
+       showModal(modalDialog(
+              title = "Submittal Failed...",
+              h4(submit_msg)
+            ))
+       } else {
+    removeModal()
+    submit_msg <<- paste("Successful submittal of", nrow(processedData1()), "record(s) to the BRC Program Coordinator")
     print(paste0("Data Submittal Successful at ", Sys.time()))
+    showModal(modalDialog(
+              title = "Submittal Successful...",
+              h4(submit_msg)
+            ))
     NewCount <- SubmitActionCount() + 1
     SubmitActionCount(NewCount)
     print(paste0("Submit Action Count was ", SubmitActionCount()))
     submitEmail()
-    # updateSelectInput()
+    loadData()
+    loadComments()
+    rxdata$fileChoices <- fileChoices()
   }
 })
 
@@ -1330,22 +1348,24 @@ observeEvent(input$submit, {
 SubmitEmail <- function() {
   out <- tryCatch(
    submitEmail(),
-    error=function(cond) {
-      message(paste("There was an error with the submit email function, cannot send email", cond))
-      return(NA)
-    },
-    warning=function(cond) {
-      message(paste("Submit mail function caused a warning, but was completed successfully", cond))
-      return(NULL)
-    },
-    finally={
-      message(paste("Submit email was sent successfully"))
-    }
+      error=function(cond) {
+        mail_msg <<- paste("There was an error with the Submit email function, cannot send email", cond)
+        print(mail_msg)
+        return(NA)
+      },
+      warning=function(cond) {
+        mail_msg <<- paste("Submit email function caused a warning, but was completed successfully", cond)
+        print(mail_msg)
+        return(NULL)
+      },
+      finally={
+       message("Submit email completed")
+      }
   )
   return(out)
 }
 
-# Hide import button and tables when import button is pressed (So one cannot double import same file)
+# Hide submit button and tables when import button is pressed (So one cannot double import same file)
 observeEvent(input$submit, {
   hide('submit')
   #hide('table.process.wq')
@@ -1357,8 +1377,9 @@ observeEvent(input$submit, {
   insertUI(
     selector = "#submit",
     where = "afterEnd",
-    ui = h4(paste("Successful submittal of", nrow(processedData1()), "record(s) to the BRC Program Coordinator"))
+    ui = h4(submit_msg)
   )
+  # freezeReactiveValue(input, selectFile)
 })
 
   observeEvent(input$save_changes,{
@@ -1386,19 +1407,19 @@ observeEvent(input$submit, {
   # Extract each dataframe
   # n is numerical
   df_data_n <- reactive({
-    dfs_to_import()[[1]]
+    dfs_to_import()$data_n
   })
   # t is text
   df_data_t  <- reactive({
-   dfs_to_import()[[2]]
+   dfs_to_import()$data_t
   })
   # c is comments
   df_data_c  <- reactive({
-    dfs_to_import()[[3]]
+    dfs_to_import()$data_c
   })
  # transaction log
   df_data_trans_log  <- reactive({
-    dfs_to_import()[[4]]
+    dfs_to_import()$trans_log
   })
 
   # Last File to be Processed
@@ -1432,23 +1453,37 @@ observeEvent(input$submit, {
   })
 
   ### DATABASE PAGE ####
-data_n_db <- readRDS(data_n_RDS)
-data_t_db <- readRDS(data_t_RDS)
-data_c_db <- readRDS(data_c_RDS)
+if (file.exists(data_n_RDS)){
+rxdata$data_n_db <- readRDS(data_n_RDS)
+} else {
+  rxdata$data_n_db <- NULL
+}
+
+if (file.exists(data_t_RDS)){
+rxdata$data_t_db <- readRDS(data_t_RDS)
+} else {
+  rxdata$data_t_db <- NULL
+}
+
+if (file.exists(data_c_RDS)){
+rxdata$data_c_db <- readRDS(data_c_RDS)
+} else {
+  rxdata$data_c_db <- NULL
+}
 
   output$data_num_db <- renderDataTable({
-    req(try(data_n_db))
-    data_n_db
+    req(!is.null(rxdata$data_n_db))
+    rxdata$data_n_db
   })
 
     output$data_text_db <- renderDataTable({
-    req(try(data_t_db))
-    data_t_db
+    req(!is.null(rxdata$data_t_db))
+    rxdata$data_t_db
   })
 
     output$data_comment_db <- renderDataTable({
-    req(try(data_c_db))
-    data_c_db
+    req(!is.null(rxdata$data_C_db))
+    rxdata$data_c_db
   })
 
 
@@ -1468,69 +1503,89 @@ data_c_db <- readRDS(data_c_RDS)
 
   # Show import button and tables when process button is pressed
   # Use of req() later will limit these to only show when process did not create an error)
-  observeEvent(input$process2, {
-    show('import')
-    # show('table.process.wq')
-    # show('table.process.flag')
-  })
+  # observeEvent(input$process2, {
+  #   # req(process.status2() == 'The file was successfully processed!')
+  #   show('import')
+  #   # show('table.process.wq')
+  #   # show('table.process.flag')
+  # })
 
   ### Import Data
 
   # Import Action Button - Will only be shown when a file is processed successfully
   output$import.UI <- renderUI({
-    # req(try(df.wq()))
+    req(process.status2() == 'The file was successfully processed!')
     actionButton(inputId = "import",
                  label = paste("Import", str_replace(input$selectFile, paste0(submittedDataDir,"/"), ""), "Data"),
                  width = '500px')
   })
 ########################################################################.
-###                             IMPORT DATA                        ####
+###                             IMPORT DATA                         ####
 ########################################################################.
   observeEvent(input$import, {
+    showModal(busyModal(msg = "Importing data ..."))
     source("funs/processImport.R", local = T)
     out <- tryCatch(IMPORT_DATA(dfs_to_import()),
                     error=function(cond) {
-                      message(paste("There was an error, data not imported...\n", cond))
-                      return(NA)
+                      import_err <<- paste("Import Failed - There was an error at ", Sys.time(),
+                      "...\n ", cond)
+                      print(import_err)
+                      return(1)
                     },
                     warning=function(cond) {
-                      message(paste("Import process completed with warnings...\n", cond))
-                      return(NULL)
+                      import_err <<- paste("Import process completed with warnings...\n", cond)
+                      print(import_err)
+                      return(2)
                     },
                     finally={
                       message(paste("Import Process Complete"))
                     }
     )
-    ImportFailed <- any(class(out) == "error")
 
-    if (ImportFailed == TRUE){
-      print(paste0("Import Failed at ", Sys.time() ,". There was an error: "))
-      print(out)
-    } else {
+    if (out == 1){
+      removeModal()
+      import_msg <<- paste0("Import Failed!  There was a error ... Check log file and review submitted data files and existing database records.")
+      print(import_msg)
+      } else {
+      removeModal()
+      import_msg <<- paste0("Successful import of '", str_replace(input$selectFile, paste0(submittedDataDir,"/"), ""), "' to the BRCWQDM Database!")
       print(paste0("Data Import Successful at ", Sys.time()))
+      print(paste("Data file '", input$selectFile, "' imported."))
+      showModal(modalDialog(
+          title = "Import Successful...",
+          h4(import_msg)
+        ))
       NewCount <- ImportActionCount() + 1
       ImportActionCount(NewCount)
       print(paste0("Import Action Count was ", ImportActionCount()))
       ARCHIVE_SUBMITTED_DATA(data_file = input$selectFile)
+      print(paste("Data file '", input$selectFile, "' archived."))
       ImportEmail()
+      loadData()
+      loadComments()
+      rxdata$data_n_db <- readRDS(data_n_RDS)
+      rxdata$data_t_db <- readRDS(data_t_RDS)
+      rxdata$data_c_db <- readRDS(data_c_RDS)
+      rxdata$fileChoices <- fileChoices()
     }
   })
 
   ### Function to send ImportEmail
   ImportEmail <- function() {
     out <- tryCatch(
-      importEmail()
-      ,
+      importEmail(),
       error=function(cond) {
-        message(paste("There was an error with the Import email function, cannot send email", cond))
+        mail_msg <<- paste("There was an error with the Import email function, cannot send email", cond)
+        print(mail_msg)
         return(NA)
       },
       warning=function(cond) {
-        message(paste("Import email function caused a warning, but was completed successfully", cond))
+        mail_msg <<- paste("Import email function caused a warning, but was completed successfully", cond)
+        print(mail_msg)
         return(NULL)
       },
       finally={
-        message(paste("Import email was sent successfully!"))
+       message("Import email completed")
       }
     )
     return(out)
@@ -1552,13 +1607,13 @@ data_c_db <- readRDS(data_c_RDS)
   # })
 
   # Add text everytime successful import
-  observeEvent(input$import, {
-    insertUI(
-      selector = "#import",
-      where = "afterEnd",
-      ui = h4(paste("Successful import of '", str_replace(input$selectFile, paste0(submittedDataDir,"/"), ""), "' to the BRCWQDM Database!"))
-    )
-  })
+  # observeEvent(input$import, {
+  #   insertUI(
+  #     selector = "#import",
+  #     where = "afterEnd",
+  #     ui = h4(import_msg)
+  #   )
+  # })
 
 ### INSTRUCTION ####
     output$instructions <- renderText({
@@ -1606,6 +1661,21 @@ data_c_db <- readRDS(data_c_RDS)
       "3. ")
     })
 
+ ### BUSY MODAL ####
+ busyModal <- function(msg){
+    modalDialog(
+      size = "s",
+      fluidPage(
+        useShinyjs(),
+        includeCSS("www/animate.min.css"),
+        includeCSS("www/animate.css"),
+        h2(class = "animated infinite pulse", msg)
+        )
+    )
+  }
+
+
+### MODULE CALLS ####
 callModule(ADD_COMMENT, "add_comment_physical",
            input_section = "physical",
            site = input$site,
@@ -1618,6 +1688,11 @@ callModule(ADD_COMMENT, "add_comment_depth",
            sampler = samplersRX)
 callModule(ADD_COMMENT, "add_comment_chemical",
            input_section = "chemical",
+           site = input$site,
+           comment_date = input$date,
+           sampler = samplersRX)
+callModule(ADD_COMMENT, "add_comment_other",
+           input_section = c("chemical","physical","depth"),
            site = input$site,
            comment_date = input$date,
            sampler = samplersRX)

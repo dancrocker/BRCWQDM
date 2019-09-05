@@ -144,10 +144,7 @@ observeEvent(input$add_comment_mod, {
      # This comment button is for adding comments to staged data
         # User must select a row from the table to add a comment
     s <- df()[input$origTable_rows_selected,]
-
-     if(is.null(s)){
-       shinyalert("Oops!", "Click a record in the table to add a comment!.", type = "error")
-     } else {
+     if(!is.null(s)){
       showModal(modalDialog(
         h3("ADD COMMENT..."),
         "Add comment related to specific parameter or a general comment that applies to this sampling event.
@@ -161,7 +158,9 @@ observeEvent(input$add_comment_mod, {
           modalButton("Cancel")
       )
       ))
-     }
+    } else {
+      shinyalert("Oops!", "Click a record in the table to add a comment! Perhaps you were trying to add a comment to a data record and there are no comments upon which to comment?", type = "error")
+    }
    })
 
     saveComment_mod <- function(data, csvFile, rdsFile) {

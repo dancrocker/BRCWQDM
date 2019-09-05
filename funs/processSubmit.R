@@ -19,7 +19,7 @@ PROCESS1 <- function(){
 df_data <- read.table(stagedDataCSV, stringsAsFactors = FALSE, header = T,  sep = " " , na.strings = "NA")
 
 t_fields <- table_fields %>%
- filter(row_number() <= 31)
+ filter(row_number() <= 28)
 
 # Which columns have numeric data?
 num_cols <- t_fields$shiny_input[t_fields$col_type == "numeric"]
@@ -44,13 +44,23 @@ write.table(x = df_data, file = stagedDataCSV,
             qmethod = "d", append = FALSE)
 
 ### PROCESS COMMENTS ####
-df_comments <-read.table(stagedCommentsCSV, stringsAsFactors = FALSE, header = T,  sep = " " , na.strings = "NA")
-### Do any manipulations needed here...
+if (file.exists(stagedCommentsCSV)) {
+  df_comments <-read.table(stagedCommentsCSV, stringsAsFactors = FALSE, header = T,  sep = " " , na.strings = "NA")
+  if (nrow(df_comments) > 0) {
+  ### Do any manipulations needed here...
 
-### Overwrite the csv with the updates:
-write.table(x = df_comments, file = stagedCommentsCSV,
-            row.names = FALSE, na = "", quote = TRUE,
-            qmethod = "d", append = FALSE)
+  ### Overwrite the csv with the updates:
+  write.table(x = df_comments, file = stagedCommentsCSV,
+              row.names = FALSE, na = "", quote = TRUE,
+              qmethod = "d", append = FALSE)
+
+  } else {
+    df_comments <<- NULL
+  }
+
+} else {
+  df_comments <<- NULL
+}
 
 dfs <- list()
 dfs$data <- df_data
