@@ -846,23 +846,23 @@ samplersRX <- reactive({
   })
 # wea48RX <- reactive({
 #   req(input$wea48)
-#   paste(input$wea48, collapse = ";") %>% trimws()
+#   paste(input$wea48, collapse = "; ") %>% trimws()
 #   })
 # wea_nowRX <- reactive({
 #   req(input$wea_now)
-#   paste(input$wea_now, collapse = ";") %>% trimws()
+#   paste(input$wea_now, collapse = "; ") %>% trimws()
 #   })
 wat_appearRX <- reactive({
   req(input$wat_appear)
-  paste(input$wat_appear, collapse = ";") %>% trimws()
+  paste(input$wat_appear, collapse = "; ") %>% trimws()
   })
 erosionRX <- reactive({
   req(input$erosion)
-  paste(input$erosion, collapse = ";") %>% trimws()
+  paste(input$erosion, collapse = "; ") %>% trimws()
   })
 wat_odorRX <- reactive({
   req(input$wat_odor)
-  paste(input$wat_odor, collapse = ";") %>% trimws()
+  paste(input$wat_odor, collapse = "; ") %>% trimws()
   })
 
 depth_typeRX <- reactive({
