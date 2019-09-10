@@ -67,16 +67,28 @@ editableDT <- function(input, output, session,
   })
 
 
-  df=reactive({
-    if(is.null(input$result)){
-      df<-data()
-    } else if(input$result!="") {
-      df<-eval(parse(text=input$result))
-    }
-    else df<-data()
+  df <- reactive({
+      if(is.null(input$result)){
+        df <- data()
+      } else if(input$result!="") {
+        df <- eval(parse(text=input$result))
+      }
+    else df <- data()
     ### BOOKMARK ####
     df
   })
+
+
+#   observe({
+#     enable_comment <- nrow(df()) > 0
+#       print(enable_comment)
+#     # enable/disable the comment button
+#       if(nrow(df()) > 0){
+#     # shinyjs::toggleState(id = "add_comment_mod", condition = enable_comment)
+#       enable("add_comment_mod")
+#     }
+# })
+
 
   output$buttons <-renderUI({
     ns <- session$ns
@@ -86,7 +98,13 @@ editableDT <- function(input, output, session,
       # actionButton(ns("addRow"),"Add New",icon=icon("plus",lib="glyphicon")),
       # actionButton(ns("insertRow"),"Insert Row",icon=icon("hand-up",lib="glyphicon")),
       actionButton(ns("editData"),"Edit Data", icon=icon("wrench",lib="glyphicon")),
+     if(data_name %in% c("stagedData", "submittedData")){
+       # if(nrow(df() >0)){
+      # disabled(actionButton(ns("add_comment_mod"), "Add Comment", icon=icon("pencil",lib="glyphicon")))
+       # } else {
       actionButton(ns("add_comment_mod"), "Add Comment", icon=icon("pencil",lib="glyphicon"))
+       # }
+     }
       # if(amode==1) actionButton(ns("newCol"),"New Col",icon=icon("plus-sign",lib="glyphicon")),
       # if(amode==1) actionButton(ns("removeCol"),"Remove Col",icon=icon("trash",lib="glyphicon")),
       # if(amode==1) actionButton(ns("dplyr"),"Manipulate",icon=icon("scissors",lib="glyphicon")),
@@ -94,6 +112,10 @@ editableDT <- function(input, output, session,
       # if(amode==2) actionButton(ns("restore"),"Restore",icon=icon("heart",lib="glyphicon"))
     )
   })
+
+  observe({
+        toggleState(id = "delRow", condition = nrow(df()[input$origTable]) > 0)
+      })
 
 
   output$origTable <- DT::renderDT({
@@ -143,8 +165,11 @@ observeEvent(input$add_comment_mod, {
     ns <- session$ns
      # This comment button is for adding comments to staged data
         # User must select a row from the table to add a comment
-    s <- df()[input$origTable_rows_selected,]
-     if(!is.null(s)){
+    ids <- input$origTable_rows_selected
+    # s <- df()[input$origTable_rows_selected,]
+    # print(s)
+    # print(class(s))
+     if(length(ids) > 0){
       showModal(modalDialog(
         h3("ADD COMMENT..."),
         "Add comment related to specific parameter or a general comment that applies to this sampling event.
@@ -159,7 +184,7 @@ observeEvent(input$add_comment_mod, {
       )
       ))
     } else {
-      shinyalert("Oops!", "Click a record in the table to add a comment! Perhaps you were trying to add a comment to a data record and there are no comments upon which to comment?", type = "error")
+      shinyalert("Oops!", "Click a record in the table to add a comment!", type = "error")
     }
    })
 
@@ -181,16 +206,22 @@ observeEvent(input$add_comment_mod, {
 formatComment_mod <- function(){
   if(input$FM_comment == TRUE){
     commenter <- switch(data_name,
-              "stagedData" = df()[input$origTable_rows_selected, 3],
-              "stagedComments" = df()[input$origTable_rows_selected, 4],
-              "submittedData" = df()[input$origTable_rows_selected, 3],
-              "submittedComments" = df()[input$origTable_rows_selected, 4]
+              "stagedData" = df()[input$origTable_rows_selected, 4],
+              "stagedComments" = df()[input$origTable_rows_selected, 5],
+              "submittedData" = df()[input$origTable_rows_selected, 4],
+              "submittedComments" = df()[input$origTable_rows_selected, 5]
     )
   } else {
     commenter <- app_user
   }
-  site_comm <- df()[input$origTable_rows_selected, 2]
-  date_comm <- df()[input$origTable_rows_selected, 1] %>%
+  site_comm <- switch(data_name,
+              "stagedData" = df()[input$origTable_rows_selected, 3],
+              "stagedComments" = df()[input$origTable_rows_selected, 1],
+              "submittedData" = df()[input$origTable_rows_selected, 3],
+              "submittedComments" = df()[input$origTable_rows_selected, 1]
+    )
+
+  date_comm <- df()[input$origTable_rows_selected, 2] %>%
     str_trunc(width = 10, side = "right", ellipsis = "")
 
   comment <- tibble(SITE = site_comm, DATE = date_comm, PARAMETER = input$comment_par,
@@ -310,7 +341,7 @@ observeEvent(input$save_comment,{
       #x[ids,i]=input[[myname[i]]]
       if("character" %in% class(x[ids,i])){
         # levels(x[ids,i]) <- unique(c(levels(x[ids,i]), newlevel()))
-        try(x[ids,i] <- paste0(input[[myname[i]]], collapse = ";") %>% trimws())
+        try(x[ids,i] <- paste0(input[[myname[i]]], collapse = "; ") %>% trimws())
       } else {
         try(x[ids,i] <- input[[myname[i]]])
       }
@@ -506,12 +537,28 @@ observeEvent(input$save_comment,{
   })
 
   observeEvent(input$editData,{
+    ns <- session$ns
     ids <- input$origTable_rows_selected
-    if(length(ids)==1) updateNumericInput(session,"no",value=ids)
-    else if(input$no>nrow(df())) updateNumericInput(session,"no",value=1)
-    #updateCheckboxInput(session,"showEdit",value=TRUE)
-    editData2()
-    updateNumericInput(session,"page",value=(ids-1)%/%10+1)
+     if(length(ids)>0){
+      if(length(ids)==1){
+        updateNumericInput(session,"no",value=ids)
+      } else {
+        #updateCheckboxInput(session,"showEdit",value=TRUE)
+       updateNumericInput(session,"no",value=1)
+      }
+
+      editData2()
+      updateNumericInput(session,"page",value=(ids-1)%/%10+1)
+    } else {
+        showModal(
+          modalDialog(
+            title = "Edit data...",
+            "There is no data selected to edit! Press 'Esc' or Press 'OK' button",
+            easyClose = TRUE,
+            footer=modalButton("OK")
+          )
+        ) #End Modal
+    }
   })
 
   editData2=reactive({

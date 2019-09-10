@@ -125,9 +125,11 @@ if (user_role == "Program Coordinator"){
     } else {
   files <- drop_dir(path = paste0(dropb_root_dir, "/Submitted_Data_Staging"), recursive = FALSE, dtoken = drop_auth(rdstoken = tokenpath))
   # files <- dir_listing$result["name"] %>% unlist()
+  if (length(files) > 0){
   files <- files$name
+  }
   local_data_dir <- paste0(config[1],"Data/SubmittedData")
-  if(files %>%  length() %>% as.numeric() > 0){
+  if(files %>% length() %>% as.numeric() > 0){
     ### Check if we already have the submitted files locally
        if(all(files %in% list.files(submittedDataDir))){
          print("All submitted files found on Dropbox were previously downloaded")

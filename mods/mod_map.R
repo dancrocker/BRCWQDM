@@ -75,6 +75,17 @@ BRCMAP <- function(input, output, session, sitelist) {
                            domain = factor(df_site$MapFactor, levels = map_levels),
                            ordered = TRUE)
 
+# Spatial Data
+
+      # bs_huc8 <- readOGR("gis/Blackstone_HUC8.shp") %>%
+      # spTransform(CRS("+proj=longlat +ellps=GRS80"))
+      #
+      # bs_huc10 <- readOGR("gis/Blackstone_HUC10.shp") %>%
+      # spTransform(CRS("+proj=longlat +ellps=GRS80"))
+
+      bs_huc12 <- readOGR("gis/Blackstone_HUC12.shp", verbose = FALSE) %>%
+      spTransform(CRS("+proj=longlat +ellps=GRS80"))
+
 # Map
 
   output$map <- renderLeaflet({
@@ -90,20 +101,20 @@ BRCMAP <- function(input, output, session, sitelist) {
       addTiles() %>%
        addProviderTiles(input$map_type,
                            options = providerTileOptions(noWrap = TRUE)) %>%
-      # Basemap (World Imagery from ESRI)
-      # addProviderTiles(providers$Esri.WorldImagery,
-      #                  options = providerTileOptions(noWrap = TRUE)) %>%
+
       # Watershed Boundary
-      # addPolygons(data = QWW,
-      #             layerId = QWW,
-      #             color = "white", # "#00008B",
-      #             weight = 2, smoothFactor = 0.5,
-      #             opacity = 0.7, fillOpacity = .1,
-      #             fillColor = "#00008B") %>%  # ,
+      addPolygons(data = bs_huc12,
+                  layerId = bs_huc12,
+                  color = "red", # "#00008B",
+                  weight = 2, smoothFactor = 0.5,
+                  opacity = 0.9, fillOpacity = 0.1,
+                  label = ~Name,
+                  fillColor = "#00008B",#) %>%
                   # Removed Highlighting due to BringToFront interferring with circle Markers
-                  #highlightOptions = highlightOptions(color = "white",
-                                                      #weight = 2,
-                                                      #bringToFront = TRUE)) %>%
+                  highlightOptions = highlightOptions(color = "white",
+                                          weight = 2,
+                                          bringToFront = FALSE)) %>%
+       # %>%
       # Site Location Markers
       addCircleMarkers(
         lng = ~LONGITUDE, lat = ~LATITUDE,
@@ -121,6 +132,7 @@ BRCMAP <- function(input, output, session, sitelist) {
         weight = 3,
         opacity = 0.8,
         fillOpacity = 0.4) %>%
+
       # Legend
       leaflet::addLegend(
                 position = "topright",

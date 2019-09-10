@@ -34,7 +34,7 @@ ipak <- function(pkg){
 packages <- c("shiny","shinyjs", "shinyFiles", "shinyTime", "shinyalert","shinydashboard","rmarkdown", "knitr", "tidyselect", "lubridate",
               "plotly", "leaflet", "RColorBrewer", "devtools", "data.table", "DT", "scales", "stringr", "shinythemes", "ggthemes", "tidyr",
               "dplyr", "magrittr", "httr", "tibble", "bsplus", "readxl", "miniUI", "rstudioapi", "rdrop2", "readr", "purrr", "htmlwidgets", "ggplot2",
-              "pool", "mailR")
+              "pool", "mailR", "rgdal")
 suppressPackageStartupMessages(
   ipak(packages)
 )
@@ -119,9 +119,10 @@ sites_db <- sites_db %>%
 sites <<- sites_db$BRC_CODE
 names(sites) <- paste0(sites_db$WATERBODY_NAME, " - ", sites_db$SITE_NAME, " (", sites_db$BRC_CODE, ")")
 sites <<- sites
+
 samplers <<-  assignments_db %>%
   filter(ROLE == "Field", YEAR ==  year(Sys.Date())) %>%
-  .$NAME
+  .$NAME %>% sort()
 
 wea_choices <<- c("Storm (heavy rain)", "Rain (steady rain)",
                  "Showers (intermittent rain)", "Overcast","Clear/Sunny", "Other","Not Recorded")
@@ -563,8 +564,9 @@ ui <-tagList(
            column(2, imageOutput("zap_logo7", height = 80), align = "right")
          ),
       fluidRow(column(12,
-                  h2("Instructions and Data Processing Workflow", align = "center"),
-                  verbatimTextOutput("instructions")
+
+                  h2("Instructions and Data Processing Workflow", align = "center")#,
+                    # htmlOutput("instructions")
       )
       )            ### Perhaps this should be a markdown doc
     )
@@ -840,7 +842,7 @@ SampleDT <- reactive({paste0(strftime(input$date, "%Y-%m-%d"), " ", strftime(inp
 ### CONVERT MULIPLE SELECT INPUTS TO 1 STRING ####
 samplersRX <- reactive({
   req(input$sampler)
-  paste(input$sampler, collapse = ";") %>% trimws()
+  paste(input$sampler, collapse = "; ") %>% trimws()
   })
 # wea48RX <- reactive({
 #   req(input$wea48)
@@ -944,6 +946,14 @@ observeEvent(input$enter, {
     shinyjs::hide("enter_msg")
   })
 })
+
+
+observe({
+  input$enter
+   updateRadioButtons(session, "wea48", "Weather Last 48 Hours (P01):", choices = wea_choices, selected = character(0))
+   updateRadioButtons(session, "wea_now", "Weather at time of sample (P02):", choices = wea_choices, selected = character(0))
+   updateRadioButtons(session, "wat_nav", "Nuisance Aquatic Vegetation (NAV) (P09):", choices = wat_NAV_choices, selected = character(0))
+})
 # action to take when enter button is pressed
 # observeEvent(input$enter, {
 #   saveData(formData())
@@ -969,9 +979,7 @@ observeEvent(input$enter, {
 #     # formatDate("SampleDateTime", method = "toLocaleString")
 #    }
 
-###
-
-### COMMENT MODAL ####
+### COMMENT CHOICES ####
 comment_par_choices <<- c("General Comment", data_fields$dt_cols[data_fields$take_comments =="yes"])
 
   ### save to RDS and CSV ####
@@ -1615,51 +1623,11 @@ rxdata$data_c_db <- readRDS(data_c_RDS)
   #   )
   # })
 
-### INSTRUCTION ####
-    output$instructions <- renderText({
-      paste0(
-      "APPLICATION OVERVIEW:\n",
-        "      .\n",
-        "      .\n",
-        "      .\n",
-        "      .\n",
-      "DATA ENTRY:\n",
-      "1. Starting on the DATA ENTRY page enter field and lab results within each data section.\n",
-      "2. You will not be allowed to enter the complete data record until the required fields are entered (red asterisk).\n",
-      "3. Multiple selections are allowed for some fields.\n",
-      "4. If 'Not Recorded' is selected it will clear and prevent any other selections for that field. You must toggle off 'Not Recorded'\n",
-      "if you want to change your selection.\n",
-      "5. If 'Other' is selected you will be prompted to provided a comment for that parameter. This is required for all choices of 'Other'.\n",
+### INSTRUCTIONS ####
 
-      "      .\n",
-        "      .\n",
-      "ADDING COMMENTS:\n",
-        "      .\n",
-        "      .\n",
-        "      .\n",
-        "      .\n",
-      "SUBMITTING ENTERED RECORDS:\n",
-        "      .\n",
-        "      .\n",
-        "      .\n",
-        "      .\n",
-            "SUBMITTING ENTERED RECORDS:\n",
-        "      .\n",
-        "      .\n",
-        "      .\n",
-        "      .\n",
-            "SUBMITTING ENTERED RECORDS:\n",
-        "      .\n",
-        "      .\n",
-        "      .\n",
-        "      .\n",
-            "SUBMITTING ENTERED RECORDS:\n",
-        "      .\n",
-        "      .\n",
-        "      .\n",
-        "      .\n",
-      "3. ")
-    })
+  # output$instructions <- renderUI({
+  #   includeHTML("www/instructions.html")
+  # })
 
  ### BUSY MODAL ####
  busyModal <- function(msg){
