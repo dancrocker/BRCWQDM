@@ -565,10 +565,10 @@ ui <-tagList(
          ),
       fluidRow(column(12,
 
-                  h2("Instructions and Data Processing Workflow", align = "center")#,
-                    # htmlOutput("instructions")
+                  h2("Instructions and Data Processing Workflow", align = "center"),
+                    htmlOutput("instructions")
       )
-      )            ### Perhaps this should be a markdown doc
+      )
     )
   ) # End navbar page
 )
@@ -1625,9 +1625,9 @@ rxdata$data_c_db <- readRDS(data_c_RDS)
 
 ### INSTRUCTIONS ####
 
-  # output$instructions <- renderUI({
-  #   includeHTML("www/instructions.html")
-  # })
+  output$instructions <- renderUI({
+    includeHTML("www/instructions.html")
+  })
 
  ### BUSY MODAL ####
  busyModal <- function(msg){
