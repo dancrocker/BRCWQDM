@@ -842,7 +842,7 @@ SampleDT <- reactive({paste0(strftime(input$date, "%Y-%m-%d"), " ", strftime(inp
 ### CONVERT MULIPLE SELECT INPUTS TO 1 STRING ####
 samplersRX <- reactive({
   req(input$sampler)
-  paste(input$sampler, collapse = "; ") %>% trimws()
+  paste0(input$sampler, collapse = "; ") %>% trimws()
   })
 # wea48RX <- reactive({
 #   req(input$wea48)
@@ -854,15 +854,15 @@ samplersRX <- reactive({
 #   })
 wat_appearRX <- reactive({
   req(input$wat_appear)
-  paste(input$wat_appear, collapse = "; ") %>% trimws()
+  paste0(input$wat_appear, collapse = "; ") %>% trimws()
   })
 erosionRX <- reactive({
   req(input$erosion)
-  paste(input$erosion, collapse = "; ") %>% trimws()
+  paste0(input$erosion, collapse = "; ") %>% trimws()
   })
 wat_odorRX <- reactive({
   req(input$wat_odor)
-  paste(input$wat_odor, collapse = "; ") %>% trimws()
+  paste0(input$wat_odor, collapse = "; ") %>% trimws()
   })
 
 depth_typeRX <- reactive({
