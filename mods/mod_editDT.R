@@ -137,11 +137,9 @@ editableDT <- function(input, output, session,
     )
   })
 
-  # commenter_choices <- reactive({
-  #  c(df()[input$origTable_rows_selected,][4], app_user)
-  # })
 
-  commenter_choices <- app_user
+
+  # commenter_choices <- app_user
 
   # print the selected indices
   output$record = renderPrint({
@@ -392,6 +390,7 @@ observeEvent(input$save_comment,{
                        "yes" = TRUE,
                        "no" = FALSE)
         width <- table_fields$input_width[table_fields$dt_cols == myname]
+        commenter_choices <- c(mydf2[input$no ,4], app_user)
 
         if(type == "factor"){
           if(mult == TRUE){
@@ -491,6 +490,8 @@ observeEvent(input$save_comment,{
                        "yes" = TRUE,
                        "no" = FALSE)
         width <- table_fields$input_width[table_fields$dt_cols == myname]
+        commenter_choices <- c(mydf2[input$no ,4], app_user)
+
 ### Note: connot update levels of factors during edit - use table-fields to pick which input style for each variable
         # Try changing sampler to character type so that the choices can be updated during edit mode.
 
