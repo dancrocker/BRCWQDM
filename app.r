@@ -278,9 +278,9 @@ ui <-tagList(
                   column(width = 12,
                     fluidRow(
                       column(width = 3,
-                          radioButtons("wea48", "Weather Last 48 Hours (P01):", choices = wea_choices, selected = character(0)),
+                          radioButtons("wea48", "Weather Last 48 Hours (P01):", choices = wea_choices, selected = "Not Recorded"),
                           textAreaInput("comm_P01", labelMandatory("Comments for Weather Last 48 Hours (P01):"), placeholder = "Describe 'other'"),
-                          radioButtons("wea_now", "Weather at time of sample (P02):", choices = wea_choices, selected = character(0)),
+                          radioButtons("wea_now", "Weather at time of sample (P02):", choices = wea_choices, selected = "Not Recorded"),
                           textAreaInput("comm_P02", labelMandatory("Comments for Weather at time of Sample (P02):"), placeholder = "Describe 'other'"),
                           numericInput("temp_air","Ending Air Temperature (C) (P03):",
                                        value = NULL, min = -20, max = 40, step = 0.5),
@@ -291,7 +291,7 @@ ui <-tagList(
                         column(width = 3,
                           checkboxGroupInput("wat_appear", "Water Appearance (P05):", choices = wat_appear_choices),
                           textAreaInput("comm_P05", labelMandatory("Comments for Water Appearance (P05):"), placeholder = "Describe 'other'"),
-                          checkboxGroupInput("wat_trash", "Presence of Trash (P06):", choices = wat_trash_choices)
+                          radioButtons("wat_trash", "Presence of Trash (P06):", choices = wat_trash_choices, selected = "Not Recorded")
                         ),
                         column(width = 3,
                           checkboxGroupInput("erosion", "Stream bank/infrastructure erosion (P07):", choices = wat_erosion_choices),
@@ -300,8 +300,8 @@ ui <-tagList(
                           textAreaInput("comm_P08", labelMandatory("Comments for Water Odor (P08):"), placeholder = "Describe 'other'")
                         ),
                         column(width = 3,
-                          radioButtons("wat_nav", "Nuisance Aquatic Vegetation (NAV) (P09):", choices = wat_NAV_choices, selected = character(0)),
-                          checkboxGroupInput("wat_clarity", "Water Clarity (P10)", choices = wat_clarity_choices),
+                          radioButtons("wat_nav", "Nuisance Aquatic Vegetation (NAV) (P09):", choices = wat_NAV_choices, selected = "Not Recorded"),
+                          radioButtons("wat_clarity", "Water Clarity (Visual Turbidity) (P10)", choices = wat_clarity_choices, selected = "Not Recorded"),
                           numericInput("lab_turb","Lab Turbidity (NTU) (P11.A):", value = NULL, min = 0, max = 2500, step = 0.5),
                           numericInput("lab_turb_rep","Lab Turbidity Replicate (NTU) (P11.B):", value = NULL, min = 0, max = 2500, step = 0.5)
                         )
@@ -379,7 +379,7 @@ ui <-tagList(
                 div(br(), tags$b("Error: "), span(id = "error_msg"))
             )
           )
-        ), # End div
+    ), # End div
         shinyjs::hidden(
           div(
             id = "thankyou_msg",
@@ -947,13 +947,21 @@ observeEvent(input$enter, {
   })
 })
 
+update_inputs <- function(){
+   updateRadioButtons(session, "wea48", "Weather Last 48 Hours (P01):", choices = wea_choices, selected = "Not Recorded")
+   updateRadioButtons(session, "wea_now", "Weather at time of sample (P02):", choices = wea_choices, selected = "Not Recorded")
+   updateRadioButtons(session, "wat_nav", "Nuisance Aquatic Vegetation (NAV) (P09):", choices = wat_NAV_choices, selected = "Not Recorded")
+   updateRadioButtons(session, "wat_clarity", "Water Clarity (Visual Turbidity) (P10)", choices = wat_clarity_choices, selected = "Not Recorded")
+   updateRadioButtons(session, "wat_trash", "Presence of Trash (P06):", choices = wat_trash_choices, selected = "Not Recorded")
+   updateDateInput(session, "date", labelMandatory("Sample Date:"), value = today())
+   updateTimeInput(session, "time", labelMandatory("Sample Starting Time (24-hr format):"), value = strptime("00:00", "%H:%M"))
+}
 
 observe({
-  input$enter
-   updateRadioButtons(session, "wea48", "Weather Last 48 Hours (P01):", choices = wea_choices, selected = character(0))
-   updateRadioButtons(session, "wea_now", "Weather at time of sample (P02):", choices = wea_choices, selected = character(0))
-   updateRadioButtons(session, "wat_nav", "Nuisance Aquatic Vegetation (NAV) (P09):", choices = wat_NAV_choices, selected = character(0))
-})
+update_inputs()
+  })
+
+
 # action to take when enter button is pressed
 # observeEvent(input$enter, {
 #   saveData(formData())
