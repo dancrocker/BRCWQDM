@@ -77,6 +77,7 @@ importEmail <- function(){
     # Get field coordinator names
   fc <- filter(assignments_db, YEAR == yr,
                ROLE == "Field Coordinator") %>% .$NAME
+  fc <- fc[1] # Delete when app is in full use
   # Get field coordinator names
   fc_email <- people_db$EMAIL[people_db$FULL_NAME %in% fc]
 

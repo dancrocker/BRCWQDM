@@ -390,7 +390,7 @@ observeEvent(input$save_comment,{
                        "yes" = TRUE,
                        "no" = FALSE)
         width <- table_fields$input_width[table_fields$dt_cols == myname]
-        commenter_choices <- c(mydf2[input$no ,4], app_user)
+        commenter_choices <- c(mydf2[input$no ,4], app_user) %>% unique()
 
         if(type == "factor"){
           if(mult == TRUE){
@@ -490,7 +490,7 @@ observeEvent(input$save_comment,{
                        "yes" = TRUE,
                        "no" = FALSE)
         width <- table_fields$input_width[table_fields$dt_cols == myname]
-        commenter_choices <- c(mydf2[input$no ,4], app_user)
+        commenter_choices <- c(mydf2[input$no ,4], app_user) %>% unique()
 
 ### Note: connot update levels of factors during edit - use table-fields to pick which input style for each variable
         # Try changing sampler to character type so that the choices can be updated during edit mode.
