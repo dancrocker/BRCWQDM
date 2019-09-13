@@ -206,7 +206,7 @@ c_file <- str_replace(d_file,"_SubmittedData_","_SubmittedComments_")
 
 ### List local csv files
 
-d_csv <- data_file
+d_csv <- str_replace(data_file, pattern = "SubmittedData","Imported_Data")
 c_csv <- str_replace(d_csv,"_SubmittedData_","_SubmittedComments_")
 
 dropb_root_dir <- config[12]
@@ -216,6 +216,8 @@ data_from_path <-  paste0(dropb_root_dir, "/Submitted_Data_Staging/", d_file)
 comment_from_path <- paste0(dropb_root_dir, "/Submitted_Data_Staging/", c_file)
 data_to_path <-  paste0(dropb_root_dir, "/Imported_Data_Archive/", d_file)
 comment_to_path <-   paste0(dropb_root_dir, "/Imported_Data_Archive/", c_file)
+drop_path <- "BRCWQDM/Imported_Data_Archive"
+
 # print(data_from_path)
 # print(comment_from_path)
 
@@ -230,8 +232,8 @@ if (FALSE %in% dir_listing$result) {
   } else {
   files <- drop_dir(path = paste0(dropb_root_dir, "/Submitted_Data_Staging"), recursive = FALSE, dtoken = drop_auth(rdstoken = tokenpath))
 
-    if (data_from_path %in% files$path_display & file.exists(d_csv)) {
-      drop_upload(file = d_csv, path = data_to_path, mode = "overwrite",
+      if (data_from_path %in% files$path_display & file.exists(d_csv)) {
+      drop_upload(file = d_csv, path = drop_path, mode = "overwrite",
               verbose = TRUE, dtoken = drop_auth(rdstoken = tokenpath))
 
       drop_delete(path = data_from_path, dtoken = drop_auth(rdstoken = tokenpath))
@@ -241,7 +243,7 @@ if (FALSE %in% dir_listing$result) {
     }
 
     if (comment_from_path %in% files$path_display & file.exists(c_csv)) {
-      drop_upload(file = c_csv, path = comment_to_path, mode = "overwrite",
+      drop_upload(file = c_csv, path = drop_path, mode = "overwrite",
               verbose = TRUE, dtoken = drop_auth(rdstoken = tokenpath))
 
       drop_delete(path = comment_from_path, dtoken = drop_auth(rdstoken = tokenpath))

@@ -220,7 +220,6 @@ trans_log <- data %>%
   mutate("ID" = lastTransLogID + row_number()) %>%
   select(col_trans_log)
 
-
 # Add all dfs to import to a list
 
 dfs <- list()
@@ -234,11 +233,11 @@ dfs <- list()
 return(dfs)
 }
 
-# dfs <- PROCESS2(data_file =  paste0(submittedDataDir,"/","Mid-Reach_SubmittedData_2019-09-04.csv"))
+# dfs <- PROCESS2(data_file =  paste0(submittedDataDir,"/","Mid-Reach_SubmittedData_2019-09-12.csv"))
 
 IMPORT_DATA <- function(dfs){
 data_file <- input$selectFile
-# data_file <-  paste0(submittedDataDir,"/","Mid-Reach_SubmittedData_2019-09-04.csv")
+# data_file <-  paste0(submittedDataDir,"/","Mid-Reach_SubmittedData_2019-09-12.csv")
 data_csv <- data_file
 comment_csv <- str_replace(data_csv,"_SubmittedData_","_SubmittedComments_")
 # print(data_csv)
@@ -254,13 +253,10 @@ poolWithTransaction(pool, function(conn) {
     dbWriteTable(pool, DBdataNumTbl, value = dfs$data_n, append = TRUE)
     dbWriteTable(pool, DBdataTextTbl, value = dfs$data_t, append = TRUE)
     dbWriteTable(pool, DBtransLog, value = dfs$trans_log, append = TRUE)
+   if (!is.null(dfs$data_c)){
+     dbWriteTable(pool, DBdataCommentTbl, value = dfs$data_c, append = TRUE)
+   }
   })
-
-if (!is.null(dfs$data_c)){
-poolWithTransaction(pool, function(conn){
-    dbWriteTable(pool, DBdataCommentTbl, value = dfs$data_c, append = TRUE)
-})
-}
 
 ########################################################################.
 ###                  SAVE RDS FILES LOCALLY                         ####

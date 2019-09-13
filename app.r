@@ -1498,7 +1498,7 @@ rxdata$data_c_db <- readRDS(data_c_RDS)
   })
 
     output$data_comment_db <- renderDataTable({
-    req(!is.null(rxdata$data_C_db))
+    req(!is.null(rxdata$data_c_db))
     rxdata$data_c_db
   })
 
@@ -1561,7 +1561,10 @@ rxdata$data_c_db <- readRDS(data_c_RDS)
     if (out == 1){
       removeModal()
       import_msg <<- paste0("Import Failed!  There was a error ... Check log file and review submitted data files and existing database records.")
-      print(import_msg)
+      showModal(modalDialog(
+          title = "Import Failed...",
+          h4(import_msg)
+        ))
       } else {
       removeModal()
       import_msg <<- paste0("Successful import of '", str_replace(input$selectFile, paste0(submittedDataDir,"/"), ""), "' to the BRCWQDM Database!")
