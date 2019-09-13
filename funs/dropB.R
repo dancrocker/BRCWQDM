@@ -201,9 +201,13 @@ GET_DATABASE_DATA <- function(){
 
 ARCHIVE_SUBMITTED_DATA <- function(data_file){
  ### List Drop Box files ####
-
 d_file <- str_replace(data_file, pattern = paste0(submittedDataDir,"/"),"")
 c_file <- str_replace(d_file,"_SubmittedData_","_SubmittedComments_")
+
+### List local csv files
+
+d_csv <- data_file
+c_csv <- str_replace(d_csv,"_SubmittedData_","_SubmittedComments_")
 
 dropb_root_dir <- config[12]
 # From/To paths
@@ -225,18 +229,22 @@ if (FALSE %in% dir_listing$result) {
   ))
   } else {
   files <- drop_dir(path = paste0(dropb_root_dir, "/Submitted_Data_Staging"), recursive = FALSE, dtoken = drop_auth(rdstoken = tokenpath))
-  data_from_path
-  files$path_display
 
-    if (data_from_path %in% files$path_display) {
-      drop_move(from_path = data_from_path, to_path = data_to_path, dtoken = drop_auth(rdstoken = tokenpath))
+    if (data_from_path %in% files$path_display & file.exists(d_csv)) {
+      drop_upload(file = d_csv, path = data_to_path, mode = "overwrite",
+              verbose = TRUE, dtoken = drop_auth(rdstoken = tokenpath))
+
+      drop_delete(path = data_from_path, dtoken = drop_auth(rdstoken = tokenpath))
       print(paste0("The data csv file '", d_file, "'  was moved to the Imported Data Archive folder"))
     } else {
       print("The submitted data file on Dropbox was not found and could not be moved to the archive folder!")
     }
 
-    if (comment_from_path %in% files$path_display) {
-      drop_move(from_path = comment_from_path,  to_path = comment_to_path, dtoken = drop_auth(rdstoken = tokenpath))
+    if (comment_from_path %in% files$path_display & file.exists(c_csv)) {
+      drop_upload(file = c_csv, path = comment_to_path, mode = "overwrite",
+              verbose = TRUE, dtoken = drop_auth(rdstoken = tokenpath))
+
+      drop_delete(path = comment_from_path, dtoken = drop_auth(rdstoken = tokenpath))
       print(paste0("The comment csv file '", c_file, "'  was moved to the Imported Data Archive folder"))
     } else {
       print("The submitted comment file on Dropbox was not found and could not be moved to the archive folder!")
@@ -246,8 +254,9 @@ if (FALSE %in% dir_listing$result) {
 
 # Run function manually:
 ### input$selectFile in shiny app enter SubmittedData filename to use manually
-# ARCHIVE_SUBMITTED_DATA(data_file = "Mid-Reach_SubmittedData_2019-08-07.csv")
-# data_file <-  "Mid-Reach_SubmittedData_2019-08-07.csv"
+# ARCHIVE_SUBMITTED_DATA(data_file = "Mid-Reach_SubmittedData_2019-09-12.csv")
+# data_file <-  paste0(submittedDataDir,"/Mid-Reach_SubmittedData_2019-09-12.csv")
+# data_file
 
 UPLOAD_RDS <- function(){
 ### This function will upload the database RDS files to Dropbox

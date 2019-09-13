@@ -69,7 +69,7 @@ poolClose(pool)
 
 ### PROCESS SUBMITTED DATA ####
 
-data_file =  paste0(submittedDataDir,"/","Mid-Reach_SubmittedData_2019-09-05.csv")
+# data_file =  paste0(submittedDataDir,"/","Mid-Reach_SubmittedData_2019-09-12.csv")
 
 PROCESS2 <- function(data_file){
 
@@ -135,11 +135,12 @@ data <- df_data %>%
 data$RESULT <- recode(data$RESULT, "TRUE" = "1", "FALSE" = "0")
 data$PARAMETER <- parameters_db$PARAMETER_NAME[match(data$PARAMETER,parameters_db$SHINY_OBJ)]
 
-### Filter out Null Replicates
+### Filter out null Replicates and any null water depths for No_datum sites
 rep_pars <- parameters_db$PARAMETER_NAME[str_detect(parameters_db$PARAMETER_NAME, pattern = "Replicate")]
 
 data <- data %>%
-   filter(!(PARAMETER %in% rep_pars & RESULT != -999999))
+   filter(!(PARAMETER %in% rep_pars & RESULT == -999999),
+          !(PARAMETER == "Water Depth" & RESULT == -999999))
 
 ### NA Parameters are those that don't match parameters table
 # QC check boxes mostly
