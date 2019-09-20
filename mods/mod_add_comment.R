@@ -22,7 +22,7 @@ ADD_COMMENT <- function(input, output, session, input_section, site, comment_dat
     ns <- session$ns
     # req(input$site, SampleDT())
     if(site == ""| is.null(comment_date) | is.null(sampler)){
-      shinyalert("Oops!", "A Site and Date and Sampler must be selected to add a comment!.", type = "error")
+      shinyalert("Oops!", "A Site, Date-Time and Sampler must be selected to add a comment!.", type = "error")
     } else {
       showModal(modalDialog(
         h3("ADD COMMENT..."),

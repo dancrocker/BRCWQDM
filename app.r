@@ -569,9 +569,18 @@ ui <-tagList(
                     htmlOutput("instructions")
       )
       )
+    ),
+    ### ADMIN TOOLS ####
+    tabPanel("ADMIN TOOLS",
+        fluidRow(
+           column(2, imageOutput("brc_logo8", height = 80), align = "left"),
+           column(8,  h2("Admin Tools", align = "center")),
+           column(2, imageOutput("zap_logo8", height = 80), align = "right")
+         ),
+    uiOutput("admin_tools.UI")
     )
   ) # End navbar page
-)
+  )
 ) # End UI - taglist
 
 ####################################################.
@@ -598,6 +607,12 @@ if(app_user %in% user_list){
 ### Set User Role ####
 user_role <<- filter(assignments_db, YEAR == year(Sys.Date()), NAME == app_user) %>% .$ROLE
 # user_role <<- "Field Coordinator"
+
+if(user_role %in% c("App Developer", "Program Coordinator")){
+      shinyjs::show("ADMIN TOOLS")
+} else {
+      shinyjs::hide("ADMIN TOOLS")
+}
 
 ### Download submitted data from dropbox ####
 GET_SUBMITTED_DATA()
@@ -999,7 +1014,6 @@ comment_par_choices <<- c("General Comment", data_fields$dt_cols[data_fields$tak
                 row.names = FALSE, col.names = TRUE, quote = TRUE,
                 qmethod = "d", append = FALSE)
     # loadData()
-    # shinyalert(title = "Saved!", type = "success")
      ### Read the updated table back and refresh the DT
      data <- read.table(stagedDataCSV, stringsAsFactors = FALSE, header = T,  sep = " " , na.strings = "NA")
      df <- data_csv2df(data, data_fields) ### saves RDS file as data.frame
@@ -1227,14 +1241,6 @@ output$submitted_comments_dt <- renderDataTable(
                                     selection = "single",
                                     options = list(searching = TRUE, lengthChange = TRUE))
 )
-# Need to decide how this will work  -
-# For coordinators is there a need to see the data submitted within the app - this data is archived as csvs
-# For Program Manager - need to be able to see and edit submitted data before importing -
-# Need to pull submitted records from Dropbox (They will be csv files)
-
-# Convert to dataframes and display through mod_editDT module
-# Need a way to add comments to specific records
-# Another process button and an import button
 
 
 ########################################################################.
@@ -1468,7 +1474,8 @@ observeEvent(input$submit, {
     df_data_trans_log()
   })
 
-  ### DATABASE PAGE ####
+### DATABASE PAGE ####
+
 if (file.exists(data_n_RDS)){
 rxdata$data_n_db <- readRDS(data_n_RDS)
 } else {
@@ -1502,6 +1509,42 @@ rxdata$data_c_db <- readRDS(data_c_RDS)
     rxdata$data_c_db
   })
 
+### ADMIN TOOLS UI ####
+# Add buttton to update database rds files after database editing
+# Add buttons to enter volunteers/add roles?
+#
+
+output$admin_tools.UI <- renderUI({
+if (user_role %in% c("Program Coordinator", "App Developer")){
+  fluidRow(
+    column(6,
+           verbatimTextOutput("testing_mode_text"),
+           checkboxInput("testing_mode", label = "Turn on testing mode", value = FALSE),
+           verbatimTextOutput("update_db_text"),
+           actionButton(inputId = "update_db_rds",label = "UPDATE DATABASE TABLES", width = "245px", class="butt")
+    ))
+}
+})
+
+t_mode <<- reactive({
+  if(input$testing_mode == TRUE){
+     TRUE
+  } else {
+     FALSE
+  }
+})
+
+output$testing_mode_text <- renderText("Testing mode turns off all app email alerts")
+output$update_db_text <- renderText("Use this button after making updates or edits in the BRCWQ Database.")
+
+  observeEvent(input$update_db_rds, {
+    source("funs/BRCDB2RDS.R", local = T)
+    msg <- MAKE_DB_RDS()
+      showModal(modalDialog(
+          title = "Database file update ...",
+          h4(msg)
+      ))
+  })
 
   # Text for Process Data Error or Successful
   process.status2 <- reactive({
@@ -1579,6 +1622,7 @@ rxdata$data_c_db <- readRDS(data_c_RDS)
       print(paste0("Import Action Count was ", ImportActionCount()))
       ARCHIVE_SUBMITTED_DATA(data_file = input$selectFile)
       print(paste("Data file '", input$selectFile, "' archived."))
+      BACKUP_DATABASE()
       ImportEmail()
       loadData()
       loadComments()
@@ -1695,6 +1739,8 @@ callModule(BRCMAP, "brc_map", sitelist = sites_db)
   output$zap_logo6 <- renderImage({list(src = "www/zap_logo.gif", width= "76", height= "59")}, deleteFile = FALSE)
   output$brc_logo7 <- renderImage({list(src = "www/BRC_logo_River.jpg", width= "160", height= "80")}, deleteFile = FALSE)
   output$zap_logo7 <- renderImage({list(src = "www/zap_logo.gif", width= "76", height= "59")}, deleteFile = FALSE)
+  output$brc_logo8 <- renderImage({list(src = "www/BRC_logo_River.jpg", width= "160", height= "80")}, deleteFile = FALSE)
+  output$zap_logo8 <- renderImage({list(src = "www/zap_logo.gif", width= "76", height= "59")}, deleteFile = FALSE)
 
 ### SESSION END ####
 # Code to stop app when browser session window closes

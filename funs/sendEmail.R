@@ -40,7 +40,11 @@ submitEmail <- function(){
   # Sending email acct
   sender <- config[4]
   # Recipients
-  distro <- c(from_email, pc_email) %>% unique() # Need to add ST here once app is live
+  if(t_mode == TRUE){
+    distro <- c(from_email) %>% unique() # Need to add ST here once app is live
+  } else {
+    distro <- c(from_email, pc_email) %>% unique() # Need to add ST here once app is live
+  }
   # Msg subject
   subj <- "New BRC water quality data has been submitted"
   # Msg body
@@ -88,7 +92,12 @@ importEmail <- function(){
   # Sending email acct
   sender <- config[4]
   # Recipients
-  distro <- c(from_email, pc_email, fc_email) %>% unique() # Need to add  fc_email here once app is live
+  if(t_mode == TRUE){
+    distro <- from_email
+  } else {
+    distro <- c(from_email, pc_email, fc_email) %>% unique() # Need to add  fc_email here once app is live
+  }
+
   # Msg subject
   subj <- "New water quality data added to the BRCWQDM Database"
   # Msg body

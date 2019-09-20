@@ -3,7 +3,7 @@
 library(rdrop2)
 library(tibble)
 
-#EE This setting is very important - if not set then random connection errors occur
+### This setting is very important - if not set then random connection errors occur
 httr::set_config(httr::config(http_version = 0))
 
 ### Get Token - only need once, then saved locally -DONE
@@ -317,6 +317,21 @@ return(upload_msg)
 }
 # UPLOAD_DB_DATA_RDS()
 
+BACKUP_DATABASE <- function(){
+  db_path <- paste0(dataDir,"BRC_Database/BRCWQDB.sqlite")
+  ### Dropbox backup directory:
+  dropb_root_dir <- config[12]
+  drop_path <- "BRCWQDM/DB_Backups"
+  fn <- paste0(dataDir,"BRC_Database/BRCWQDB_",today(),".sqlite")
+  ### Overwrite filename so that it can be uploaded to dropbox
+  file.copy(from = db_path, to = fn, overwrite = T, copy.mode = F)
 
+  drop_upload(file = fn, path = drop_path, mode = "overwrite",
+              verbose = TRUE, dtoken = drop_auth(rdstoken = tokenpath))
+  ### Now delete the temp copy of the database?
+  file.remove(fn)
+  return(print("Database backed up to Dropbox 'DB_Backups' folder"))
+}
+# BACKUP_DATABASE()
 
 

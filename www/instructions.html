@@ -5,11 +5,11 @@
 <h1>Field Coordinator Workflow</h1>
 <div id="data-entry-page" class="section level2">
 <h2>Data Entry Page</h2>
-<p>Field coordinators (FC) will input data from field and lab sheets one site at a time starting with the Sample Event Info panel, working down the page to Physical Parameters, Depth Parameters, Chemical Parameters, and finally Other Sample Information.</p>
+<p>Field Coordinators (FC) will input data from field and lab sheets one site at a time starting with the Sample Event Info panel, working down the page through Physical Parameters, Depth Parameters, Chemical Parameters, and finally Other Sample Information.</p>
 <ul>
 <li>For each sample event the only required fields are: Location, Sampler(s), Date and Time</li>
 <li>The Lab Record # field is optional and it is only used so that records may be sorted in the order that they were analyzed in the lab to make it easier to review.</li>
-<li>For inputs where ‘Other’ is the selected option a mandatory comment box appears and a comment must be provided to explain what ‘Other’ is.</li>
+<li>For inputs where ‘Other’ is selected, a comment box appears and a comment must be provided to explain what ‘Other’ is.</li>
 <li><p>If a parameter value was not provided on the field/lab sheets then ‘Not Recorded’ should be selected for multiple choice parameters and numerical parameters should be left blank.</p></li>
 <li><strong>Comments</strong> may be added by clicking the <strong>‘Add Comment’</strong> button within each data entry panel, but only after the required fields are provided in the Sample Event Info panel.
 <ul>
@@ -17,7 +17,7 @@
 <li>There is no limit to the number of comments that can be added.</li>
 </ul></li>
 </ul>
-<p>Once all sample event data, associate lab data and comments have been entered for a sampling event the FC will click the <strong>‘Enter Record’</strong> button.</p>
+<p>Once all sample event data, associated lab data and comments have been entered for a sampling event the FC will click the <strong>‘Enter Record’</strong> button.</p>
 <ul>
 <li>A confirmation message will appear and a prompt will allow you to refresh the Data Entry Page to add the next record.</li>
 <li>Entered records are stored two staging files:
@@ -31,7 +31,7 @@
 <div id="staged-data-page" class="section level2">
 <h2>Staged Data Page</h2>
 <p>The staged Data page has three tabs - ‘Staged Data’, ‘Staged Comments’, and ‘Process &amp; Submit’. Staged records are split between data and comments because of the one-to-many relationship between data and comments. The entered data and comments can be searched, sorted, reviewed, and edited.</p>
-<p>Editing options include deleting entire records, modifying the entries, or adding additional comments. If a record for a sample event is deleted and it has associated comments, those comments will not be imported to the database. After edits are made to staged data the ‘Save’ button must be clicked in order to propagate those changes to the staged csv files.</p>
+<p>Editing options include deleting entire records, modifying the entries, or adding additional comments. If a record for a sample event is deleted and it has associated comments, those comments will not be imported to the database.</p>
 <ul>
 <li>Review all records in the staged data and staged comments tables</li>
 <li>A single record can be viewed in ‘long’ format by clicking on a row in the table</li>
@@ -41,46 +41,46 @@
 <ul>
 <li>Toggle through records by clicking the arrows at the top of the edit pop-up</li>
 <li>Click the ‘Update’ button to confirm edits, or press ‘Cancel’ to drop edits.</li>
-<li>After editing and deleting records you must click ‘Save’ in order to permanently save your changes</li>
+<li>After editing and deleting records you must click ‘Save’ in order to permanently save your changes and to propagate those changes to the staged csv files.</li>
 </ul></li>
 </ul>
-<p>After all records have been reviewed proceed to the ‘Process &amp; Submit’ tab to process and submit the staged data/comments to the PC.</p>
+<p>After all records have been reviewed proceed to the ‘Process &amp; Submit’ tab to process and submit the staged data/comments to the Program Coordinator (PC).</p>
 <ul>
-<li>Click the ‘Process’ button.
+<li>Click the <strong>‘Process’</strong> button.
 <ul>
 <li>This will check for input errors and data integrity</li>
 <li>The processed data is displayed in two tables below</li>
 <li>You will see placeholder values for empty results (-999999 for numerical data and ‘Not Recorded’ for text data)</li>
 </ul></li>
 </ul>
-<p>If no problems are found at this step the data can then be submitted using the ‘Submit’ button. When the submit button is pressed the following events are triggered:</p>
+<p>If no problems are found at this step the data can then be submitted using the <strong>‘Submit’</strong> button. When the submit button is pressed the following events are triggered:</p>
 <ul>
 <li>The staged data and staged comment files are renamed using the FC zone and the current date.</li>
 <li>The renamed files are uploaded to the staged submitted folder on Dropbox.</li>
-<li>The renamed files are archived to this folder:
+<li>The renamed files are archived locally to this folder:
 <ul>
 <li>~/LocalProjectDir/SubmittedData</li>
 </ul></li>
-<li>An email confirmation/notification is sent to the FC submitting the data and the Program Coordinator.</li>
+<li>An email confirmation/notification is sent to the FC submitting the data and the PC.</li>
 </ul>
 </div>
 <div id="submitted-data-page" class="section level2">
 <h2>Submitted Data Page</h2>
-<p>After data has been submitted it can be accessed on the Submitted Data Page. A drop-down menu at the top of the page allows the user to select which submitted data to view. Field Coordinators will be able to see all files that they have previously submitted. The PC will only see submitted data that has yet to be imported to the database. There is no further functionality for the FC on this page – submitted data can be viewed and that is all. This page is the start of the workflow for the PC.</p>
+<p>After data has been submitted it can be accessed on the Submitted Data Page. A drop-down menu at the top of the page allows the user to select which submitted data to view. FCs will be able to see all files that they have previously submitted. The PC will only see submitted data that has yet to be imported to the database. There is no further functionality for the FC on this page – submitted data can be viewed and that is all. This page is the start of the workflow for the PC.</p>
 </div>
 </div>
 <div id="program-coordinator-workflow" class="section level1">
 <h1>Program Coordinator Workflow</h1>
-<p>The PC will review and import one submission at a time (consisting of one data and one comment file). The PC review and import process is similar to the FC review and submit process. Records may be deleted or edited and new comments may be added.</p>
+<p>The PC will review and import one submission at a time (consisting of one data and one comment file). The PC review and import process is similar to the FC review and submit process described above. Records may be deleted or edited and new comments may be added.</p>
 <ul>
 <li>Review submitted records (modify records where necessary)</li>
 <li>Note: Any changes to submitted data will not be reflected in FC copies of submitted data. This includes any added comments</li>
-<li>When QA/QC is complete the PC will process the records by clicking the Process button.
+<li>When QA/QC is complete the PC will process the records by clicking the <strong>‘Process’</strong> button.
 <ul>
 <li>Data will be checked for errors and integrity and it will be presented below for preview prior to import in the database.</li>
-<li>This process step converts the data from flat files to the the related table formats where the data will be stored in the database.</li>
-<li>Data is split into two tables- one for numerical parameter values and one for text parameter values. Comments will remain in their own table.</li>
-<li>The forth table is a transaction log for each sample event with metadata for each event consisting of the import date and the name of the PC who imported the data.</li>
+<li>This process step converts the data from flat files to the the related table formats structured how the data will be stored in the database.</li>
+<li>Data is split into two tables, one for numerical parameter values and one for text parameter values. Comments will remain in their own table.</li>
+<li>The fourth table is a transaction log for each sample event with metadata for each event consisting of the import date and the name of the PC who imported the data.</li>
 </ul></li>
 </ul>
 <p>If any errors were found during processing the PC can go back and fix the submitted results. If no errors are found then an <strong>Import button</strong> will appear and the PC may import the data to the database. When the ‘Import’ button is clicked the following events are triggered:</p>
@@ -93,8 +93,32 @@
 </ul></li>
 <li>The updated data in the database is re-queried and RDS files are uploaded to Dropbox<br />
 </li>
+<li>The entire database is backed up on Dropbox</li>
 <li>An email confirmation/notification is sent to the PC and all FC’s letting everyone know that new data has been added to the database.</li>
 </ul>
-<p>The next time the app is opened all users will be able to see the database tables on the Database page (Under the ‘More’ dropdown menu on the navigation bar)</p>
+<p>The next time the App is opened all users will be able to see the database tables on the Database page (Under the ‘More’ dropdown menu on the navigation bar)</p>
+</div>
+<div id="troubleshooting-and-help" class="section level1">
+<h1>Troubleshooting and Help</h1>
+<div id="log-files" class="section level3">
+<h3>Log Files:</h3>
+<p>The application will generate a log file during app usage. This file contains output information generated during a user session and it gets overwritten every time the App is launched. If the App crashes, freezes, or an error message is displayed on the screen in red text, please send the log file to the <a href="mailto:decrocker@gmail.com">App Developer</a>.<br />
+The log file will be located here: ~/LocalProjectDir/BRCWQDM.log</p>
+</div>
+<div id="records-not-appearing-in-tables" class="section level3">
+<h3>Records not appearing in tables:</h3>
+<p>Occassionally the user interface and server state become unsynced when trying to edit data already entered and then trying to add new data or comments. If you notice that a data entry or comment does not appear after entering it is usually best to close and reopen the App to confirm that the data was saved properly. This is behavior is best avoided by entering data records first and then reviewing and applying all edits afterwards.</p>
+</div>
+<div id="manual-edits-to-csv-files" class="section level3">
+<h3>Manual edits to csv files:</h3>
+<p>If edits are made directly in any of the csv files please ensure that the file delimiter is not inadvertently changed to ‘comma’ by your software (Excel, LibreOffice etc). The csv files are actually ‘space’ delimited, so when opening and saving the csv files you should specify that the delimiter is ‘space’. If the delimiter is changed by mistake you will no longer be able to add records to the staged data files until the staged files are resaved as ‘space’ delimitted csv files.</p>
+</div>
+<div id="reporting-bugs-and-feature-requests" class="section level3">
+<h3>Reporting Bugs and Feature Requests:</h3>
+<p>If you encounter a problem with the application it should be documented in the ‘Issues’ tracker on the application <a href="https://github.com/dancrocker/BRCWQDM/">GitHub page</a> (Note- This requires a GitHub account). Please include the log file from the session when the problem (error) occurred and a screen shot from the App if possible. The App developer (Dan Crocker) is committed to providing a functional application and will work to resolve the issue quickly. If you do not want to set up a GitHub account (understandable), then you can report the issue by sending an email to the <a href="mailto:decrocker@gmail.com">App Developer</a>.</p>
+<p>New features may be added to this application by multiple developers. Further development of this App will be provided by Dan Crocker on a volunteer basis. If other developers would like to create features to include the best approach is for them to develop a module using the ‘shiny’ framework in R. New features may be requested by submitting a new issue at the application GitHub page (linked above), or by sending a ‘Pull Request’ via GitHub (this is for developers).</p>
+<p>Contact the Program Coordinator for all questions pertaining to the monitoring program or to request corrections for data already submiitted or imported to the database.</p>
+<p><em>Instructions Last Updated - September 2019</em></p>
+</div>
 </div>
 
