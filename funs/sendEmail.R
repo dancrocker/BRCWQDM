@@ -92,7 +92,7 @@ importEmail <- function(){
   # Sending email acct
   sender <- config[4]
   # Recipients
-  if(t_mode == TRUE){
+  if(rxdata$t_mode == TRUE){
     distro <- from_email
   } else {
     distro <- c(from_email, pc_email, fc_email) %>% unique() # Need to add  fc_email here once app is live

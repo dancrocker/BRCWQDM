@@ -968,8 +968,8 @@ update_inputs <- function(){
    updateRadioButtons(session, "wat_nav", "Nuisance Aquatic Vegetation (NAV) (P09):", choices = wat_NAV_choices, selected = "Not Recorded")
    updateRadioButtons(session, "wat_clarity", "Water Clarity (Visual Turbidity) (P10)", choices = wat_clarity_choices, selected = "Not Recorded")
    updateRadioButtons(session, "wat_trash", "Presence of Trash (P06):", choices = wat_trash_choices, selected = "Not Recorded")
-   updateDateInput(session, "date", labelMandatory("Sample Date:"), value = today())
-   updateTimeInput(session, "time", labelMandatory("Sample Starting Time (24-hr format):"), value = strptime("00:00", "%H:%M"))
+   # updateDateInput(session, "date", labelMandatory("Sample Date:"), value = today())
+   # updateTimeInput(session, "time", labelMandatory("Sample Starting Time (24-hr format):"), value = strptime("00:00", "%H:%M"))
 }
 
 observe({
@@ -1510,10 +1510,11 @@ rxdata$data_c_db <- readRDS(data_c_RDS)
   })
 
 ### ADMIN TOOLS UI ####
-# Add buttton to update database rds files after database editing
 # Add buttons to enter volunteers/add roles?
 #
-
+### Other Tools:
+    # csv download for tables
+    #
 output$admin_tools.UI <- renderUI({
 if (user_role %in% c("Program Coordinator", "App Developer")){
   fluidRow(
@@ -1526,11 +1527,11 @@ if (user_role %in% c("Program Coordinator", "App Developer")){
 }
 })
 
-t_mode <<- reactive({
+observeEvent(input$testing_mode, {
   if(input$testing_mode == TRUE){
-     TRUE
+     rxdata$t_mode <<- TRUE
   } else {
-     FALSE
+     rxdata$t_mode <<- FALSE
   }
 })
 
