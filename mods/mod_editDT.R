@@ -47,7 +47,7 @@ editableDTUI <- function(id) {
 
 editableDT <- function(input, output, session,
                        data=reactive(NULL),
-                       # rxdata,
+                       globalSession,
                        data_name,
                        inputwidth=reactive(100),
                        edit_cols,
@@ -132,8 +132,8 @@ editableDT <- function(input, output, session,
       editable=FALSE,
       caption = NULL,
       options = list(
-        lengthMenu = list(c(5, 10, 15), c('5', '10', '15')),
-        pageLength = 5)
+        lengthMenu = list(c(5, 25, 50, 100), c('5', '25', '50', '100')),
+        pageLength = 10)
     )
   })
 
@@ -254,7 +254,7 @@ observeEvent(input$save_comment,{
   observeEvent(input$resetPage,{
     if(input$resetPage){
       proxy %>% selectPage(input$page)
-      updateCheckboxInput(session,"resetPage",value=FALSE)
+      updateCheckboxInput(session,"resetPage", value=FALSE)
     }
   })
 

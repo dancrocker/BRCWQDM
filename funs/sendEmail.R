@@ -7,7 +7,7 @@
 #  R version 3.4.4 (2018-03-15)  x86_64
 ##############################################################################.
 
-# library(mailR)
+library(mailR)
 library(lubridate)
 
 #set working directory
@@ -40,7 +40,7 @@ submitEmail <- function(){
   # Sending email acct
   sender <- config[4]
   # Recipients
-  if(t_mode == TRUE){
+  if(isTRUE(rxdata$t_mode)){
     distro <- c(from_email) %>% unique() # Need to add ST here once app is live
   } else {
     distro <- c(from_email, pc_email) %>% unique() # Need to add ST here once app is live
@@ -92,7 +92,7 @@ importEmail <- function(){
   # Sending email acct
   sender <- config[4]
   # Recipients
-  if(rxdata$t_mode == TRUE){
+  if(isTRUE(rxdata$t_mode)){
     distro <- from_email
   } else {
     distro <- c(from_email, pc_email, fc_email) %>% unique() # Need to add  fc_email here once app is live

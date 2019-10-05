@@ -34,7 +34,7 @@ ipak <- function(pkg){
 packages <- c("shiny","shinyjs", "shinyFiles", "shinyTime", "shinyalert","shinydashboard","rmarkdown", "knitr", "tidyselect", "lubridate",
               "plotly", "leaflet", "RColorBrewer", "devtools", "data.table", "DT", "scales", "stringr", "shinythemes", "ggthemes", "tidyr",
               "dplyr", "magrittr", "httr", "tibble", "bsplus", "readxl", "miniUI", "rstudioapi", "rdrop2", "readr", "purrr", "htmlwidgets", "ggplot2",
-              "pool", "rgdal") #maul.r
+              "pool", "rgdal", "mailR")
 suppressPackageStartupMessages(
   ipak(packages)
 )
@@ -122,7 +122,9 @@ sites <<- sites
 
 samplers <<-  assignments_db %>%
   filter(ROLE == "Field", YEAR ==  year(Sys.Date())) %>%
-  .$NAME %>% sort()
+   add_case(NAME = "BRC SamplerX") %>%
+  .$NAME %>%
+  sort()
 
 wea_choices <<- c("Storm (heavy rain)", "Rain (steady rain)",
                  "Showers (intermittent rain)", "Overcast","Clear/Sunny", "Other","Not Recorded")
@@ -523,7 +525,8 @@ ui <-tagList(
                  ),
                  tabsetPanel(
                    tabPanel("Numeric Data",
-                            dataTableOutput("data_num_db")
+                          downloadButton("download_data_num", "Download table as csv"),
+                          dataTableOutput("data_num_db")
                    ),
                    tabPanel("Text Data",
                             dataTableOutput("data_text_db")
@@ -1007,6 +1010,7 @@ comment_par_choices <<- c("General Comment", data_fields$dt_cols[data_fields$tak
 
   ### save to RDS and CSV ####
   observeEvent(input$SaveStagedData,{
+    req(staged_df())
     csv <- staged_df()
     names(csv) <- data_fields$shiny_input
     #### overwrite table as well ... write.table
@@ -1023,6 +1027,7 @@ comment_par_choices <<- c("General Comment", data_fields$dt_cols[data_fields$tak
   })
 
    observeEvent(input$SaveSubmittedData,{
+     req(submitted_df())
      csv <- submitted_df() ### This is the current state of DT
      names(csv) <- data_fields$shiny_input # Change col names back to csv format
      ### Set the file name
@@ -1041,6 +1046,7 @@ comment_par_choices <<- c("General Comment", data_fields$dt_cols[data_fields$tak
 
    ### save to RDS and CSV ####
    observeEvent(input$SaveStagedComments,{
+     req(staged_comments())
      csv <- staged_comments()
      names(csv) <- comment_fields$shiny_input
      #### overwrite table as well ... write.table
@@ -1058,6 +1064,7 @@ comment_par_choices <<- c("General Comment", data_fields$dt_cols[data_fields$tak
 
    ### save to RDS and CSV ####
    observeEvent(input$SaveSubmittedComments,{
+     req(submitted_comments())
      csv <- submitted_comments()
      names(csv) <- comment_fields$shiny_input
      file <- str_replace(input$selectFile, "_SubmittedData_","_SubmittedComments_")
@@ -1508,6 +1515,19 @@ rxdata$data_c_db <- readRDS(data_c_RDS)
     req(!is.null(rxdata$data_c_db))
     rxdata$data_c_db
   })
+
+
+  # Downloadable csv of selected dataset
+  output$download_data_num <- downloadHandler(
+    filename = function() {
+      paste("BRC_NumericalData", ".csv", sep = "")
+    },
+    content = function(file) {
+        df_csv <- rxdata$data_n_db
+        # df_csv$SampleDateTime <- format(df_csv$SampleDateTime, usetz=TRUE)
+      write_csv(df_csv, file)
+    }
+  )
 
 ### ADMIN TOOLS UI ####
 # Add buttons to enter volunteers/add roles?
