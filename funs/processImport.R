@@ -19,7 +19,7 @@ library("tidyr")
 library("magrittr")
 library("stringr")
 
-source(paste0(wdir, "/funs/data_update.R"))
+# source(paste0(wdir, "/funs/data_update.R"))
 
 ### ISSUES TO RESOLVE ####
   # Convert inches to ft for water depths or include both?
