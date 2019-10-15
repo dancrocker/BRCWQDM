@@ -61,10 +61,11 @@ stagedCommentsRDS <<- paste0(rdsFiles,"stagedComments.rds")
 submittedDataRDS <<- paste0(rdsFiles,"submittedData.rds")
 submittedCommentsRDS <<- paste0(rdsFiles,"submittedComments.rds")
 
-### Database Data RDS - updated each time data is imported
+### Database Data RDS - updated each time data is imported or using admin tools
 data_n_RDS <- paste0(rdsFiles,"data_num_db.rds")
 data_t_RDS <- paste0(rdsFiles,"data_text_db.rds")
 data_c_RDS <- paste0(rdsFiles,"data_comment_db.rds")
+trans_log_RDS <-  paste0(rdsFiles,"trans_log_db.rds")
 ### RDS DATABASE FILES ####
 
 remote_data_dir <- paste0(getwd(),"/data/")
@@ -146,6 +147,7 @@ source(paste0(wdir, "/mods/mod_editDT.R"))
 source(paste0(wdir, "/funs/sendEmail.R"))
 source(paste0(wdir, "/mods/mod_add_comment.R"))
 source(paste0(wdir, "/mods/mod_map.R"))
+source(paste0(wdir, "/funs/data_update.R"))
 
   app_user <<- config[2]
   rxdata <<- reactiveValues()
@@ -525,13 +527,15 @@ ui <-tagList(
                  ),
                  tabsetPanel(
                    tabPanel("Numeric Data",
-                          downloadButton("download_data_num", "Download table as csv"),
-                          dataTableOutput("data_num_db")
+                            fluidRow(downloadButton("download_data_num", "Download table as csv"), align = "center"),
+                            dataTableOutput("data_num_db")
                    ),
                    tabPanel("Text Data",
+                            fluidRow(downloadButton("download_data_text", "Download table as csv"), align = "center"),
                             dataTableOutput("data_text_db")
                    ),
                    tabPanel("Comments",
+                            fluidRow(downloadButton("download_data_comments", "Download table as csv"), align = "center"),
                             dataTableOutput("data_comment_db")
                    )
                  )  # End Tab Panel
@@ -1161,7 +1165,6 @@ if (user_role %in% c("Program Coordinator", "App Developer")){
                       tags$head(tags$style(".butt{background-color:#222f5b;} .butt{color: #e6ebef;}")),
                       useShinyalert(),
                       actionButton(inputId = "SaveSubmittedComments",label = "Save", width = "245px", class="butt"),
-                      # downloadButton("Trich_csv", "Download in CSV", class="butt"),
                       # Set up shinyalert
                       editableDTUI("submittedCommentsDT")
                )
@@ -1524,6 +1527,28 @@ rxdata$data_c_db <- readRDS(data_c_RDS)
     },
     content = function(file) {
         df_csv <- rxdata$data_n_db
+        # df_csv$SampleDateTime <- format(df_csv$SampleDateTime, usetz=TRUE)
+      write_csv(df_csv, file)
+    }
+  )
+    # Downloadable csv of selected dataset
+  output$download_data_text <- downloadHandler(
+    filename = function() {
+      paste("BRC_TextData", ".csv", sep = "")
+    },
+    content = function(file) {
+        df_csv <- rxdata$data_t_db
+        # df_csv$SampleDateTime <- format(df_csv$SampleDateTime, usetz=TRUE)
+      write_csv(df_csv, file)
+    }
+  )
+    # Downloadable csv of selected dataset
+  output$download_data_comments <- downloadHandler(
+    filename = function() {
+      paste("BRC_CommentData", ".csv", sep = "")
+    },
+    content = function(file) {
+        df_csv <- rxdata$data_c_db
         # df_csv$SampleDateTime <- format(df_csv$SampleDateTime, usetz=TRUE)
       write_csv(df_csv, file)
     }

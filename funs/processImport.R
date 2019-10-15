@@ -19,13 +19,11 @@ library("tidyr")
 library("magrittr")
 library("stringr")
 
+source(paste0(wdir, "/funs/data_update.R"))
+
 ### ISSUES TO RESOLVE ####
   # Convert inches to ft for water depths or include both?
-  # Average temperatures? from form?
-  # Keep or toss qc records - now they are filtered out of final data
-  # Data grades -opted not to include since it is a calculated value
   # How to handle non-detects - what do they come in like? Flag?
-  # How to handle raw data archival - all in 1 folder? subfolders?
 
 ### CONFIG ####
 # config # This is defined in the launch script
@@ -261,24 +259,27 @@ poolWithTransaction(pool, function(conn) {
 ########################################################################.
 ###                  SAVE RDS FILES LOCALLY                         ####
 ########################################################################.
+# source(paste0(wdir, "/funs/data_update.R"))
+DATA_UPDATE()
 # Regenerate staged RDS files after successful import... note - include a button in app to
 # regenerate rds files in the event of manual db updates
 
 # Read updated tables from database
-newDataNum <- dbReadTable(pool, DBdataNumTbl)
-newDataText <- dbReadTable(pool, DBdataTextTbl)
-newDataComment <- dbReadTable(pool, DBdataCommentTbl)
-
-# Close the pool
-poolClose(pool)
-
-# Save them in RDS folder in project directory (This is only so they can be uploaded to Dropbox)
-saveRDS(newDataNum, file = paste0(config[1],"Data/rdsFiles/data_num_db.rds"))
-saveRDS(newDataText, file = paste0(config[1],"Data/rdsFiles/data_text_db.rds"))
-saveRDS(newDataComment, file = paste0(config[1],"Data/rdsFiles/data_comment_db.rds"))
-
-### UPLOAD RDS FILES TO DROPBOX ####
-UPLOAD_DB_DATA_RDS()
+# newDataNum <- dbReadTable(pool, DBdataNumTbl)
+# newDataText <- dbReadTable(pool, DBdataTextTbl)
+# newDataComment <- dbReadTable(pool, DBdataCommentTbl)
+#
+# # Close the pool
+# poolClose(pool)
+#
+# # Save them in RDS folder in project directory (This is only so they can be uploaded to Dropbox)
+# saveRDS(newDataNum, file = paste0(config[1],"Data/rdsFiles/data_num_db.rds"))
+# saveRDS(newDataText, file = paste0(config[1],"Data/rdsFiles/data_text_db.rds"))
+# saveRDS(newDataComment, file = paste0(config[1],"Data/rdsFiles/data_comment_db.rds"))
+# saveRDS(newDataComment, file = paste0(config[1],"Data/rdsFiles/data_comment_db.rds"))
+#
+# ### UPLOAD RDS FILES TO DROPBOX ####
+# UPLOAD_DB_DATA_RDS()
 
 ### ARCHIVE SUBMITTED CSV FILES ####
 
