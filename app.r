@@ -82,7 +82,7 @@ source(paste0(wdir, "/funs/dropB.R"))
 ### Download rds files cached on dropbox to local data folder and load these and any staged RDS files
 LOAD_DB_RDS()
 ### Change to the last record date (rds file)
-last_update <- Sys.Date()
+last_update <- data_num_db$DATE_TIME %>% max()
 
 ### AS IS fields require no manipulation and can go directly to outputs
 ### Date and Time and any other QC'd values need to come from reactive elements
@@ -232,7 +232,7 @@ ui <-tagList(
              inverse = FALSE, collapsible = TRUE,
              theme = shinytheme("flatly"), windowTitle = "BRCWQM",
              footer = tagList(hr(),
-               column(4,strong(paste("Data last updated:", last_update)),br()),
+               column(4,strong(paste("Most recent date of data: ", last_update)),br()),
                column(8,tags$div(tags$em("Created by Dan Crocker"), align = "right"), br())
   ),
   ### DATA ENTRY TAB  ####
