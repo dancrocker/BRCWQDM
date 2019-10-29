@@ -7,7 +7,7 @@
 "wea_now","Current Weather","factor","selectInput","no","yes","P02","yes","wea_choices",180,"yes","physical"
 "temp_air","Air Temperature (C)","numeric","numericInput",,"yes","P03","yes",,120,"yes","physical"
 "temp_wat","Water Temperature (C)","numeric","numericInput",,"yes","P04","yes",,120,"yes","physical"
-"wat_appear","Water Appearance","factor","selectInput","no","yes",,"yes","wat_appear_choices",120,"no","physical"
+"wat_appear","Water Appearance","factor","selectInput","yes","yes",,"yes","wat_appear_choices",120,"no","physical"
 "wat_trash","Trash","factor","selectInput","no","yes",,"yes","wat_trash_choices",120,"yes","physical"
 "erosion","Erosion","factor","selectInput","yes","yes",,"yes","wat_erosion_choices",170,"no","physical"
 "wat_odor","Water Odor","factor","selectInput","yes","yes",,"yes","wat_odor_choices",170,"no","physical"
