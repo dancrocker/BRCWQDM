@@ -44,7 +44,7 @@ print(paste0("BRCWQDM App lauched at ", Sys.time()))
 
 # source('all_sessions.R', local = TRUE)
 ### Set Directories ####
-wdir <- getwd()
+wdir <<- getwd()
 ### Local Data Directory ####
 dataDir <<- paste0(config[1],"Data/")
 app_user <<- config[2]
@@ -636,6 +636,13 @@ fileChoices <- function(){
     }
 
 rxdata$fileChoices <- fileChoices()
+
+selected_site <- reactive({
+  input$site
+  })
+selected_date <- reactive({
+  input$date
+  })
 
 # SelectFile UI
 output$selectFile_ui <- renderUI({
@@ -1747,23 +1754,23 @@ output$update_db_text <- renderText("Use this button after making updates or edi
 ### MODULE CALLS ####
 callModule(ADD_COMMENT, "add_comment_physical",
            input_section = "physical",
-           site = input$site,
-           comment_date = input$date,
+           site = selected_site,
+           comment_date = selected_date,
            sampler = samplersRX)
 callModule(ADD_COMMENT, "add_comment_depth",
            input_section = "depth",
-           site = input$site,
-           comment_date = input$date,
+           site = selected_site,
+           comment_date = selected_date,
            sampler = samplersRX)
 callModule(ADD_COMMENT, "add_comment_chemical",
            input_section = "chemical",
-           site = input$site,
-           comment_date = input$date,
+           site = selected_site,
+           comment_date = selected_date,
            sampler = samplersRX)
 callModule(ADD_COMMENT, "add_comment_other",
            input_section = c("chemical","physical","depth"),
-           site = input$site,
-           comment_date = input$date,
+           site = selected_site,
+           comment_date = selected_date,
            sampler = samplersRX)
 
 callModule(BRCMAP, "brc_map", sitelist = sites_db)

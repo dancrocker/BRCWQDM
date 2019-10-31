@@ -21,7 +21,7 @@ ADD_COMMENT <- function(input, output, session, input_section, site, comment_dat
   observeEvent(input$add_comment_mod, {
     ns <- session$ns
     # req(input$site, SampleDT())
-    if(site == ""| is.null(comment_date) | is.null(sampler)){
+    if(site() == ""| is.null(comment_date()) | is.null(sampler())){
       shinyalert("Oops!", "A Site, Date-Time and Sampler must be selected to add a comment!.", type = "error")
     } else {
       showModal(modalDialog(
@@ -62,7 +62,7 @@ formatComment <- function(){
   } else {
     commenter <- app_user
   }
-  comment <- tibble(SITE = site, DATE = comment_date, PARAMETER = input$comment_par,
+  comment <- tibble(SITE = site(), DATE = comment_date(), PARAMETER = input$comment_par,
                     COMMENTER = commenter, COMMENT_TEXT = input$comment_text)
   # glimpse(comment)
   return(comment)
