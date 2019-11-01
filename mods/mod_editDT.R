@@ -74,7 +74,6 @@ editableDT <- function(input, output, session,
         df <- eval(parse(text=input$result))
       }
     else df <- data()
-    ### BOOKMARK ####
     df
   })
 
@@ -137,7 +136,9 @@ editableDT <- function(input, output, session,
     )
   })
 
-
+comm_par <- reactive({
+  input$comment_par
+})
 
   # commenter_choices <- app_user
 
@@ -152,7 +153,22 @@ editableDT <- function(input, output, session,
     }
   })
 
+  site_selected <- reactive({
+    df()[input$origTable_rows_selected, 3]
+})
+  output$comment_site <- renderText({
+    paste0("Site: ", site_selected())
+           })
 
+  comment_commenter <- reactive({
+    df()[input$origTable_rows_selected, 4]
+})
+   comment_date <- reactive({
+    df()[input$origTable_rows_selected, 2]
+   })
+comm_text <- reactive({
+   input$comment_text
+})
   ########################################################################.
   ###                     ADD A COMMENT                              ####
   ########################################################################.
@@ -171,7 +187,8 @@ observeEvent(input$add_comment_mod, {
       showModal(modalDialog(
         h3("ADD COMMENT..."),
         "Add comment related to specific parameter or a general comment that applies to this sampling event.
-           You will be listed as the commenter, unless the box is checked to indicate that the comment is from the Field Monitor",
+           You will be listed as the commenter, unless the box is checked to indicate that the comment is from the Field Monitor.",
+        verbatimTextOutput(ns("comment_site")),
         selectInput(ns("comment_par"), "Parameter Reference:", comment_par_choices),
         textAreaInput(ns("comment_text"), label = NULL, placeholder = "Add comment here...", width = "100%"),
         checkboxInput(ns("FM_comment"), "This is a comment from Field Monitor", value = F),
@@ -196,34 +213,43 @@ observeEvent(input$add_comment_mod, {
                        row.names = FALSE, col.names = comm_col_names, quote = TRUE,
                        qmethod = "d", append = FALSE)
          }
-         dt <- read.table(csvFile, stringsAsFactors = TRUE, header = T, sep = " ")
-         loadAll()
-         rxdata$stagedComments <- readRDS(rdsFile)
-  }
+
+         # loadAll() # This only reloads staged data and comments because app doesn't know what submitted file to use until user selects
+          # print(data_name)
+         if(data_name == "stagedData"){
+           ### Read the updated table back and refresh the DT
+            dt <- read.table(csvFile, stringsAsFactors = TRUE, header = T, sep = " ")
+            loadAll()
+            rxdata$stagedComments <- readRDS(rdsFile)
+         } else {
+           ### Read the updated table back and refresh the DT
+                dt <- read.table(csvFile, stringsAsFactors = FALSE, header = T,  sep = " " , na.strings = "NA")
+                df <- comm_csv2df(dt, comment_fields) ### saves RDS file as data.frame
+                saveRDS(df, submittedCommentsRDS)
+              rxdata$submittedComments <- readRDS(rdsFile)
+         }
+    }
 
 formatComment_mod <- function(){
   if(input$FM_comment == TRUE){
-    commenter <- switch(data_name,
-              "stagedData" = df()[input$origTable_rows_selected, 4],
-              "stagedComments" = df()[input$origTable_rows_selected, 5],
-              "submittedData" = df()[input$origTable_rows_selected, 4],
-              "submittedComments" = df()[input$origTable_rows_selected, 5]
-    )
+    commenter <- comment_commenter()
   } else {
     commenter <- app_user
   }
-  site_comm <- switch(data_name,
-              "stagedData" = df()[input$origTable_rows_selected, 3],
-              "stagedComments" = df()[input$origTable_rows_selected, 1],
-              "submittedData" = df()[input$origTable_rows_selected, 3],
-              "submittedComments" = df()[input$origTable_rows_selected, 1]
-    )
+  # site_comm <- df()[input$origTable_rows_selected, 3]
 
-  date_comm <- df()[input$origTable_rows_selected, 2] %>%
+    # switch(data_name,
+    #           "stagedData" = ,
+    #           # "stagedComments" = df()[input$origTable_rows_selected, 1],
+    #           "submittedData" = df()[input$origTable_rows_selected, 3],
+    #           # "submittedComments" = df()[input$origTable_rows_selected, 1]
+    # )
+
+  date_comm <- comment_date() %>%
     str_trunc(width = 10, side = "right", ellipsis = "")
 
-  comment <- tibble(SITE = site_comm, DATE = date_comm, PARAMETER = input$comment_par,
-                    COMMENTER = commenter, COMMENT_TEXT = input$comment_text)
+  comment <- tibble(SITE = site_selected(), DATE = date_comm, PARAMETER = comm_par(),
+                    COMMENTER = commenter, COMMENT_TEXT = comm_text())
   # glimpse(comment)
   return(comment)
 }
@@ -244,7 +270,7 @@ observeEvent(input$save_comment,{
   )
 
   saveComment_mod(data = formatComment_mod(), csvFile = csv, rdsFile = rds)
-  shinyalert(title = "Comment Saved!", type = "success")
+  shinyalert(title = "Comment Entered!", type = "success")
   # session$sendCustomMessage("handler1", message = 'Comment Saved!')
   removeModal()
 })
