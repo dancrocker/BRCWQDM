@@ -1029,7 +1029,7 @@ comment_par_choices <<- c("General Comment", data_fields$dt_cols[data_fields$tak
     write.table(x = csv, file = stagedDataCSV,
                 row.names = FALSE, col.names = TRUE, quote = TRUE,
                 qmethod = "d", append = FALSE)
-    # loadData()
+     loadData()
      ### Read the updated table back and refresh the DT
      data <- read.table(stagedDataCSV, stringsAsFactors = FALSE, header = T,  sep = " " , na.strings = "NA")
      df <- data_csv2df(data, data_fields) ### saves RDS file as data.frame
