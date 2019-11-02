@@ -28,11 +28,11 @@ submitEmail <- function(){
   pc <- filter(assignments_db, YEAR == yr,
                ROLE == "Program Coordinator") %>% .$NAME
   # Get app developer name
-  # ad <- filter(assignments_db, YEAR == yr,
-  #              ROLE == "App Developer") %>% .$NAME
+  ad <- filter(assignments_db, YEAR == yr,
+               ROLE == "App Developer") %>% .$NAME
   # Get program coordinator email
   pc_email <- people_db$EMAIL[people_db$FULL_NAME == pc]
-  # ad_email <- people_db$EMAIL[people_db$FULL_NAME == ad]
+  ad_email <- people_db$EMAIL[people_db$FULL_NAME == ad]
   # Person submitting data name
   from_name <- app_user
   # Person submitting data email address
@@ -42,9 +42,9 @@ submitEmail <- function(){
   if(isTRUE(rxdata$t_mode)){
     distro <- c(from_email) %>% unique() # Need to add ST here once app is live
   } else {
-    distro <- c(from_email, pc_email) %>% unique() # Need to add ST here once app is live
+    distro <- c(from_email, pc_email, ad_email) %>% unique() # Need to add ST here once app is live
   }
-  distro <- "decrocker@gmail.com"
+
 message <- glue('From: "BRCWQDM App" <BlackstoneWQMdata@gmail.com>
 Subject: New BRC water quality data has been submitted
 
@@ -72,12 +72,15 @@ importEmail <- function(){
   # Get program coordinator name
   pc <- filter(assignments_db, YEAR == yr,
                ROLE == "Program Coordinator") %>% .$NAME
+ # Get app developer name
+  ad <- filter(assignments_db, YEAR == yr,
+               ROLE == "App Developer") %>% .$NAME
   # Get program coordinator email
   pc_email <- people_db$EMAIL[people_db$FULL_NAME == pc]
+  ad_email <- people_db$EMAIL[people_db$FULL_NAME == ad]
     # Get field coordinator names
   fc <- filter(assignments_db, YEAR == yr,
                ROLE == "Field Coordinator") %>% .$NAME
-  fc <- fc[1] # Delete when app is in full use
   # Get field coordinator names
   fc_email <- people_db$EMAIL[people_db$FULL_NAME %in% fc]
 
@@ -90,7 +93,7 @@ importEmail <- function(){
   if(isTRUE(rxdata$t_mode)){
     distro <- from_email
   } else {
-    distro <- c(from_email, pc_email, fc_email) %>% unique() # Need to add  fc_email here once app is live
+    distro <- c(from_email, pc_email, fc_email, ad_email) %>% unique() # Need to add  fc_email here once app is live
   }
 
 message <- glue('From: "BRCWQDM App" <BlackstoneWQMdata@gmail.com>

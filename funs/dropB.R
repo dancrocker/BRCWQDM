@@ -115,7 +115,7 @@ SUBMIT_CSV <- function(zone, drop_path = "BRCWQDM/Submitted_Data_Staging"){
 
 # Submitted Data only fetched for Program Coordinator
 GET_SUBMITTED_DATA <- function(){
-if (user_role == "Program Coordinator"){
+if (user_role %in% c("Program Coordinator", "App Developer")){
   ### List Drop Box files ####
   dropb_root_dir <- config[12]
   safe_dir_check <- purrr::safely(drop_dir, otherwise = FALSE, quiet = FALSE)
@@ -149,7 +149,7 @@ if (user_role == "Program Coordinator"){
     }
   }
 } else {
-  print(paste0(app_user, " is not the Program Coordinator - submitted files not downloaded from Dropbox. User submitted files available locally"))
+  print(paste0(app_user, " is not the Program Coordinator or App Developer - submitted files not downloaded from Dropbox. User submitted files available locally"))
 }
 }
 
