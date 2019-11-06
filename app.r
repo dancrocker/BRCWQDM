@@ -38,7 +38,9 @@ packages <- c("shiny","shinyjs", "shinyFiles", "shinyTime", "shinyalert","shinyd
 suppressPackageStartupMessages(
   ipak(packages)
 )
-remotes::install_github("jeroen/curl@smtp")
+
+update.packages("curl", repos="http://cran.rstudio.com/", quiet = T, verbose = F)
+
 # loadData()
 
 print(paste0("BRCWQDM App lauched at ", Sys.time()))
