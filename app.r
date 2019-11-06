@@ -38,6 +38,7 @@ packages <- c("shiny","shinyjs", "shinyFiles", "shinyTime", "shinyalert","shinyd
 suppressPackageStartupMessages(
   ipak(packages)
 )
+remotes::install_github("jeroen/curl@smtp")
 # loadData()
 
 print(paste0("BRCWQDM App lauched at ", Sys.time()))
@@ -686,7 +687,7 @@ output$selectFile_ui <- renderUI({
      observeEvent(input$submit, {
       updateSelectInput(session = session,
                         inputId = "selectFile",
-                        label = selectFile_lab,
+                        label = bselectFile_la,
                         choices = c("",rxdata$fileChoices),
                         selected = "")
     })
