@@ -39,7 +39,7 @@ suppressPackageStartupMessages(
   ipak(packages)
 )
 
-update.packages("curl", repos="http://cran.rstudio.com/", quiet = T, verbose = F)
+# update.packages("curl", repos="http://cran.rstudio.com/", quiet = T, verbose = F)
 
 # loadData()
 
@@ -565,6 +565,12 @@ ui <-tagList(
            column(2, imageOutput("brc_logo6", height = 80), align = "left"),
            column(8,  h2("Reports", align = "center")),
            column(2, imageOutput("zap_logo6", height = 80), align = "right")
+         ),
+         fluidRow(
+           column(12,
+                  h4("Click this button to test email functionality - check email and log file for result", align = "center"),
+                      actionButton(inputId = "email_test",label = "Send a testing Email", width = "245px", class="butt")
+           )
          )
     ),
     ### INSTRUCTIONS TAB ####
@@ -1734,6 +1740,11 @@ output$update_db_text <- renderText("Use this button after making updates or edi
   #     ui = h4(import_msg)
   #   )
   # })
+### REPORTS ####
+
+  observeEvent(input$email_test,{
+    try(testEmail())
+  })
 
 ### INSTRUCTIONS ####
 
