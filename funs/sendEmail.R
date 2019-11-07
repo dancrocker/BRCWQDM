@@ -105,7 +105,57 @@ recipients <- distro
 sender <- config[4]
 username <- config[4]
 password <- config[5]
+
 curl::send_mail(mail_from = sender, mail_rcpt = recipients, smtp_server = 'smtp.gmail.com',
   message = message, username = username, password = password, use_ssl = T, verbose = F)
 
+
 } # End function
+
+
+########################################################################.
+###                          TEST EMAIL                           ####
+########################################################################.
+
+### Function to send email when data is imported to database
+### distro needs to be db admin, program coordinator, and 3 field coordinator
+
+testEmail <- function(){
+  yr <- year(Sys.Date())
+
+  # Get program coordinator name
+  pc <- filter(assignments_db, YEAR == yr,
+               ROLE == "Program Coordinator") %>% .$NAME
+ # Get app developer name
+  ad <- filter(assignments_db, YEAR == yr,
+               ROLE == "App Developer") %>% .$NAME
+
+  ad_email <- people_db$EMAIL[people_db$FULL_NAME == ad]
+    # Get field coordinator names
+
+  # Person importing data name
+  from_name <- app_user
+  # Person submitting data email address
+  from_email <- people_db$EMAIL[people_db$FULL_NAME == from_name]
+
+
+  distro <- c(from_email, ad_email) %>% unique() # Need to add  fc_email here once app is live
+
+
+message <- glue('From: "BRCWQDM App" <BlackstoneWQMdata@gmail.com>
+Subject: This is a testing email
+
+{from_name} was able to generate email through the BRCWQDM App!')
+
+recipients <- distro
+sender <- config[4]
+username <- config[4]
+password <- config[5]
+
+curl::send_mail(mail_from = sender, mail_rcpt = recipients, smtp_server = 'smtp.gmail.com',
+  message = message, username = username, password = password, use_ssl = T, verbose = F)
+
+
+} # End function
+
+
