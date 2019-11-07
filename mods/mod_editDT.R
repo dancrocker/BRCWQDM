@@ -20,9 +20,11 @@ editableDTUI <- function(id) {
     includeScript("www/message-handler.js"),
     fluidRow(
       uiOutput(ns("buttons")),
-      # radioButtons3(ns("selection"),"Data Selection",choices=c("single","multiple"),
-      #               inline=TRUE,labelwidth=130,align="center"),
-      # radioButtons3(ns("resultAs"),"Resultant Data as",choices=c("tibble","data.frame"),inline=TRUE,labelwidth=150,align="center"),
+      span(textOutput(ns("site_name")), style="color:purple"),
+
+         # radioButtons3(ns("selection"),"Data Selection",choices=c("single","multiple"),
+         #               inline=TRUE,labelwidth=130,align="center"),
+         # radioButtons3(ns("resultAs"),"Resultant Data as",choices=c("tibble","data.frame"),inline=TRUE,labelwidth=150,align="center"),
       p(""),
       DT::DTOutput(ns("origTable")),
       conditionalPanel(condition="true==false",
@@ -88,6 +90,21 @@ editableDT <- function(input, output, session,
 #     }
 # })
 
+  ### Text label for selected row site
+
+site_name_text <- reactive({
+  switch(data_name,
+      "submittedData" = names(which(sites == site_selected())),
+      "submittedComments" = names(which(sites == comment_site_selected())),
+      "stagedData" = names(which(sites == site_selected())),
+      "stagedComments" = names(which(sites == comment_site_selected()))
+  )
+})
+
+output$site_name <- renderText(
+  paste0("Site name for selected row:  ", site_name_text())
+  )
+
 
   output$buttons <-renderUI({
     ns <- session$ns
@@ -102,6 +119,7 @@ editableDT <- function(input, output, session,
       # disabled(actionButton(ns("add_comment_mod"), "Add Comment", icon=icon("pencil",lib="glyphicon")))
        # } else {
       actionButton(ns("add_comment_mod"), "Add Comment", icon=icon("pencil",lib="glyphicon"))
+
        # }
      }
       # if(amode==1) actionButton(ns("newCol"),"New Col",icon=icon("plus-sign",lib="glyphicon")),
@@ -152,6 +170,10 @@ comm_par <- reactive({
                   row.names = paste0(names(df()), ": "), quote = FALSE, col.names = FALSE)
     }
   })
+
+comment_site_selected <- reactive({
+    df()[input$origTable_rows_selected, 1]
+})
 
   site_selected <- reactive({
     df()[input$origTable_rows_selected, 3]

@@ -406,7 +406,7 @@ ui <-tagList(
          tabsetPanel(
            tabPanel("STAGED DATA", type = "pills",
                   fluidRow(
-                    column(6,
+                    column(12,
                            ### This is to adjust the width of pop up "showmodal()" for DT modify table
                            tags$head(tags$style(HTML('
 
@@ -429,7 +429,7 @@ ui <-tagList(
                 ), # END DATA tp
                 tabPanel("STAGED COMMENTS", type = "pills",
                   fluidRow(
-                    column(6,
+                    column(12,
                            ### This is to adjust the width of pop up "showmodal()" for DT modify table
                            tags$head(tags$style(HTML('
 
@@ -510,6 +510,7 @@ ui <-tagList(
                                               '))),
                  uiOutput("selectFile_ui"),
                  br(),
+
                  uiOutput("submitted_data.UI")
         ) #End Col
         ) # End FR
@@ -1145,7 +1146,7 @@ if (user_role %in% c("Program Coordinator", "App Developer")){
   tabsetPanel(
     tabPanel("SUBMITTED DATA", type = "pills",
              fluidRow(
-               column(6,
+               column(12,
                       ### This is to adjust the width of pop up "showmodal()" for DT modify table
                       tags$head(tags$style(HTML('
 
@@ -1168,7 +1169,7 @@ if (user_role %in% c("Program Coordinator", "App Developer")){
     ), # END DATA tp
     tabPanel("SUBMITTED COMMENTS", type = "pills",
              fluidRow(
-               column(6,
+               column(12,
                       ### This is to adjust the width of pop up "showmodal()" for DT modify table
                       tags$head(tags$style(HTML('
 
