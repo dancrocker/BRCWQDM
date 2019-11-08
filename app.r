@@ -39,7 +39,7 @@ suppressPackageStartupMessages(
   ipak(packages)
 )
 # install.packages("https://github.com/jeroen/curl/archive/master.tar.gz", repos = NULL)
-update.packages("curl", repos="http://cran.rstudio.com/", quiet = T, verbose = F)
+# update.packages("curl", repos="http://cran.rstudio.com/", quiet = T, verbose = F)
 
 # loadData()
 
@@ -542,6 +542,10 @@ ui <-tagList(
                    tabPanel("Comments",
                             fluidRow(downloadButton("download_data_comments", "Download table as csv"), align = "center"),
                             dataTableOutput("data_comment_db")
+                   ),
+                         tabPanel("Transaction Log",
+                            fluidRow(downloadButton("download_trans_log", "Download table as csv"), align = "center"),
+                            dataTableOutput("data_trans_log_db")
                    )
                  )  # End Tab Panel
           ) # End Col
@@ -1522,6 +1526,12 @@ rxdata$data_c_db <- readRDS(data_c_RDS)
   rxdata$data_c_db <- NULL
 }
 
+if (file.exists(trans_log_RDS)){
+rxdata$data_trans_log_db <- readRDS(trans_log_RDS)
+} else {
+  rxdata$data_trans_log_db <- NULL
+}
+
   output$data_num_db <- renderDataTable({
     req(!is.null(rxdata$data_n_db))
     rxdata$data_n_db
@@ -1537,8 +1547,13 @@ rxdata$data_c_db <- readRDS(data_c_RDS)
     rxdata$data_c_db
   })
 
+    output$data_trans_log_db <- renderDataTable({
+    req(!is.null(rxdata$data_trans_log_db))
+    rxdata$data_trans_log_db
+  })
 
-  # Downloadable csv of selected dataset
+
+  # Downloadable csv of numerical data
   output$download_data_num <- downloadHandler(
     filename = function() {
       paste("BRC_NumericalData", ".csv", sep = "")
@@ -1549,7 +1564,7 @@ rxdata$data_c_db <- readRDS(data_c_RDS)
       write_csv(df_csv, file)
     }
   )
-    # Downloadable csv of selected dataset
+    # Downloadable csv of text data
   output$download_data_text <- downloadHandler(
     filename = function() {
       paste("BRC_TextData", ".csv", sep = "")
@@ -1560,13 +1575,25 @@ rxdata$data_c_db <- readRDS(data_c_RDS)
       write_csv(df_csv, file)
     }
   )
-    # Downloadable csv of selected dataset
+    # Downloadable csv of comment data
   output$download_data_comments <- downloadHandler(
     filename = function() {
       paste("BRC_CommentData", ".csv", sep = "")
     },
     content = function(file) {
         df_csv <- rxdata$data_c_db
+        # df_csv$SampleDateTime <- format(df_csv$SampleDateTime, usetz=TRUE)
+      write_csv(df_csv, file)
+    }
+  )
+
+      # Downloadable csv of transaction log
+  output$download_trans_log <- downloadHandler(
+    filename = function() {
+      paste("BRC_TransactionData", ".csv", sep = "")
+    },
+    content = function(file) {
+        df_csv <- rxdata$trans_log_db
         # df_csv$SampleDateTime <- format(df_csv$SampleDateTime, usetz=TRUE)
       write_csv(df_csv, file)
     }

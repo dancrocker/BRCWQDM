@@ -3,6 +3,7 @@
 library(rdrop2)
 library(tibble)
 
+
 ### This setting is very important - if not set then random connection errors occur
 httr::set_config(httr::config(http_version = 0))
 
@@ -76,11 +77,18 @@ SUBMIT_CSV <- function(zone, drop_path = "BRCWQDM/Submitted_Data_Staging"){
  ### Args for interactive testing
   ### Need to add some error handling here
   # zone <- "Mid-Reach"
-  # drop_path <-  "BRCWQDM/Submitted_Data_Staging"
   ### Upload the data first
   csv <- stagedDataCSV
   if(file.exists(csv)){
-  fn <- paste0(zone,"_SubmittedData_",today(),".csv")
+  ### Get month of data
+  data_date <- read.table(csv, stringsAsFactors = FALSE, header = T,  sep = " " , na.strings = "NA") %>%
+    slice(1) %>%
+    pull(SampleDateTime)
+ ### Calculate year and month from date of data
+  mon <- month.abb[month(data_date)]
+  yr <- year(data_date)
+
+  fn <- paste0(zone,"_SubmittedData_", mon,"_", yr,".csv")
   ### Overwrite filename so that it can be uploaded to dropbox
   file.copy(csv,fn, overwrite = TRUE)
   ### First check and see if it was already submitted
@@ -97,8 +105,16 @@ SUBMIT_CSV <- function(zone, drop_path = "BRCWQDM/Submitted_Data_Staging"){
 
   ### Upload the Comments
   if(file.exists(csv) & read.table(csv, stringsAsFactors = FALSE, header = T,  sep = " " , na.strings = "NA") %>% nrow() > 0) {
+  ### Get month of data
+  data_date <- read.table(csv, stringsAsFactors = FALSE, header = T,  sep = " " , na.strings = "NA") %>%
+    slice(1) %>%
+    pull(DATE)
 
-  fn <- paste0(zone,"_SubmittedComments_",today(),".csv")
+ ### Calculate year and month from date of data
+  mon <- month.abb[month(data_date)]
+  yr <- year(data_date)
+
+  fn <- paste0(zone,"_SubmittedComments_", mon,"_", yr,".csv")
   file.copy(csv, fn, overwrite = TRUE)
   ### First check and see if it was already submitted
   # drop_exists(path = drop_path, dtoken = drop_auth(rdstoken = tokenpath))
