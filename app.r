@@ -39,7 +39,7 @@ suppressPackageStartupMessages(
   ipak(packages)
 )
 # install.packages("https://github.com/jeroen/curl/archive/master.tar.gz", repos = NULL)
-# update.packages("curl", repos="http://cran.rstudio.com/", quiet = T, verbose = F)
+update.packages("curl", repos="http://cran.rstudio.com/", quiet = T, verbose = F)
 
 # loadData()
 
@@ -1593,7 +1593,7 @@ rxdata$data_trans_log_db <- readRDS(trans_log_RDS)
       paste("BRC_TransactionData", ".csv", sep = "")
     },
     content = function(file) {
-        df_csv <- rxdata$trans_log_db
+        df_csv <- rxdata$data_trans_log_db
         # df_csv$SampleDateTime <- format(df_csv$SampleDateTime, usetz=TRUE)
       write_csv(df_csv, file)
     }

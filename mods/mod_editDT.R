@@ -20,7 +20,7 @@ editableDTUI <- function(id) {
     includeScript("www/message-handler.js"),
     fluidRow(
       uiOutput(ns("buttons")),
-      span(textOutput(ns("site_name")), style="color:purple"),
+      span(textOutput(ns("site_name")), style="color:purple; font-weight: 900"),
 
          # radioButtons3(ns("selection"),"Data Selection",choices=c("single","multiple"),
          #               inline=TRUE,labelwidth=130,align="center"),
