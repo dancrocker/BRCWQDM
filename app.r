@@ -38,8 +38,8 @@ packages <- c("shiny","shinyjs", "shinyFiles", "shinyTime", "shinyalert","shinyd
 suppressPackageStartupMessages(
   ipak(packages)
 )
-
-# update.packages("curl", repos="http://cran.rstudio.com/", quiet = T, verbose = F)
+# install.packages("https://github.com/jeroen/curl/archive/master.tar.gz", repos = NULL)
+update.packages("curl", repos="http://cran.rstudio.com/", quiet = T, verbose = F)
 
 # loadData()
 
