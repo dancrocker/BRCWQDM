@@ -40,8 +40,8 @@ suppressPackageStartupMessages(
 )
 # install.packages("https://github.com/jeroen/curl/archive/master.tar.gz", repos = NULL)
 update.packages("curl", repos="http://cran.rstudio.com/", quiet = T, verbose = F)
-
-# loadData()
+print(sessionInfo())
+  # loadData()
 
 print(paste0("BRCWQDM App lauched at ", Sys.time()))
 
@@ -49,6 +49,7 @@ print(paste0("BRCWQDM App lauched at ", Sys.time()))
 ### Set Directories ####
 wdir <<- getwd()
 ### Local Data Directory ####
+LocalDir <<- config[1]
 dataDir <<- paste0(config[1],"Data/")
 app_user <<- config[2]
 user_zone <<- config[13]
@@ -700,18 +701,10 @@ output$selectFile_ui <- renderUI({
      observeEvent(input$submit, {
       updateSelectInput(session = session,
                         inputId = "selectFile",
-                        label = bselectFile_la,
+                        label = selectFile_lab,
                         choices = c("",rxdata$fileChoices),
                         selected = "")
     })
-
-  ### interactive dataset
-
-  # rxdata$stagedData <- readRDS(stagedDataRDS)
-  # rxdata$stagedComments <- readRDS(stagedCommentsRDS)
-
-  # rxdata$submittedData <- try(readRDS(submittedDataRDS))
-  # rxdata$submittedComments <- try(readRDS(submittedCommentsRDS))
 
   DataEditCols <- data_fields$dt_cols[data_fields$editable == "yes"]
   CommentEditCols <- comment_fields$dt_cols[comment_fields$editable == "yes"]
@@ -1841,6 +1834,10 @@ callModule(BRCMAP, "brc_map", sitelist = sites_db)
 ### SESSION END ####
 # Code to stop app when browser session window closes
 session$onSessionEnded(function() {
+      if(user_role != "App Developer"){
+         UPLOAD_LOG()
+      }
+
       print(paste0("BRCWQDM session ended at ", Sys.time()))
       stopApp()
     })

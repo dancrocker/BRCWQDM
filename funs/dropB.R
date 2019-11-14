@@ -361,3 +361,19 @@ BACKUP_DATABASE <- function(){
 # BACKUP_DATABASE()
 
 
+UPLOAD_LOG <- function(){
+  log_path <- paste0(LocalDir,"BRCWQDM.log")
+  ### Dropbox backup directory:
+  dropb_root_dir <- config[12]
+  drop_path <- "BRCWQDM/User_logs"
+  fn <- glue("{LocalDir}{user_zone}_AppLog_{Sys.time()}.log")
+  ### Overwrite filename so that it can be uploaded to dropbox
+  file.copy(from = log_path, to = fn, overwrite = T, copy.mode = F)
+
+  drop_upload(file = fn, path = drop_path, mode = "overwrite",
+              verbose = TRUE, dtoken = drop_auth(rdstoken = tokenpath))
+  ### Now delete the temp copy of the database?
+  file.remove(fn)
+  return(print("App log uploaded to Dropbox"))
+}
+
