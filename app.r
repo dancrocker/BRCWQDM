@@ -91,7 +91,7 @@ last_update <- data_num_db$DATE_TIME %>% max()
 ### AS IS fields require no manipulation and can go directly to outputs
 ### Date and Time and any other QC'd values need to come from reactive elements
 # wdir
-table_fields <<- readr::read_csv(paste0(wdir,"/data/table_fields.csv"),col_types = cols(
+table_fields <<- readr::read_csv(paste0(wdir,"/data/table_fields.csv"), col_types = cols(
   shiny_input = col_character(),
   dt_cols = col_character(),
   col_type = col_character(),

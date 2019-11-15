@@ -366,7 +366,7 @@ UPLOAD_LOG <- function(){
   ### Dropbox backup directory:
   dropb_root_dir <- config[12]
   drop_path <- "BRCWQDM/User_logs"
-  fn <- glue("{LocalDir}{user_zone}_AppLog_{Sys.time()}.log")
+  fn <- glue("{LocalDir}{app_user}_AppLog_{Sys.Date()}.log")
   ### Overwrite filename so that it can be uploaded to dropbox
   file.copy(from = log_path, to = fn, overwrite = T, copy.mode = F)
 
