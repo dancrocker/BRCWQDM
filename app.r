@@ -628,7 +628,9 @@ if(app_user %in% user_list){
 }
 
 ### Set User Role ####
-user_role <<- filter(assignments_db, YEAR == year(Sys.Date()), NAME == app_user) %>% .$ROLE
+user_role <<- filter(assignments_db, YEAR == year(Sys.Date()),
+                     NAME == app_user,
+                     ROLE %in% c("App Developer", "Program Coordinator", "Field Coordinator")) %>% .$ROLE
 # user_role <<- "Field Coordinator"
 
 if(user_role %in% c("App Developer", "Program Coordinator")){
@@ -660,13 +662,14 @@ selected_date <- reactive({
   input$date
   })
 
+if(user_role == "Program Coordinator"){
+      selectFile_lab <<-  "Choose submitted data to process and import:"
+      } else {
+      selectFile_lab <<- "Choose previously submitted data to view:"
+}
+
 # SelectFile UI
 output$selectFile_ui <- renderUI({
-      if (user_role == "Program Coordinator"){
-      selectFile_lab <<-  "Choose submitted data to process and import:"
-      } else{
-      selectFile_lab <<- "Choose previously submitted data to view:"
-      }
       selectInput("selectFile", label = selectFile_lab,
                   choices = c("", rxdata$fileChoices), selected = "" , multiple = FALSE, width = "400px")
     })
