@@ -32,9 +32,14 @@ ipak <- function(pkg){
 }
 
 packages <- c("shiny","shinyjs", "shinyFiles", "shinyTime", "shinyalert","shinydashboard","rmarkdown", "knitr", "tidyselect", "lubridate",
-              "plotly", "leaflet", "RColorBrewer", "devtools", "data.table", "DT", "scales", "stringr", "shinythemes", "ggthemes", "tidyr",
-              "dplyr", "magrittr", "httr", "tibble", "bsplus", "readxl", "miniUI", "rstudioapi", "rdrop2", "readr", "purrr", "htmlwidgets", "ggplot2",
+              "plotly", "leaflet", "RColorBrewer", "data.table", "DT", "scales", "stringr", "shinythemes", "ggthemes", "tidyr",
+              "dplyr", "magrittr", "httr", "tibble", "bsplus", "readxl", "rdrop2", "readr", "purrr", "htmlwidgets", "ggplot2",
               "pool", "rgdal", "curl", "glue")
+ # "devtools"
+# "miniUI"
+# "rstudioapi"
+# "shinyFiles"
+
 suppressPackageStartupMessages(
   ipak(packages)
 )
@@ -617,9 +622,10 @@ GET_DATABASE_DATA()
 
 ### Generate User list ####
 user_list <<- assignments_db %>%
-    filter(YEAR == year(Sys.Date()), ROLE %in% c("Field Coordinator","Program Coordinator", "App Developer")) %>%
+    filter(YEAR == max(assignments_db$YEAR), ROLE %in% c("Field Coordinator","Program Coordinator", "App Developer")) %>%
   .$NAME
 
+max(assignments_db$YEAR)
 ### Verify User ####
 if(app_user %in% user_list){
   print(paste0("App user '", app_user, "' verified!"))
@@ -628,7 +634,7 @@ if(app_user %in% user_list){
 }
 
 ### Set User Role ####
-user_role <<- filter(assignments_db, YEAR == year(Sys.Date()),
+user_role <<- filter(assignments_db, YEAR == max(assignments_db$YEAR),
                      NAME == app_user,
                      ROLE %in% c("App Developer", "Program Coordinator", "Field Coordinator")) %>% .$ROLE
 # user_role <<- "Field Coordinator"
