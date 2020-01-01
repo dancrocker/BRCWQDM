@@ -625,6 +625,7 @@ user_list <<- assignments_db %>%
     filter(YEAR == max(assignments_db$YEAR), ROLE %in% c("Field Coordinator","Program Coordinator", "App Developer")) %>%
   .$NAME
 
+max(assignments_db$YEAR)
 ### Verify User ####
 if(app_user %in% user_list){
   print(paste0("App user '", app_user, "' verified!"))
