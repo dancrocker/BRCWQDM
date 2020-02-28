@@ -2,6 +2,7 @@
 
 library(rdrop2)
 library(tibble)
+library(lubridate)
 
 
 ### This setting is very important - if not set then random connection errors occur

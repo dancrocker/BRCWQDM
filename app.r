@@ -539,19 +539,19 @@ ui <-tagList(
                  tabsetPanel(
                    tabPanel("Numeric Data",
                             fluidRow(downloadButton("download_data_num", "Download table as csv"), align = "center"),
-                            dataTableOutput("data_num_db")
+                            DTOutput("data_num_db")
                    ),
                    tabPanel("Text Data",
                             fluidRow(downloadButton("download_data_text", "Download table as csv"), align = "center"),
-                            dataTableOutput("data_text_db")
+                          DTOutput("data_text_db")
                    ),
                    tabPanel("Comments",
                             fluidRow(downloadButton("download_data_comments", "Download table as csv"), align = "center"),
-                            dataTableOutput("data_comment_db")
+                            DTOutput("data_comment_db")
                    ),
                          tabPanel("Transaction Log",
                             fluidRow(downloadButton("download_trans_log", "Download table as csv"), align = "center"),
-                            dataTableOutput("data_trans_log_db")
+                           DTOutput("data_trans_log_db")
                    )
                  )  # End Tab Panel
           ) # End Col
@@ -1509,50 +1509,49 @@ observeEvent(input$submit, {
 
 ### DATABASE PAGE ####
 
-if (file.exists(data_n_RDS)){
-rxdata$data_n_db <- readRDS(data_n_RDS)
-} else {
-  rxdata$data_n_db <- NULL
-}
+  if (file.exists(data_n_RDS)){
+    rxdata$data_n_db <- readRDS(data_n_RDS)
+  } else {
+    rxdata$data_n_db <- NULL
+  }
 
-if (file.exists(data_t_RDS)){
-rxdata$data_t_db <- readRDS(data_t_RDS)
-} else {
-  rxdata$data_t_db <- NULL
-}
+  if (file.exists(data_t_RDS)){
+    rxdata$data_t_db <- readRDS(data_t_RDS)
+  } else {
+    rxdata$data_t_db <- NULL
+  }
 
-if (file.exists(data_c_RDS)){
-rxdata$data_c_db <- readRDS(data_c_RDS)
-} else {
-  rxdata$data_c_db <- NULL
-}
+  if (file.exists(data_c_RDS)){
+    rxdata$data_c_db <- readRDS(data_c_RDS)
+  } else {
+    rxdata$data_c_db <- NULL
+  }
 
-if (file.exists(trans_log_RDS)){
-rxdata$data_trans_log_db <- readRDS(trans_log_RDS)
-} else {
-  rxdata$data_trans_log_db <- NULL
-}
+  if (file.exists(trans_log_RDS)){
+    rxdata$data_trans_log_db <- readRDS(trans_log_RDS)
+  } else {
+    rxdata$data_trans_log_db <- NULL
+  }
 
   output$data_num_db <- renderDataTable({
     req(!is.null(rxdata$data_n_db))
-    rxdata$data_n_db
+    datatable(rxdata$data_n_db,filter = "top")
   })
 
-    output$data_text_db <- renderDataTable({
+  output$data_text_db <- renderDataTable({
     req(!is.null(rxdata$data_t_db))
-    rxdata$data_t_db
+    datatable(rxdata$data_t_db,filter = "top")
   })
 
-    output$data_comment_db <- renderDataTable({
+  output$data_comment_db <- renderDataTable({
     req(!is.null(rxdata$data_c_db))
-    rxdata$data_c_db
+    datatable(rxdata$data_c_db,filter = "top")
   })
 
-    output$data_trans_log_db <- renderDataTable({
+  output$data_trans_log_db <- renderDataTable({
     req(!is.null(rxdata$data_trans_log_db))
-    rxdata$data_trans_log_db
+    datatable(rxdata$data_trans_log_db,filter = "top")
   })
-
 
   # Downloadable csv of numerical data
   output$download_data_num <- downloadHandler(
