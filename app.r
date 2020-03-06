@@ -53,7 +53,7 @@ wdir <<- getwd()
 ### Settings dependent on launch mode (docker or normal) ####
 if(launch_mode == "docker") {
   suppressPackageStartupMessages(
-    sapply(pkg, require, character.only = TRUE)
+    sapply(packages, require, character.only = TRUE)
    )
   LocalDir <<- "/usr/local/src/LocalProjectDir/"
 } else { # app is not run in docker container
