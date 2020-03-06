@@ -23,6 +23,8 @@
 # Add comment modal button for submitted comments
 # When datatable modules are empty- disable buttons or remove entirely and display a helpful message
 
+print(paste0("BRCWQDM App lauched at ", Sys.time()))
+
 ### Load Libraries ####
 ipak <- function(pkg){
   new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
@@ -33,31 +35,38 @@ ipak <- function(pkg){
 
 packages <- c("shiny","shinyjs", "shinyFiles", "shinyTime", "shinyalert","shinydashboard","rmarkdown", "knitr", "tidyselect", "lubridate",
               "plotly", "leaflet", "RColorBrewer", "data.table", "DT", "scales", "stringr", "shinythemes", "ggthemes", "tidyr",
-              "dplyr", "magrittr", "httr", "tibble", "bsplus", "readxl", "rdrop2", "readr", "purrr", "htmlwidgets", "ggplot2",
+              "dplyr", "magrittr", "httr", "tibble", "bsplus", "readxl", "rdrop2", "RSQLite", "readr", "purrr", "htmlwidgets", "ggplot2",
               "pool", "rgdal", "curl", "glue")
+
+# install.packages("https://github.com/jeroen/curl/archive/master.tar.gz", repos = NULL)
+# update.packages("curl", repos="http://cran.rstudio.com/", quiet = T, verbose = F)
+
+# source('all_sessions.R', local = TRUE)
  # "devtools"
 # "miniUI"
 # "rstudioapi"
 # "shinyFiles"
 
-suppressPackageStartupMessages(
-  ipak(packages)
-)
-# install.packages("https://github.com/jeroen/curl/archive/master.tar.gz", repos = NULL)
-update.packages("curl", repos="http://cran.rstudio.com/", quiet = T, verbose = F)
-print(sessionInfo())
-  # loadData()
-
-print(paste0("BRCWQDM App lauched at ", Sys.time()))
-
-# source('all_sessions.R', local = TRUE)
 ### Set Directories ####
 wdir <<- getwd()
-### Local Data Directory ####
-LocalDir <<- config[1]
-dataDir <<- paste0(config[1],"Data/")
-app_user <<- config[2]
-user_zone <<- config[13]
+### LOCAL PROJECT DIRECTORY ####
+### Settings dependent on launch mode (docker or normal) ####
+if(launch_mode == "docker") {
+  suppressPackageStartupMessages(
+    sapply(pkg, require, character.only = TRUE)
+   )
+  LocalDir <<- "/usr/local/src/LocalProjectDir/"
+} else { # app is not run in docker container
+  suppressPackageStartupMessages(
+    ipak(packages)
+  )
+  LocalDir <<- config[1]
+}
+
+  dataDir <<- paste0(LocalDir,"Data/")
+  app_user <<- config[2]
+  user_zone <<- config[13]
+
 ### CSV Files ####
 stagedDataCSV <<- paste0(dataDir,"StagedData/BRC_StagedData.csv")
 stagedCommentsCSV <<- paste0(dataDir,"StagedData/BRC_StagedComments.csv")
@@ -77,12 +86,11 @@ data_c_RDS <- paste0(rdsFiles,"data_comment_db.rds")
 trans_log_RDS <-  paste0(rdsFiles,"trans_log_db.rds")
 ### RDS DATABASE FILES ####
 
-remote_data_dir <- paste0(getwd(),"/data/")
 ### Periodic updates - supporting tables
-sitesRDS <- paste0(remote_data_dir,"sites_db.rds")
-peopleRDS <- paste0(remote_data_dir,"people_db.rds")
-parametersRDS <- paste0(remote_data_dir,"parameters_db.rds")
-assignmentsRDS <- paste0(remote_data_dir,"assignments_db.rds")
+sitesRDS <- paste0(rdsFiles,"sites_db.rds")
+peopleRDS <- paste0(rdsFiles,"people_db.rds")
+parametersRDS <- paste0(rdsFiles,"parameters_db.rds")
+assignmentsRDS <- paste0(rdsFiles,"assignments_db.rds")
 
 ### From edit module ####
 useShinyalert()
@@ -95,7 +103,9 @@ last_update <- data_num_db$DATE_TIME %>% max()
 
 ### AS IS fields require no manipulation and can go directly to outputs
 ### Date and Time and any other QC'd values need to come from reactive elements
-# wdir
+
+remote_data_dir <- paste0(getwd(),"/data/")
+
 table_fields <<- readr::read_csv(paste0(wdir,"/data/table_fields.csv"), col_types = cols(
   shiny_input = col_character(),
   dt_cols = col_character(),
