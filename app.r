@@ -36,7 +36,7 @@ ipak <- function(pkg){
 packages <- c("shiny","shinyjs", "shinyFiles", "shinyTime", "shinyalert","shinydashboard","rmarkdown", "knitr", "tidyselect", "lubridate",
               "plotly", "leaflet", "RColorBrewer", "data.table", "DT", "scales", "stringr", "shinythemes", "ggthemes", "tidyr",
               "dplyr", "magrittr", "httr", "tibble", "bsplus", "readxl", "rdrop2", "RSQLite", "readr", "purrr", "htmlwidgets", "ggplot2",
-              "pool", "rgdal", "curl", "glue")
+              "pool", "curl", "glue")
 
 # install.packages("https://github.com/jeroen/curl/archive/master.tar.gz", repos = NULL)
 # update.packages("curl", repos="http://cran.rstudio.com/", quiet = T, verbose = F)
@@ -46,6 +46,7 @@ packages <- c("shiny","shinyjs", "shinyFiles", "shinyTime", "shinyalert","shinyd
 # "miniUI"
 # "rstudioapi"
 # "shinyFiles"
+# "rgdal"
 
 ### Set Directories ####
 wdir <<- getwd()

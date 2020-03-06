@@ -15,7 +15,7 @@ httr::set_config(httr::config(http_version = 0))
 ### Save token
 # tokendir <- paste0(config[1], "Data/")
 # saveRDS(token, paste0(tokendir, "dropb_token.RDS"))
-tokenpath <- paste0(config[1], "Data/dropb_token.RDS")
+tokenpath <- paste0(LocalDir, "Data/dropb_token.RDS")
 ### Use Token like this:
 drop_auth(rdstoken = tokenpath)
 
