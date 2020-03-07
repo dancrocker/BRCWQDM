@@ -29,7 +29,7 @@ library("stringr")
 # config # This is defined in the launch script
 
 ### Path to the synced database
-db <- paste0(config[1],"Data/BRC_Database/",config[6])
+db <- paste0(LocalDir,"Data/BRC_Database/",config[6])
 ### DB TABLES ####
 
 ### Make dfs from db tables ####
@@ -273,10 +273,10 @@ DATA_UPDATE()
 # poolClose(pool)
 #
 # # Save them in RDS folder in project directory (This is only so they can be uploaded to Dropbox)
-# saveRDS(newDataNum, file = paste0(config[1],"Data/rdsFiles/data_num_db.rds"))
-# saveRDS(newDataText, file = paste0(config[1],"Data/rdsFiles/data_text_db.rds"))
-# saveRDS(newDataComment, file = paste0(config[1],"Data/rdsFiles/data_comment_db.rds"))
-# saveRDS(newDataComment, file = paste0(config[1],"Data/rdsFiles/data_comment_db.rds"))
+# saveRDS(newDataNum, file = paste0(LocalDir,"Data/rdsFiles/data_num_db.rds"))
+# saveRDS(newDataText, file = paste0(LocalDir,"Data/rdsFiles/data_text_db.rds"))
+# saveRDS(newDataComment, file = paste0(LocalDir,"Data/rdsFiles/data_comment_db.rds"))
+# saveRDS(newDataComment, file = paste0(LocalDir,"Data/rdsFiles/data_comment_db.rds"))
 #
 # ### UPLOAD RDS FILES TO DROPBOX ####
 # UPLOAD_DB_DATA_RDS()

@@ -16,7 +16,7 @@ library("pool")
 
 DATA_UPDATE <- function(){
 ### Path to the synced database
-db <- paste0(config[1],"Data/BRC_Database/",config[6])
+db <- paste0(LocalDir,"Data/BRC_Database/",config[6])
 ### Make the db connection
 pool <- dbPool(drv = RSQLite::SQLite(), dbname = db)
 
@@ -30,10 +30,10 @@ poolClose(pool)
 rm(db)
 
 # Save them in RDS folder in project directory (This is only so they can be uploaded to Dropbox)
-saveRDS(data_num_db, file = paste0(config[1],"Data/rdsFiles/data_num_db.rds"))
-saveRDS(data_text_db, file = paste0(config[1],"Data/rdsFiles/data_text_db.rds"))
-saveRDS(data_comments_db, file = paste0(config[1],"Data/rdsFiles/data_comment_db.rds"))
-saveRDS(trans_log_db, file = paste0(config[1],"Data/rdsFiles/trans_log_db.rds"))
+saveRDS(data_num_db, file = paste0(LocalDir,"Data/rdsFiles/data_num_db.rds"))
+saveRDS(data_text_db, file = paste0(LocalDir,"Data/rdsFiles/data_text_db.rds"))
+saveRDS(data_comments_db, file = paste0(LocalDir,"Data/rdsFiles/data_comment_db.rds"))
+saveRDS(trans_log_db, file = paste0(LocalDir,"Data/rdsFiles/trans_log_db.rds"))
 
 ### UPLOAD RDS FILES TO DROPBOX ####
 source(paste0(wdir, "/funs/dropB.R"))

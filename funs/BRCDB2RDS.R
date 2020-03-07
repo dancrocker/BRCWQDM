@@ -21,7 +21,7 @@ config <- read.csv(paste0(app_dir,"BRC_config.csv"), header = TRUE, stringsAsFac
 config <- as.character(config$config_value)
 wdir <- getwd()
 ### Path to the synced database
-db <- paste0(config[1],"Data/BRC_Database/", config[6])
+db <- paste0(LocalDir,"Data/BRC_Database/", config[6])
 ### Make the db connection
 pool <- dbPool(drv = RSQLite::SQLite(), dbname = db)
 dbListTables(pool)
@@ -33,10 +33,10 @@ assignments_db <- dbReadTable(pool,"assignments")
 
 poolClose(pool)
 rm(db)
-saveRDS(sites_db, paste0(config[1],"Data/rdsFiles/sites_db.rds"))
-saveRDS(people_db, paste0(config[1],"Data/rdsFiles/people_db.rds"))
-saveRDS(parameters_db, paste0(config[1],"Data/rdsFiles/parameters_db.rds"))
-saveRDS(assignments_db, paste0(config[1],"Data/rdsFiles/assignments_db.rds"))
+saveRDS(sites_db, paste0(LocalDir,"Data/rdsFiles/sites_db.rds"))
+saveRDS(people_db, paste0(LocalDir,"Data/rdsFiles/people_db.rds"))
+saveRDS(parameters_db, paste0(LocalDir,"Data/rdsFiles/parameters_db.rds"))
+saveRDS(assignments_db, paste0(LocalDir,"Data/rdsFiles/assignments_db.rds"))
 source("funs/dropB.R")
 # Upload the rds files to dropbox
 UPLOAD_RDS()

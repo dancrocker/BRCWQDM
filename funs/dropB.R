@@ -13,7 +13,7 @@ httr::set_config(httr::config(http_version = 0))
 ### Save the Token to an object - DONE
 # token <- drop_auth()
 ### Save token
-# tokendir <- paste0(config[1], "Data/")
+# tokendir <- paste0(LocalDir, "Data/")
 # saveRDS(token, paste0(tokendir, "dropb_token.RDS"))
 tokenpath <- paste0(LocalDir, "Data/dropb_token.RDS")
 ### Use Token like this:
@@ -29,7 +29,7 @@ dir_listing <- safe_dir_check(path = paste0(dropb_root_dir, "/AppFiles"), recurs
   print("Dropbox connection failed trying to get data RDS files. Check internet connection and verify database RDS files have been uploaded to the correct location on dropbox")
 } else {
   files <- dir_listing$result
-  local_data_dir <- paste0(config[1],"Data/rdsFiles")
+  local_data_dir <- paste0(LocalDir,"Data/rdsFiles")
   # # Get info from dropbox RDS files:
   rds_info_path <- paste0(local_data_dir,"/rds_info.rds")
   dbox_rds_info <- tibble(`rds_file` = files$name, `timestamp` = files$server_modified)
@@ -145,7 +145,7 @@ if (user_role %in% c("Program Coordinator", "App Developer")){
   if (length(files) > 0){
   files <- files$name
   }
-  local_data_dir <- paste0(config[1],"Data/SubmittedData")
+  local_data_dir <- paste0(LocalDir,"Data/SubmittedData")
   if(files %>% length() %>% as.numeric() > 0){
     ### Check if we already have the submitted files locally
        if(all(files %in% list.files(submittedDataDir))){
@@ -180,7 +180,7 @@ GET_DATABASE_DATA <- function(){
   } else {
     files <- dir_listing$result
       if(files$name %>% length() %>% as.numeric() > 0){ # There are db data rds files to get...
-        local_data_dir <- paste0(config[1],"Data/rdsFiles")
+        local_data_dir <- paste0(LocalDir,"Data/rdsFiles")
         # # Get info from dropbox RDS files:
         db_info_path <- paste0(local_data_dir,"/db_info.rds")
         dbox_db_info <- tibble(`rds_file` = files$name, `timestamp` = files$server_modified)
@@ -291,10 +291,10 @@ UPLOAD_RDS <- function(){
 dropb_root_dir <- config[12]
 drop_path <- "BRCWQDM/AppFiles"
 
-  sitesRDS <- paste0(config[1],"Data/rdsFiles/sites_db.rds")
-  peopleRDS <- paste0(config[1],"Data/rdsFiles/people_db.rds")
-  parametersRDS <- paste0(config[1],"Data/rdsFiles/parameters_db.rds")
-  assignmentsRDS <- paste0(config[1],"Data/rdsFiles/assignments_db.rds")
+  sitesRDS <- paste0(LocalDir,"Data/rdsFiles/sites_db.rds")
+  peopleRDS <- paste0(LocalDir,"Data/rdsFiles/people_db.rds")
+  parametersRDS <- paste0(LocalDir,"Data/rdsFiles/parameters_db.rds")
+  assignmentsRDS <- paste0(LocalDir,"Data/rdsFiles/assignments_db.rds")
 
 
   drop_upload(file = sitesRDS, path = drop_path, mode = "overwrite",
@@ -325,10 +325,10 @@ dir_listing <- safe_dir_check(path = paste0(dropb_root_dir, "/DB_Tables_RDS"), r
     ))
   upload_msg <- "Database RDS files not uploaded to dropbox!"
 } else {
-  data_num_rds <-  paste0(config[1],"Data/rdsFiles/data_num_db.rds")
-  data_text_rds <- paste0(config[1],"Data/rdsFiles/data_text_db.rds")
-  data_comment_rds <-  paste0(config[1],"Data/rdsFiles/data_comment_db.rds")
-  data_trans_log_rds <-  paste0(config[1],"Data/rdsFiles/trans_log_db.rds")
+  data_num_rds <-  paste0(LocalDir,"Data/rdsFiles/data_num_db.rds")
+  data_text_rds <- paste0(LocalDir,"Data/rdsFiles/data_text_db.rds")
+  data_comment_rds <-  paste0(LocalDir,"Data/rdsFiles/data_comment_db.rds")
+  data_trans_log_rds <-  paste0(LocalDir,"Data/rdsFiles/trans_log_db.rds")
 
   drop_upload(file = data_num_rds, path = drop_path, mode = "overwrite",
               verbose = TRUE, dtoken = drop_auth(rdstoken = tokenpath))
