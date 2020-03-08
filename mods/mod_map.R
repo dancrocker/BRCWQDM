@@ -83,11 +83,11 @@ BRCMAP <- function(input, output, session, sitelist) {
       # bs_huc10 <- readOGR("gis/Blackstone_HUC10.shp") %>%
       # spTransform(CRS("+proj=longlat +ellps=GRS80"))
 
-      bs_huc12 <- readOGR("gis/Blackstone_HUC12.shp", verbose = FALSE) %>%
-      spTransform(CRS("+proj=longlat +ellps=GRS80"))
+      # bs_huc12 <- readOGR("gis/Blackstone_HUC12.shp", verbose = FALSE) %>%
+      # spTransform(CRS("+proj=longlat +ellps=GRS80"))
+bs_huc12 <- readRDS(paste0(getwd(),"/gis/bs_huc12.rds"))
 
 # Map
-
   output$map <- renderLeaflet({
     pal <- color_pal
     #Placeholder for subbasin boundaries - get HUC boundaries
