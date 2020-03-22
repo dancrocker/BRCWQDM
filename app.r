@@ -122,8 +122,8 @@ table_fields <<- readr::read_csv(paste0(wdir,"/data/table_fields.csv"), col_type
   input_section = col_character()
 ))
 
-data_fields <<- table_fields[1:28,]
-comment_fields <<- table_fields[29:33,]
+data_fields <<- table_fields[1:32,]
+comment_fields <<- table_fields[33:37,]
 
 ### DATA FIELDS ####
 fieldsASIS <<- data_fields$shiny_input[data_fields$as_is == "yes"]
@@ -375,6 +375,23 @@ ui <-tagList(
                           column(width = 3,
                              numericInput("conduct", "Specific Conductivity (uS/cm)(C05.A):", value = NULL, min = 0, max = 10000, step = 1),
                              numericInput("conduct_rep", "Specific Conductivity Replicate (uS/cm)(C05.B):", value = NULL, min = 0, max = 10000, step = 1)
+                          ))
+                      )
+                    )) # End Well Panel and FR
+        ) %>%
+        bs_set_opts(panel_type = "primary", use_heading_link = TRUE) %>%
+        bs_append(title = "BIOLOGICAL PARAMETERS", content =
+                    wellPanel(fluidRow(
+                      column(width = 12,
+                        fluidRow(
+                          column(width = 4,
+                            numericInput("e_coli", "E. coli (MPN/100mL) (B01):", value = NULL, min = 0, max = 25),
+                            numericInput("e_coli_rep", "E. coli - Replicate (MPN/100mL) (B02):", value = NULL, min = 0, max = 100, step = 1),
+                            ADD_COMMENT_UI("add_comment_biological")
+                            ),
+                          column(width = 4,
+                             numericInput("e_coli_lab_blank", "E. coli - Lab Blank (MPN/100mL) (B03):", value = NULL, min = 0, max = 20),
+                             numericInput("e_coli_field_blank", "E. coli - Field Blank (MPN/100mL) (B04):", value = NULL, min = 0, max = 20)
                           ))
                       )
                     )) # End Well Panel and FR
@@ -676,6 +693,9 @@ selected_site <- reactive({
   })
 selected_date <- reactive({
   input$date
+  })
+selected_sampler <- reactive({
+  input$sampler
   })
 
 if(user_role == "Program Coordinator"){
@@ -1046,7 +1066,7 @@ update_inputs()
 ### COMMENT CHOICES ####
 comment_par_choices <<- c("General Comment", data_fields$dt_cols[data_fields$take_comments =="yes"])
 
-  ### save to RDS and CSV ####
+  ### save Staged Data to RDS and CSV ####
   observeEvent(input$SaveStagedData,{
     req(staged_df())
     csv <- staged_df()
@@ -1082,7 +1102,7 @@ comment_par_choices <<- c("General Comment", data_fields$dt_cols[data_fields$tak
      shinyalert(title = "Saved!", type = "success")
    })
 
-   ### save to RDS and CSV ####
+   ### Save Staged Comments to RDS and CSV ####
    observeEvent(input$SaveStagedComments,{
      req(staged_comments())
      csv <- staged_comments()
@@ -1100,7 +1120,7 @@ comment_par_choices <<- c("General Comment", data_fields$dt_cols[data_fields$tak
      shinyalert(title = "Saved!", type = "success")
    })
 
-   ### save to RDS and CSV ####
+   ### Save Submitted Comments to RDS and CSV ####
    observeEvent(input$SaveSubmittedComments,{
      req(submitted_comments())
      csv <- submitted_comments()
@@ -1804,28 +1824,41 @@ output$update_db_text <- renderText("Use this button after making updates or edi
     )
   }
 
-
 ### MODULE CALLS ####
 callModule(ADD_COMMENT, "add_comment_physical",
            input_section = "physical",
            site = selected_site,
            comment_date = selected_date,
-           sampler = samplersRX)
+           sampler = selected_sampler,
+           formatted_sampler = samplersRX)
+
 callModule(ADD_COMMENT, "add_comment_depth",
            input_section = "depth",
            site = selected_site,
            comment_date = selected_date,
-           sampler = samplersRX)
+           sampler = selected_sampler,
+           formatted_sampler = samplersRX)
+
 callModule(ADD_COMMENT, "add_comment_chemical",
            input_section = "chemical",
            site = selected_site,
            comment_date = selected_date,
-           sampler = samplersRX)
-callModule(ADD_COMMENT, "add_comment_other",
-           input_section = c("chemical","physical","depth"),
+           sampler = selected_sampler,
+           formatted_sampler = samplersRX)
+
+callModule(ADD_COMMENT, "add_comment_biological",
+           input_section = c("biological"),
            site = selected_site,
            comment_date = selected_date,
-           sampler = samplersRX)
+           sampler = selected_sampler,
+           formatted_sampler = samplersRX)
+
+callModule(ADD_COMMENT, "add_comment_other",
+           input_section = c("chemical","physical","depth","biological"),
+           site = selected_site,
+           comment_date = selected_date,
+           sampler = selected_sampler,
+           formatted_sampler = samplersRX)
 
 callModule(BRCMAP, "brc_map", sitelist = sites_db)
 

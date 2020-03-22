@@ -10,18 +10,18 @@ ADD_COMMENT_UI <- function(id){
  actionButton(ns("add_comment_mod"), "Add Comment")
 }
 
-
 ########################################################################.
 ###                       MODULE SERVER                             ####
 ########################################################################.
-ADD_COMMENT <- function(input, output, session, input_section, site, comment_date, sampler) {
+ADD_COMMENT <- function(input, output, session, input_section, site, comment_date, sampler, formatted_sampler) {
   ### input_section refers to the data inputs: physical, chemical, depth
   comm_choices <-  c("General Comment", table_fields$dt_cols[table_fields$take_comments =="yes" & table_fields$input_section %in% input_section])
 
   observeEvent(input$add_comment_mod, {
     ns <- session$ns
     # req(input$site, SampleDT())
-    if(site() == ""| is.null(comment_date()) | is.null(sampler())){
+
+    if(any(site() == "", is.null(comment_date()), is.null(sampler()))){
       shinyalert("Oops!", "A Site, Date-Time and Sampler must be selected to add a comment!.", type = "error")
     } else {
       showModal(modalDialog(
@@ -39,7 +39,6 @@ ADD_COMMENT <- function(input, output, session, input_section, site, comment_dat
       ))
     }
   })
-
 
 saveComment <- function(data, csvFile, rdsFile) {
          if(file.exists(csvFile)){

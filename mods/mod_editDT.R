@@ -105,7 +105,7 @@ output$site_name <- renderText(
   paste0("Site name for selected row:  ", site_name_text())
   )
 
-
+### EDIT BUTTONS ####
   output$buttons <-renderUI({
     ns <- session$ns
     amode=mode()
@@ -190,6 +190,10 @@ comment_site_selected <- reactive({
    })
 comm_text <- reactive({
    input$comment_text
+})
+
+ entered_by <- reactive({
+    df()[input$origTable_rows_selected, ncol(df())]
 })
   ########################################################################.
   ###                     ADD A COMMENT                              ####
@@ -399,6 +403,10 @@ observeEvent(input$save_comment,{
         if(!is.null(attr(x[ids,i],"tzone"))) tz=attr(x[ids,i],"tzone")
         x[ids,i]=as.POSIXct(input[[myname[i]]],tz=tz,origin="1970-01-01")
       }
+      if (i == 32) {
+        x[ids,i] = entered_by() # This was needed because this column kept getting deleted it is non-editable
+      }
+
     }
     if(input$result=="updated"){
       updated1<<-x
