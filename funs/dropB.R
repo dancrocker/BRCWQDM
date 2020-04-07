@@ -79,7 +79,7 @@ SUBMIT_CSV <- function(zone, drop_path = "BRCWQDM/Submitted_Data_Staging"){
   ### Need to add some error handling here
   # zone <- "Mid-Reach"
   ### Upload the data first
-  csv <- stagedDataCSV
+  csv <- stagedDataCSV # This is the full path
   if(file.exists(csv)){
   ### Get month of data
   data_date <- read.table(csv, stringsAsFactors = FALSE, header = T,  sep = " " , na.strings = "NA") %>%
@@ -90,14 +90,16 @@ SUBMIT_CSV <- function(zone, drop_path = "BRCWQDM/Submitted_Data_Staging"){
   yr <- year(data_date)
 
   fn <- paste0(zone,"_SubmittedData_", mon,"_", yr,".csv")
-  ### Overwrite filename so that it can be uploaded to dropbox
-  file.copy(csv,fn, overwrite = TRUE)
-  ### First check and see if it was already submitted
+  file_path <- paste0(submittedDataDir, "/", fn)
+
+  ### Make a copy of staged data csv - rename and put in submitted data folder
+  file.copy(csv, paste0(submittedDataDir, "/", fn), overwrite = TRUE)
+  ### Upload submitted data to dropbox
   # drop_exists(path = drop_path, dtoken = drop_auth(rdstoken = tokenpath))
-  drop_upload(file = fn, path = drop_path, mode = "overwrite",
+  drop_upload(file = file_path, path = drop_path, mode = "overwrite",
               verbose = TRUE, dtoken = drop_auth(rdstoken = tokenpath))
-  ### Now move the submitted data to the submitted folder
-  file.rename(fn, paste0(submittedDataDir,"/",fn))
+  ### Delete staged data csv
+  # file.rename(fn, paste0(submittedDataDir,"/",fn))
   file.remove(csv)
   } else {
     print("There are no data to upload!")
@@ -116,13 +118,14 @@ SUBMIT_CSV <- function(zone, drop_path = "BRCWQDM/Submitted_Data_Staging"){
   yr <- year(data_date)
 
   fn <- paste0(zone,"_SubmittedComments_", mon,"_", yr,".csv")
-  file.copy(csv, fn, overwrite = TRUE)
-  ### First check and see if it was already submitted
+  file_path <- paste0(submittedDataDir, "/", fn)
+  file.copy(csv, file_path, overwrite = TRUE)
+  ### Upload submitted comments to dropbox
   # drop_exists(path = drop_path, dtoken = drop_auth(rdstoken = tokenpath))
   drop_upload(file = fn, path = drop_path, mode = "overwrite",
               verbose = TRUE, dtoken = drop_auth(rdstoken = tokenpath))
-  ### Now move the submitted data to the submitted folder
-  file.rename(fn, paste0(submittedDataDir,"/",fn))
+  ### Delete the staged comments csv
+  # file.rename(fn, paste0(submittedDataDir,"/",fn))
   file.remove(csv)
   } else {
     print("There were no comments to upload!")

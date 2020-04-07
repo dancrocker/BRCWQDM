@@ -67,7 +67,7 @@ poolClose(pool)
 
 ### PROCESS SUBMITTED DATA ####
 
-# data_file =  paste0(submittedDataDir,"/","Mid-Reach_SubmittedData_2019-09-12.csv")
+# data_file =  paste0(submittedDataDir,"/","Test-Reach_SubmittedData_Mar_2020.csv")
 
 PROCESS2 <- function(data_file){
 
@@ -179,7 +179,7 @@ data_t <- data_t %>%
   select(col_data_text)
 
 ########################################################################.
-###                           DATA_C                              ####
+###                           DATA_C                                ####
 ########################################################################.
 
 # First make sure there are comments

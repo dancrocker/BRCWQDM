@@ -155,7 +155,6 @@ password <- config[5]
 curl::send_mail(mail_from = sender, mail_rcpt = recipients, smtp_server = 'smtp.gmail.com',
   message = message, username = username, password = password, use_ssl = T, verbose = F)
 
-
 } # End function
 
 
