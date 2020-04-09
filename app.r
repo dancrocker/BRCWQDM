@@ -97,11 +97,12 @@ assignmentsRDS <- paste0(rdsFiles,"assignments_db.rds")
 useShinyalert()
 
 source(paste0(wdir, "/funs/dropB.R"))
-### Download rds files cached on dropbox to local data folder and load these and any staged RDS files
-# LOAD_DB_RDS()
 
 ### Download database rds files from dropbox ####
 GET_DATABASE_DATA()
+### Download rds files cached on dropbox to local data folder and load these and any staged RDS files
+LOAD_DB_RDS()
+
 data_num_db <-  readRDS(data_n_RDS)
 ### Change to the last record date (rds file)
 last_update <- data_num_db$DATE_TIME %>% max()
