@@ -98,7 +98,11 @@ useShinyalert()
 
 source(paste0(wdir, "/funs/dropB.R"))
 ### Download rds files cached on dropbox to local data folder and load these and any staged RDS files
-LOAD_DB_RDS()
+# LOAD_DB_RDS()
+
+### Download database rds files from dropbox ####
+GET_DATABASE_DATA()
+
 ### Change to the last record date (rds file)
 last_update <- data_num_db$DATE_TIME %>% max()
 
@@ -169,7 +173,6 @@ source(paste0(wdir, "/mods/mod_add_comment.R"))
 source(paste0(wdir, "/mods/mod_map.R"))
 source(paste0(wdir, "/funs/data_update.R"))
 
-  app_user <<- config[2]
   rxdata <<- reactiveValues()
   loadData <<- function() {
     if(file.exists(stagedDataCSV) == TRUE){
@@ -644,9 +647,6 @@ ui <-tagList(
 ####################################################.
 
 server <- function(input, output, session) {
-
-### Download database rds files from dropbox ####
-GET_DATABASE_DATA()
 
 ### Generate User list ####
 user_list <<- assignments_db %>%
