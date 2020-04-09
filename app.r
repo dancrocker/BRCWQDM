@@ -102,7 +102,7 @@ source(paste0(wdir, "/funs/dropB.R"))
 
 ### Download database rds files from dropbox ####
 GET_DATABASE_DATA()
-
+data_num_db <-  readRDS(data_n_RDS)
 ### Change to the last record date (rds file)
 last_update <- data_num_db$DATE_TIME %>% max()
 
