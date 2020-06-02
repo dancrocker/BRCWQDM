@@ -45,7 +45,6 @@ packages <- c("shiny","shinyjs", "shinyFiles", "shinyTime", "shinyalert","shinyd
  # "devtools"
 # "miniUI"
 # "rstudioapi"
-# "shinyFiles"
 # "rgdal"
 ### Set Directories ####
 wdir <<- getwd()
@@ -180,8 +179,6 @@ source(paste0(wdir, "/mods/mod_photo_browser.R"))
 rxdata <<- reactiveValues()
 
 rxdata$photo_list <<- try(GS_GET_PHOTOS(sheet = config[14]))
-
-photo_list <<- df_photos
 
 loadData <<- function() {
     if(file.exists(stagedDataCSV) == TRUE){
