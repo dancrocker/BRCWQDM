@@ -36,7 +36,7 @@ ipak <- function(pkg){
 packages <- c("shiny","shinyjs", "shinyFiles", "shinyTime", "shinyalert","shinydashboard","rmarkdown", "knitr", "tidyselect", "lubridate",
               "plotly", "leaflet", "RColorBrewer", "data.table", "DT", "scales", "stringr", "shinythemes", "ggthemes", "tidyr",
               "dplyr", "magrittr", "httr", "tibble", "bsplus", "readxl", "rdrop2", "RSQLite", "readr", "purrr", "htmlwidgets", "ggplot2",
-              "pool", "curl", "glue")
+              "pool", "curl", "glue","googlesheets4", "fs")
 
 # install.packages("https://github.com/jeroen/curl/archive/master.tar.gz", repos = NULL)
 # update.packages("curl", repos="http://cran.rstudio.com/", quiet = T, verbose = F)
@@ -47,7 +47,6 @@ packages <- c("shiny","shinyjs", "shinyFiles", "shinyTime", "shinyalert","shinyd
 # "rstudioapi"
 # "shinyFiles"
 # "rgdal"
-
 ### Set Directories ####
 wdir <<- getwd()
 ### LOCAL PROJECT DIRECTORY ####
@@ -166,16 +165,25 @@ wat_erosion_choices <<- c("Undercut bank", "Slumping", "Erosional gullies in ban
 depth_choices <<- c("Gage (Staff Plate-feet)", "Ruler (inches)", "Not Recorded", "No Datum")
 
 ### SOURCE EXTERNAL SCRIPTS ####
+source(paste0(wdir, "/funs/gsheets.R"))
 source(paste0(wdir, "/funs/csv2df.R"))
 source(paste0(wdir, "/funs/editableDT_modFuns.R"))
 source(paste0(wdir, "/mods/mod_editDT.R"))
 source(paste0(wdir, "/funs/sendEmail.R"))
 source(paste0(wdir, "/mods/mod_add_comment.R"))
+source(paste0(wdir, "/mods/mod_add_photo.R"))
 source(paste0(wdir, "/mods/mod_map.R"))
 source(paste0(wdir, "/funs/data_update.R"))
+source(paste0(wdir, "/mods/mod_photo_browser.R"))
 
-  rxdata <<- reactiveValues()
-  loadData <<- function() {
+
+rxdata <<- reactiveValues()
+
+rxdata$photo_list <<- try(GS_GET_PHOTOS(sheet = config[14]))
+
+photo_list <<- df_photos
+
+loadData <<- function() {
     if(file.exists(stagedDataCSV) == TRUE){
       data <- read.table(stagedDataCSV, stringsAsFactors = FALSE, header = T,  sep = " " , na.strings = "NA")
       df <- data_csv2df(data, data_fields) ### saves RDS file as data.frame
@@ -237,7 +245,7 @@ ImportActionCount <-  reactiveVal(0)
 
 
 ### UI ####
-ui <-tagList(
+ui <- tagList(
   ### Creates padding at top for navBar space due to "fixed-top" position
   tags$style(type='text/css',
              'body {padding-top: 70px;}',
@@ -408,11 +416,9 @@ ui <-tagList(
                       ),
                       column(width = 4,
                              checkboxInput("photos","Photos associated with sampling event?")
-
                       ),
                       column(width = 4,
-                             actionButton("add_photo", "Add Photo"),
-                             h4("This feature coming soon")
+                             ADD_PHOTO_UI("add_photo_data_entry"),
                       )
                     )
                 ) # End Well Panel
@@ -581,9 +587,14 @@ ui <-tagList(
                             fluidRow(downloadButton("download_data_comments", "Download table as csv"), align = "center"),
                             DTOutput("data_comment_db")
                    ),
-                         tabPanel("Transaction Log",
+                   tabPanel("Photos",
+                            column(12,
+                                   PHOTOS_UI("photo_browser")
+                            )
+                   ),
+                   tabPanel("Transaction Log",
                             fluidRow(downloadButton("download_trans_log", "Download table as csv"), align = "center"),
-                           DTOutput("data_trans_log_db")
+                            DTOutput("data_trans_log_db")
                    )
                  )  # End Tab Panel
           ) # End Col
@@ -700,9 +711,9 @@ selected_sampler <- reactive({
   })
 
 if(user_role == "Program Coordinator"){
-      selectFile_lab <<-  "Choose submitted data to process and import:"
-      } else {
-      selectFile_lab <<- "Choose previously submitted data to view:"
+  selectFile_lab <<-  "Choose submitted data to process and import:"
+} else {
+  selectFile_lab <<- "Choose previously submitted data to view:"
 }
 
 # SelectFile UI
@@ -1422,35 +1433,35 @@ observeEvent(input$submit, {
     NewCount <- SubmitActionCount() + 1
     SubmitActionCount(NewCount)
     print(paste0("Submit Action Count was ", SubmitActionCount()))
-    submitEmail()
+    send_submit_Email()
     loadData()
     loadComments()
     rxdata$fileChoices <- fileChoices()
   }
 })
 
+send_submit_email <- function() {
+     out <- tryCatch(
+       message("Trying to send email"),
+       submitEmail(),
+       error=function(cond) {
+         message(paste("There was an error. User cannot send email via gmail", cond))
+         return(1)
+       },
+       warning=function(cond) {
+         message(paste("Send mail function caused a warning, but was completed successfully", cond))
+         return(2)
+       },
+       finally={
+         message(paste("Email notification attempted..."))
+       }
+     )
+     return(out)
+   }
 
-### Generalize this to work with both submit and import
-### Function to send ImportEmail
-SubmitEmail <- function() {
-  out <- tryCatch(
-   submitEmail(),
-      error=function(cond) {
-        mail_msg <<- paste("There was an error with the Submit email function, cannot send email", cond)
-        print(mail_msg)
-        return(NA)
-      },
-      warning=function(cond) {
-        mail_msg <<- paste("Submit email function caused a warning, but was completed successfully", cond)
-        print(mail_msg)
-        return(NULL)
-      },
-      finally={
-       message("Submit email completed")
-      }
-  )
-  return(out)
-}
+
+
+
 
 # Hide submit button and tables when import button is pressed (So one cannot double import same file)
 observeEvent(input$submit, {
@@ -1565,24 +1576,31 @@ observeEvent(input$submit, {
     rxdata$data_trans_log_db <- NULL
   }
 
-  output$data_num_db <- renderDataTable({
+  output$data_num_db <- DT::renderDT({
     req(!is.null(rxdata$data_n_db))
-    datatable(rxdata$data_n_db,filter = "top")
-  })
+    DT::datatable(rxdata$data_n_db, rownames = F)
+  },
+  options = list(autoWidth = TRUE,
+                 # scrollX = T,
+                 columnDefs = (list(list(width = '100px', targets =c (0, 1)),
+                                    list(width = '200px', targets = c(7))
+                                    )
+                               )
+  ))
 
   output$data_text_db <- renderDataTable({
     req(!is.null(rxdata$data_t_db))
-    datatable(rxdata$data_t_db,filter = "top")
+    datatable(rxdata$data_t_db, filter = "top", rownames = F)
   })
 
   output$data_comment_db <- renderDataTable({
     req(!is.null(rxdata$data_c_db))
-    datatable(rxdata$data_c_db,filter = "top")
+    datatable(rxdata$data_c_db, filter = "top", rownames = F)
   })
 
   output$data_trans_log_db <- renderDataTable({
     req(!is.null(rxdata$data_trans_log_db))
-    datatable(rxdata$data_trans_log_db,filter = "top")
+    datatable(rxdata$data_trans_log_db,filter = "top", rownames = F)
   })
 
   # Downloadable csv of numerical data
@@ -1861,7 +1879,14 @@ callModule(ADD_COMMENT, "add_comment_other",
            sampler = selected_sampler,
            formatted_sampler = samplersRX)
 
+callModule(ADD_PHOTO, "add_photo_data_entry",
+           site = selected_site,
+           photo_date = selected_date,
+           mod_loc = "data entry",
+           par = NULL)
+
 callModule(BRCMAP, "brc_map", sitelist = sites_db)
+callModule(PHOTOS, "photo_browser", photo_list = photo_list)
 
 ### IMAGES ####
 

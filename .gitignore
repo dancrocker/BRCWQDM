@@ -5,3 +5,4 @@
 BRC_Launch.R
 BRCWQDM.Rproj
 .httr-oauth
+.secrets

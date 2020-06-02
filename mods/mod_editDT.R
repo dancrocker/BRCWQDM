@@ -14,12 +14,12 @@
 
 editableDTUI <- function(id) {
   ns=NS(id)
-  tagList(
-  fluidPage(
-    shinyjs::useShinyjs(),
-    includeScript("www/message-handler.js"),
-    fluidRow(
-      uiOutput(ns("buttons")),
+    tagList(
+    fluidPage(
+      shinyjs::useShinyjs(),
+      includeScript("www/message-handler.js"),
+      fluidRow(
+        uiOutput(ns("buttons")),
       span(textOutput(ns("site_name")), style="color:purple; font-weight: 900"),
 
          # radioButtons3(ns("selection"),"Data Selection",choices=c("single","multiple"),
@@ -114,14 +114,15 @@ output$site_name <- renderText(
       # actionButton(ns("addRow"),"Add New",icon=icon("plus",lib="glyphicon")),
       # actionButton(ns("insertRow"),"Insert Row",icon=icon("hand-up",lib="glyphicon")),
       actionButton(ns("editData"),"Edit Data", icon=icon("wrench",lib="glyphicon")),
-     if(data_name %in% c("stagedData", "submittedData")){
-       # if(nrow(df() >0)){
-      # disabled(actionButton(ns("add_comment_mod"), "Add Comment", icon=icon("pencil",lib="glyphicon")))
-       # } else {
-      actionButton(ns("add_comment_mod"), "Add Comment", icon=icon("pencil",lib="glyphicon"))
-
-       # }
-     }
+      if(data_name %in% c("stagedData", "submittedData")) {
+        # if(nrow(df() >0)){
+        # disabled(actionButton(ns("add_comment_mod"), "Add Comment", icon=icon("pencil",lib="glyphicon")))
+        # } else {
+        actionButton(ns("add_comment_mod"), "Add Comment", icon = icon("pencil", lib="glyphicon"))
+        # }
+      },
+      ### ADD PHOTO UI ####
+      ADD_PHOTO_UI(ns("add_photo_staged_data"))
       # if(amode==1) actionButton(ns("newCol"),"New Col",icon=icon("plus-sign",lib="glyphicon")),
       # if(amode==1) actionButton(ns("removeCol"),"Remove Col",icon=icon("trash",lib="glyphicon")),
       # if(amode==1) actionButton(ns("dplyr"),"Manipulate",icon=icon("scissors",lib="glyphicon")),
@@ -158,36 +159,38 @@ comm_par <- reactive({
   input$comment_par
 })
 
-  # commenter_choices <- app_user
+# commenter_choices <- app_user
 
-  # print the selected indices
-  output$record = renderPrint({
-    # t(df()[input$origTable_rows_selected,])
-    s <- df()[input$origTable_rows_selected,]
-    if (length(s)) {
-      cat('DATA FOR THE SELECTED ROW:\n\n')
-      write.table(t(df()[input$origTable_rows_selected,]),
-                  row.names = paste0(names(df()), ": "), quote = FALSE, col.names = FALSE)
-    }
-  })
+# print the selected indices
+output$record = renderPrint({
+  # t(df()[input$origTable_rows_selected,])
+  s <- df()[input$origTable_rows_selected,]
+  if (length(s)) {
+    cat('DATA FOR THE SELECTED ROW:\n\n')
+    write.table(t(df()[input$origTable_rows_selected,]),
+                row.names = paste0(names(df()), ": "), quote = FALSE, col.names = FALSE)
+  }
+})
 
 comment_site_selected <- reactive({
     df()[input$origTable_rows_selected, 1]
 })
 
-  site_selected <- reactive({
-    df()[input$origTable_rows_selected, 3]
+site_selected <- reactive({
+  df()[input$origTable_rows_selected, 3]
 })
-  output$comment_site <- renderText({
-    paste0("Site: ", site_selected())
-           })
 
-  comment_commenter <- reactive({
-    df()[input$origTable_rows_selected, 4]
+output$comment_site <- renderText({
+  paste0("Site: ", site_selected())
 })
-   comment_date <- reactive({
-    df()[input$origTable_rows_selected, 2]
-   })
+
+comment_commenter <- reactive({
+  df()[input$origTable_rows_selected, 4]
+})
+rec_selected_date <- reactive({
+  df()[input$origTable_rows_selected, 2] %>% str_trunc(width = 10, side = "right", ellipsis = "")
+})
+
 comm_text <- reactive({
    input$comment_text
 })
@@ -271,10 +274,10 @@ formatComment_mod <- function(){
     #           # "submittedComments" = df()[input$origTable_rows_selected, 1]
     # )
 
-  date_comm <- comment_date() %>%
-    str_trunc(width = 10, side = "right", ellipsis = "")
+  # date_comm <- rec_selected_date() %>%
+  #   str_trunc(width = 10, side = "right", ellipsis = "")
 
-  comment <- tibble(SITE = site_selected(), DATE = date_comm, PARAMETER = comm_par(),
+  comment <- tibble(SITE = site_selected(), DATE = rec_selected_date(), PARAMETER = comm_par(),
                     COMMENTER = commenter, COMMENT_TEXT = comm_text())
   # glimpse(comment)
   return(comment)
@@ -633,6 +636,17 @@ observeEvent(input$save_comment,{
       uiOutput(ns("edit_modal"))
     ))
   })
+
+########################################################################.
+###                      CALL_PHOTO_MODULE                          ####
+########################################################################.
+
+callModule(ADD_PHOTO, "add_photo_staged_data",
+           site = site_selected,
+           photo_date = rec_selected_date,
+           mod_loc = "staged data",
+           par = NULL)
+
   return(df)
 }
 

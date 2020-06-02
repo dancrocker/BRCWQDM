@@ -10,6 +10,8 @@
 library(curl)
 library(lubridate)
 library(glue)
+library(magrittr)
+library(dplyr)
 #set working directory
 # setwd(config[1])
 
@@ -54,6 +56,7 @@ recipients <- distro
 sender <- config[4]
 username <- config[4]
 password <- config[5]
+
 curl::send_mail(mail_from = sender, mail_rcpt = recipients, smtp_server = 'smtp.gmail.com',
   message = message, username = username, password = password, use_ssl = T, verbose = F)
 

@@ -24,7 +24,8 @@ LOAD_DB_RDS <- function(){
 ### List Drop Box files ####
 dropb_root_dir <- config[12]
 safe_dir_check <- purrr::safely(drop_dir, otherwise = FALSE, quiet = TRUE)
-dir_listing <- safe_dir_check(path = paste0(dropb_root_dir, "/AppFiles"), recursive = FALSE, dtoken = drop_auth(rdstoken = tokenpath))
+dir_listing <- safe_dir_check(path = paste0(dropb_root_dir, "/AppFiles"),
+                              recursive = FALSE, dtoken = drop_auth(rdstoken = tokenpath))
   if (FALSE %in% dir_listing$result) {
   print("Dropbox connection failed trying to get data RDS files. Check internet connection and verify database RDS files have been uploaded to the correct location on dropbox")
 } else {
@@ -134,13 +135,14 @@ SUBMIT_CSV <- function(zone, drop_path = "BRCWQDM/Submitted_Data_Staging"){
 }
 
 # Submitted Data only fetched for Program Coordinator
-GET_SUBMITTED_DATA <- function(){
+GET_SUBMITTED_DATA <- function() {
 if (user_role %in% c("Program Coordinator", "App Developer")){
   ### List Drop Box files ####
   dropb_root_dir <- config[12]
   safe_dir_check <- purrr::safely(drop_dir, otherwise = FALSE, quiet = FALSE)
-  dir_listing <- safe_dir_check(path = paste0(dropb_root_dir, "/Submitted_Data_Staging"), recursive = FALSE, dtoken = drop_auth(rdstoken = tokenpath))
-  if (FALSE %in% dir_listing$result) {
+  dir_listing <- safe_dir_check(path = paste0(dropb_root_dir, "/Submitted_Data_Staging"),
+                              recursive = FALSE, dtoken = drop_auth(rdstoken = tokenpath))
+ if (FALSE %in% dir_listing$result) {
     print("Dropbox connection failed trying to download submitted data csv files. Check internet connection and verify that csv files are on Dropbox in the correct location")
     } else {
   files <- drop_dir(path = paste0(dropb_root_dir, "/Submitted_Data_Staging"), recursive = FALSE, dtoken = drop_auth(rdstoken = tokenpath))
@@ -172,6 +174,8 @@ if (user_role %in% c("Program Coordinator", "App Developer")){
   print(paste0(app_user, " is not the Program Coordinator or App Developer - submitted files not downloaded from Dropbox. User submitted files available locally"))
 }
 }
+# GET_SUBMITTED_DATA()
+
 
 GET_DATABASE_DATA <- function(){
   ### List Drop Box files ####
@@ -380,4 +384,51 @@ UPLOAD_LOG <- function(){
   file.remove(fn)
   return(print("App log uploaded to Dropbox"))
 }
+
+
+UPLOAD_PHOTO <- function(file, name) {
+  ### Dropbox backup directory:
+  dropb_root_dir <- config[12]
+  drop_path <- "BRCWQDM/Photos"
+  fn <- name
+  ### Overwrite filename so that it can be uploaded to dropbox
+  file.copy(from = file, to = fn, overwrite = T, copy.mode = F)
+
+  drop_upload(file = fn, path = drop_path, mode = "overwrite",
+              verbose = TRUE, dtoken = drop_auth(rdstoken = tokenpath))
+  ### Now delete the temp copy of the database?
+  file.remove(fn)
+  return(print(glue("Photo {fn} uploaded to Dropbox")))
+}
+
+GET_PHOTO <- function(photo){
+  # photo <- "A-07-02-020_2020-04-06_WATC_1589455220.jpg"
+  local_data_dir <- paste0(LocalDir,"Data/photos")
+  file <- paste0(local_data_dir, "/", photo)
+  if (file_exists(file)) {
+    return(paste0("Photo '", photo, "' already exists locally, skipping dropbox download..."))
+  } else { # Get photo from dropbox
+    ### List Drop Box files ####
+    dropb_root_dir <- config[12]
+    drop_path <- "BRCWQDM/Photos"
+    db_photo <- paste0(dropb_root_dir, "/Photos/", photo)
+    safe_dir_check <- purrr::safely(drop_dir, otherwise = FALSE, quiet = FALSE)
+    dir_listing <- safe_dir_check(path = paste0(dropb_root_dir, "/Photos"), recursive = FALSE, dtoken = drop_auth(rdstoken = tokenpath))
+    if (FALSE %in% dir_listing$result) {
+      return("Dropbox connection failed trying to download photo file. Check internet connection and verify requested photo is on dropbox")
+    } else {
+      files <- dir_listing$result
+      if(db_photo %in% files$path_display) {
+        # Download the photo
+        drop_download(path = db_photo, local_path = local_data_dir, overwrite = TRUE,
+                      dtoken =  drop_auth(rdstoken = tokenpath))
+        return("Photo file downloaded successfully!...")
+      } else {
+        return("The requested file is not in the dropbox photo archive - please contact database administrator...")
+      }
+    } # End if
+  } # End if
+} # End Function
+
+# GET_PHOTO(photo)
 

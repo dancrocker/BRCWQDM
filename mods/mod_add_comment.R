@@ -14,7 +14,8 @@ ADD_COMMENT_UI <- function(id){
 ###                       MODULE SERVER                             ####
 ########################################################################.
 ADD_COMMENT <- function(input, output, session, input_section, site, comment_date, sampler, formatted_sampler) {
-  ### input_section refers to the data inputs: physical, chemical, depth
+
+### input_section refers to the data inputs: physical, chemical, depth
   comm_choices <-  c("General Comment", table_fields$dt_cols[table_fields$take_comments =="yes" & table_fields$input_section %in% input_section])
 
   observeEvent(input$add_comment_mod, {
