@@ -52,22 +52,24 @@ ns <- session$ns
 
 local_photo_dir <- paste0(dataDir,"photos")
 
-photo_list$SITE_CODE <- paste0(sites_db$WATERBODY_NAME[match(photo_list$SITE_CODE, sites_db$BRC_CODE)], " (", photo_list$SITE_CODE, ")")
-photo_list <- rename(photo_list, "SITE" = "SITE_CODE")
-
+if(length(photo_list$SITE_CODE > 0)) {
+  photo_list$SITE_CODE <- paste0(sites_db$WATERBODY_NAME[match(photo_list$SITE_CODE, sites_db$BRC_CODE)], " (", photo_list$SITE_CODE, ")")
+  photo_list <- rename(photo_list, "SITE" = "SITE_CODE")
+} else {
+  print("There are no photos available for the photos table")
+}
 ### Change photo_list back to reactive with () once rxdata used again
 photo_dt <- reactive({
- photo_list
+  req(length(photo_list$SITE_CODE > 0))
+  photo_list
 })
 
 # v <- reactiveValues(photos = photo_dt())
 
 output$photos <- DT::renderDataTable({
+ req(isTruthy(photo_dt()))
  datatable(photo_dt(), filter = "top", selection = 'single', rownames = F)
 })
-
-
-
 
 browser_photo_loc <- reactive({
   photo_dt()[input$photos_rows_selected, 1]
@@ -92,8 +94,6 @@ rec <- reactive({
 browser_caption <- reactive({
   photo_dt()[input$photos_rows_selected, 6]
 })
-
-
 
 photo <- reactive({
   req(rec())
@@ -148,17 +148,6 @@ observeEvent(input$get_photo, {
      }
 }, ignoreInit = TRUE)
 
-# observeEvent(input$get_photo, {
-#      ns <- session$ns
-#       showModal(modalDialog(
-#           # h3(paste0("The photo with file name: ", rec(), " was not found in the photos folder. Check with database admin to verify photo is available from dropbox." )),
-#           imageOutput(ns("photo_output")),
-#           title = "Error", easyClose = T, size = "s"
-#         )
-#       )
-# }, ignoreInit = TRUE)
-
-
 output$selected_photo <- renderText({
   req(rec())
   paste0("Photo File: ", rec())
@@ -174,7 +163,5 @@ output$photo_output <- renderImage({
        alt = rec())
 }, deleteFile = FALSE)
 
-
-  # "A-07-02-020_2020-04-06_WATC_1589455220.jpg"
 
 }
