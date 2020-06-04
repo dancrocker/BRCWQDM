@@ -179,7 +179,9 @@ source(paste0(wdir, "/mods/mod_photo_browser.R"))
 rxdata <<- reactiveValues()
 
 ### Get photos from googledrive ####
-photo_list <<- try(GS_GET_PHOTOS(sheet = config[14]))
+# photo_list <<- try(GS_GET_PHOTOS(sheet = config[14]))
+
+photo_list <<-- data.frame("a" = c(6,5,4,3,2,1,7))
 
 loadData <<- function() {
     if(file.exists(stagedDataCSV) == TRUE){
