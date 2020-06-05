@@ -40,7 +40,7 @@ gs_token <- readRDS(gs_tokenpath)
 # gs4_has_token()
 
 ### Open authorized access to google sheets
-gs4_auth(email = config[4], token = gs_token)
+# gs4_auth(email = config[4], token = gs_token)
 
 ########################################################################.
 ###                          WITH AUTH                              ####
