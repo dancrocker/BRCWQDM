@@ -137,7 +137,7 @@ SUBMIT_CSV <- function(zone, drop_path = "BRCWQDM/Submitted_Data_Staging"){
 # Submitted Data only fetched for Program Coordinator
 GET_SUBMITTED_DATA <- function() {
 if (user_role %in% c("Program Coordinator", "App Developer")){
-  ### List Drop Box files ####
+  ### List Drop Box files ###
   dropb_root_dir <- config[12]
   safe_dir_check <- purrr::safely(drop_dir, otherwise = FALSE, quiet = FALSE)
   dir_listing <- safe_dir_check(path = paste0(dropb_root_dir, "/Submitted_Data_Staging"),
@@ -176,9 +176,8 @@ if (user_role %in% c("Program Coordinator", "App Developer")){
 }
 # GET_SUBMITTED_DATA()
 
-
 GET_DATABASE_DATA <- function(){
-  ### List Drop Box files ####
+  ### List Drop Box files ###
   dropb_root_dir <- config[12]
   safe_dir_check <- purrr::safely(drop_dir, otherwise = FALSE, quiet = FALSE)
   dir_listing <- safe_dir_check(path = paste0(dropb_root_dir, "/DB_Tables_RDS"), recursive = FALSE, dtoken = drop_auth(rdstoken = tokenpath))
@@ -231,7 +230,7 @@ GET_DATABASE_DATA <- function(){
 # GET_DATABASE_DATA()
 
 ARCHIVE_SUBMITTED_DATA <- function(data_file){
- ### List Drop Box files ####
+ ### List Drop Box files ###
 d_file <- str_replace(data_file, pattern = paste0(submittedDataDir,"/"),"")
 c_file <- str_replace(d_file,"_SubmittedData_","_SubmittedComments_")
 
@@ -315,7 +314,6 @@ drop_path <- "BRCWQDM/AppFiles"
 return("RDS files successfully copied to Dropbox")
 }
 
-
 UPLOAD_DB_DATA_RDS <- function(){
 ### This function will upload the database RDS files to Dropbox - this should
 
@@ -368,7 +366,6 @@ BACKUP_DATABASE <- function(){
 }
 # BACKUP_DATABASE()
 
-
 UPLOAD_LOG <- function(){
   log_path <- paste0(LocalDir,"BRCWQDM.log")
   ### Dropbox backup directory:
@@ -384,7 +381,6 @@ UPLOAD_LOG <- function(){
   file.remove(fn)
   return(print("App log uploaded to Dropbox"))
 }
-
 
 UPLOAD_PHOTO <- function(file, name) {
   ### Dropbox backup directory:
@@ -404,11 +400,17 @@ UPLOAD_PHOTO <- function(file, name) {
 GET_PHOTO <- function(photo){
   # photo <- "A-07-02-020_2020-04-06_WATC_1589455220.jpg"
   local_data_dir <- paste0(LocalDir,"Data/photos")
+  if(dir.exists(local_data_dir)) {
+    print("Checking local photos...")
+  } else {
+    print("There are no local photos...")
+    dir_create(local_data_dir)
+  }
   file <- paste0(local_data_dir, "/", photo)
   if (file_exists(file)) {
     return(paste0("Photo '", photo, "' already exists locally, skipping dropbox download..."))
   } else { # Get photo from dropbox
-    ### List Drop Box files ####
+    ### List Drop Box files ###
     dropb_root_dir <- config[12]
     drop_path <- "BRCWQDM/Photos"
     db_photo <- paste0(dropb_root_dir, "/Photos/", photo)

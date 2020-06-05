@@ -94,7 +94,23 @@ assignmentsRDS <- paste0(rdsFiles,"assignments_db.rds")
 ### From edit module ####
 useShinyalert()
 
+### SOURCE EXTERNAL SCRIPTS ####
+source(paste0(wdir, "/funs/csv2df.R"))
+source(paste0(wdir, "/funs/editableDT_modFuns.R"))
+source(paste0(wdir, "/mods/mod_editDT.R"))
+source(paste0(wdir, "/funs/sendEmail.R"))
+source(paste0(wdir, "/mods/mod_add_comment.R"))
+source(paste0(wdir, "/mods/mod_add_photo.R"))
+source(paste0(wdir, "/mods/mod_map.R"))
+source(paste0(wdir, "/funs/data_update.R"))
+source(paste0(wdir, "/mods/mod_photo_browser.R"))
 source(paste0(wdir, "/funs/dropB.R"))
+source(paste0(wdir, "/funs/gsheets.R"))
+
+### Get photos from googledrive ####
+photo_list <<- try(GS_GET_PHOTOS(sheet = config[14]))
+
+# photo_list <<-- data.frame("a" = c(6,5,4,3,2,1,7))
 
 ### Download database rds files from dropbox ####
 GET_DATABASE_DATA()
@@ -163,25 +179,7 @@ wat_erosion_choices <<- c("Undercut bank", "Slumping", "Erosional gullies in ban
                          "Bridge or building undermining", "No erosion", "Not Recorded")
 depth_choices <<- c("Gage (Staff Plate-feet)", "Ruler (inches)", "Not Recorded", "No Datum")
 
-### SOURCE EXTERNAL SCRIPTS ####
-source(paste0(wdir, "/funs/gsheets.R"))
-source(paste0(wdir, "/funs/csv2df.R"))
-source(paste0(wdir, "/funs/editableDT_modFuns.R"))
-source(paste0(wdir, "/mods/mod_editDT.R"))
-source(paste0(wdir, "/funs/sendEmail.R"))
-source(paste0(wdir, "/mods/mod_add_comment.R"))
-source(paste0(wdir, "/mods/mod_add_photo.R"))
-source(paste0(wdir, "/mods/mod_map.R"))
-source(paste0(wdir, "/funs/data_update.R"))
-source(paste0(wdir, "/mods/mod_photo_browser.R"))
-
-
 rxdata <<- reactiveValues()
-
-### Get photos from googledrive ####
-# photo_list <<- try(GS_GET_PHOTOS(sheet = config[14]))
-
-photo_list <<-- data.frame("a" = c(6,5,4,3,2,1,7))
 
 loadData <<- function() {
     if(file.exists(stagedDataCSV) == TRUE){
@@ -209,14 +207,12 @@ loadData <<- function() {
     return(df)
   }
 
-
   loadAll <<- function(){
     loadData()
     loadComments()
   }
 
   loadAll()
-
 
 ### CSS ####
 appCSS <-   ".mandatory_star { color: red; }

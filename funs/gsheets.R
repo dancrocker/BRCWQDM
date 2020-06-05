@@ -50,8 +50,8 @@ GS_APPEND_PHOTO <- function(sheet, data) {
   sheet_append(ss = sheet, data)
   GS_GET_PHOTOS(sheet)
   return(print("Photo record successfully added to list..."))
-
 }
+
 # sheet <- config[14]
 GS_GET_PHOTOS <- function(sheet) {
   df_photos <- range_read(ss = sheet) %>% as.data.frame()
