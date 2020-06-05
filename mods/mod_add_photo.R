@@ -40,7 +40,7 @@ par_choices <-  c("General", table_fields$dt_cols[table_fields$take_comments =="
 #  3. "submitted data"
 #  4. "imported data"
 
-roots <-  c(wd = dataDir)
+roots <- c(wd = dataDir)
 shinyFileChoose(input, 'photo_path', roots = roots, filetypes = c('png', 'jpg', 'img'))
 
 observeEvent(input$add_photo_mod, {

@@ -11,7 +11,7 @@ library("googlesheets4")
 ########################################################################.
 ###                     AUTH SETUP                                  ####
 ########################################################################.
-
+gs4_deauth()
 ### Initial setup and options
 ### Code reference: https://github.com/jennybc/rsc-gsheets
 
@@ -29,7 +29,11 @@ library("googlesheets4")
 
 ### Set required options and get token
 httr::set_config(httr::config(http_version = 0))
-options(gargle_oob_default = TRUE, gargle_oauth_email = TRUE)
+options(gargle_oauth_email = TRUE,
+        gargle_oob_default = TRUE)
+
+# gargle_oob_default = TRUE
+# gargle_oauth_cache = ".secrets"
 
 # token <- gs4_token() ## Use this to re-authenticate
 gs_tokenpath <- paste0(dataDir, "gs4_token.RDS")
