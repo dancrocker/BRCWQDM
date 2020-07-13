@@ -121,6 +121,8 @@ observeEvent(input$upload_photo,{
   }
 })
 
+ # file <- paste0(dataDir,"photos/A-07-02-020_2020-04-06_GEN_1589454965.jpg")
+ # file
 uploadPhoto <- function(file) {
   if(file.exists(file)){
     # Upload the photo file to Dropbox
@@ -142,7 +144,7 @@ uploadPhoto <- function(file) {
     UPLOAD_PHOTO(file = file, name = fullname)
 
     # Append the photo record to the Google sheets doc
-    GS_APPEND(sheet = config[14], data = photo_rec)
+    GS_APPEND_PHOTO(sheet = config[14], data = photo_rec)
 
   } else {
     stop("The file does not exist! Please choose another file.")
