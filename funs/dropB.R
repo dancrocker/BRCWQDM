@@ -393,12 +393,12 @@ UPLOAD_PHOTO <- function(file, name) {
   drop_upload(file = fn, path = drop_path, mode = "overwrite",
               verbose = TRUE, dtoken = drop_auth(rdstoken = tokenpath))
   ### Now delete the temp copy of the database?
-  file.remove(fn)
+  file.remove(file)
   return(print(glue("Photo {fn} uploaded to Dropbox")))
 }
 
 GET_PHOTO <- function(photo){
-  # photo <- "A-07-02-020_2020-04-06_WATC_1589455220.jpg"
+  # photo <- "C-02-03-040_2020-07-13_GEN_1594688860.jpg" ### Test image
   local_data_dir <- paste0(LocalDir,"Data/photos")
   if(dir.exists(local_data_dir)) {
     print("Checking local photos...")

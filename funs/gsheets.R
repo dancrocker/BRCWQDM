@@ -50,13 +50,24 @@ gs_token <- readRDS(gs_tokenpath)
 ###                          WITH AUTH                              ####
 ########################################################################.
 
+### Some test data
+# photo_rec <- tibble(SITE_CODE = "The Site",
+#                       DATE = "2020-05-15",
+#                       PARAMETER = "General",
+#                       PHOTAGRAPHER = "DC",
+#                       FILENAME = file,
+#                       CAPTION = "My Caption",
+#                       ADDED_BY = app_user)
+
 GS_APPEND_PHOTO <- function(sheet, data) {
   sheet_append(ss = sheet, data)
   GS_GET_PHOTOS(sheet)
   return(print("Photo record successfully added to list..."))
 }
 
+# GS_APPEND_PHOTO(sheet = config[14], data = photo_rec)
 # sheet <- config[14]
+
 GS_GET_PHOTOS <- function(sheet) {
   df_photos <- range_read(ss = sheet) %>% as.data.frame()
   df_photos$DATE <- unlist(df_photos$DATE)

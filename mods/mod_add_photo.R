@@ -131,7 +131,7 @@ uploadPhoto <- function(file) {
     } else {
       new_name <- glue("{site()}_{photo_date()}_{parameters_db$ABBRV[parameters_db$PARAMETER_NAME == par()]}_{format(now(),'%s')}.{stringr::str_sub(file, start = -3, end = -1)}")
     }
-    fullname <- glue("{photodir()}/{new_name}")
+    fullname <- glue("{photodir()}/photos/{new_name}")
 
     photo_rec <- tibble(SITE_CODE = site(),
                       DATE = photo_date(),
@@ -142,10 +142,8 @@ uploadPhoto <- function(file) {
                       ADDED_BY = app_user)
     # Add the photo to dropbox
     UPLOAD_PHOTO(file = file, name = fullname)
-
     # Append the photo record to the Google sheets doc
     GS_APPEND_PHOTO(sheet = config[14], data = photo_rec)
-
   } else {
     stop("The file does not exist! Please choose another file.")
   }
