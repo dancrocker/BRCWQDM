@@ -11,7 +11,7 @@ library("googlesheets4")
 ########################################################################.
 ###                     AUTH SETUP                                  ####
 ########################################################################.
-gs4_deauth()
+# gs4_deauth()
 ### Initial setup and options
 ### Code reference: https://github.com/jennybc/rsc-gsheets
 
