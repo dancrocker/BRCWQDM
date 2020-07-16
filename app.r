@@ -79,17 +79,17 @@ submittedDataRDS <<- paste0(rdsFiles,"submittedData.rds")
 submittedCommentsRDS <<- paste0(rdsFiles,"submittedComments.rds")
 
 ### Database Data RDS - updated each time data is imported or using admin tools
-data_n_RDS <- paste0(rdsFiles,"data_num_db.rds")
-data_t_RDS <- paste0(rdsFiles,"data_text_db.rds")
-data_c_RDS <- paste0(rdsFiles,"data_comment_db.rds")
-trans_log_RDS <-  paste0(rdsFiles,"trans_log_db.rds")
+data_n_RDS <<- paste0(rdsFiles,"data_num_db.rds")
+data_t_RDS <<- paste0(rdsFiles,"data_text_db.rds")
+data_c_RDS <<- paste0(rdsFiles,"data_comment_db.rds")
+trans_log_RDS <<-  paste0(rdsFiles,"trans_log_db.rds")
 ### RDS DATABASE FILES ####
 
 ### Periodic updates - supporting tables
-sitesRDS <- paste0(rdsFiles,"sites_db.rds")
-peopleRDS <- paste0(rdsFiles,"people_db.rds")
-parametersRDS <- paste0(rdsFiles,"parameters_db.rds")
-assignmentsRDS <- paste0(rdsFiles,"assignments_db.rds")
+sitesRDS <<- paste0(rdsFiles,"sites_db.rds")
+peopleRDS <<- paste0(rdsFiles,"people_db.rds")
+parametersRDS <<- paste0(rdsFiles,"parameters_db.rds")
+assignmentsRDS <<- paste0(rdsFiles,"assignments_db.rds")
 
 ### From edit module ####
 useShinyalert()
@@ -104,6 +104,7 @@ source(paste0(wdir, "/mods/mod_add_photo.R"))
 source(paste0(wdir, "/mods/mod_map.R"))
 source(paste0(wdir, "/funs/data_update.R"))
 source(paste0(wdir, "/mods/mod_photo_browser.R"))
+source(paste0(wdir, "/mods/mod_event_viewer.R"))
 source(paste0(wdir, "/funs/dropB.R"))
 source(paste0(wdir, "/funs/gsheets.R"))
 
@@ -586,6 +587,11 @@ ui <- tagList(
                    tabPanel("Photos",
                             column(12,
                                    PHOTOS_UI("photo_browser")
+                            )
+                   ),
+                   tabPanel("Event Viewer",
+                            column(12,
+                                   EVENTS_UI("event_viewer")
                             )
                    ),
                    tabPanel("Transaction Log",
@@ -1883,6 +1889,7 @@ callModule(ADD_PHOTO, "add_photo_data_entry",
 
 callModule(BRCMAP, "brc_map", sitelist = sites_db)
 callModule(PHOTOS, "photo_browser", photo_list = photo_list)
+callModule(EVENTS, "event_viewer")
 
 ### IMAGES ####
 
