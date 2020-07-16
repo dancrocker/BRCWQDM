@@ -12,11 +12,12 @@ library("googlesheets4")
 ###                     AUTH SETUP                                  ####
 ########################################################################.
 
-if (!interactive()) {
-  print("Googlesheets API being used non-interactively")
-  gs4_deauth()
-}
+# if (!interactive()) {
+#   print("Googlesheets API being used non-interactively")
+#   gs4_deauth()
+# }
 
+gs4_deauth()
 ### Initial setup and options
 ### Code reference: https://github.com/jennybc/rsc-gsheets
 
