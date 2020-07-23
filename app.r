@@ -591,7 +591,9 @@ ui <- tagList(
                    ),
                    tabPanel("Event Viewer",
                             column(12,
-                                   EVENTS_UI("event_viewer")
+                                   strong(h4("EVENT VIEWER...COMING SOON")),
+                                   br()
+                                   # EVENTS_UI("event_viewer")
                             )
                    ),
                    tabPanel("Transaction Log",
