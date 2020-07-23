@@ -1891,7 +1891,7 @@ callModule(ADD_PHOTO, "add_photo_data_entry",
 
 callModule(BRCMAP, "brc_map", sitelist = sites_db)
 callModule(PHOTOS, "photo_browser", photo_list = photo_list)
-callModule(EVENTS, "event_viewer")
+# callModule(EVENTS, "event_viewer")
 
 ### IMAGES ####
 
