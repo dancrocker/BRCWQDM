@@ -104,7 +104,7 @@ source(paste0(wdir, "/mods/mod_add_photo.R"))
 source(paste0(wdir, "/mods/mod_map.R"))
 source(paste0(wdir, "/funs/data_update.R"))
 source(paste0(wdir, "/mods/mod_photo_browser.R"))
-source(paste0(wdir, "/mods/mod_event_viewer.R"))
+# source(paste0(wdir, "/mods/mod_event_viewer.R"))
 source(paste0(wdir, "/funs/dropB.R"))
 source(paste0(wdir, "/funs/gsheets.R"))
 
