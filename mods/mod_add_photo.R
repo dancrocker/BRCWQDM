@@ -121,9 +121,10 @@ observeEvent(input$upload_photo,{
   }
 })
 
- # file <- paste0(dataDir,"photos/A-07-02-020_2020-04-06_GEN_1589454965.jpg")
+ # file <- paste0(dataDir, "photos/A-07-08-010_2020-07-23_WATD_1595547321.jpg")
  # file
 uploadPhoto <- function(file) {
+  print(paste0("Photo File is: ", file))
   if(file.exists(file)){
     # Upload the photo file to Dropbox
     if(par() == "General") {
@@ -131,7 +132,7 @@ uploadPhoto <- function(file) {
     } else {
       new_name <- glue("{site()}_{photo_date()}_{parameters_db$ABBRV[parameters_db$PARAMETER_NAME == par()]}_{format(now(),'%s')}.{stringr::str_sub(file, start = -3, end = -1)}")
     }
-    fullname <- glue("{photodir()}/photos/{new_name}")
+    fullname <- glue("{dataDir}/photos/{new_name}")
 
     photo_rec <- tibble(SITE_CODE = site(),
                       DATE = photo_date(),

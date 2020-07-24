@@ -383,12 +383,14 @@ UPLOAD_LOG <- function(){
 }
 
 UPLOAD_PHOTO <- function(file, name) {
+    print(paste0("Old photo file is: ", file))
+    print(paste0("New photo file is: ", name))
   ### Dropbox backup directory:
   dropb_root_dir <- config[12]
   drop_path <- "BRCWQDM/Photos"
   fn <- name
   ### Overwrite filename so that it can be uploaded to dropbox
-  file.copy(from = file, to = fn, overwrite = T, copy.mode = F)
+  file.copy(from = file, to = fn, overwrite = T, copy.mode = T)
 
   drop_upload(file = fn, path = drop_path, mode = "overwrite",
               verbose = TRUE, dtoken = drop_auth(rdstoken = tokenpath))

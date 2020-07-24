@@ -17,7 +17,7 @@ library("googlesheets4")
 #   gs4_deauth()
 # }
 
-gs4_deauth()
+# gs4_deauth()
 ### Initial setup and options
 ### Code reference: https://github.com/jennybc/rsc-gsheets
 
@@ -34,7 +34,7 @@ gs4_deauth()
 #   )
 
 ### Set required options and get token
-httr::set_config(httr::config(http_version = 0))
+# httr::set_config(httr::config(http_version = 0))
 options(gargle_oauth_email = TRUE,
         gargle_oob_default = TRUE)
 
@@ -55,7 +55,7 @@ gs_token <- readRDS(gs_tokenpath)
 ########################################################################.
 ###                          WITH AUTH                              ####
 ########################################################################.
-
+gs4_auth(token = gs_token)
 ### Some test data
 # photo_rec <- tibble(SITE_CODE = "The Site",
 #                       DATE = "2020-05-15",
@@ -66,17 +66,25 @@ gs_token <- readRDS(gs_tokenpath)
 #                       ADDED_BY = app_user)
 
 GS_APPEND_PHOTO <- function(sheet, data) {
-  sheet_append(ss = sheet, data)
-  GS_GET_PHOTOS(sheet)
-  return(print("Photo record successfully added to list..."))
+  if (gs4_has_token()) {
+    sheet_append(ss = sheet, data)
+    GS_GET_PHOTOS(sheet)
+    return(print("Photo record successfully added to list..."))
+  } else {
+    return("No token found for authentication...photo could not be added")
+  }
 }
 
 # GS_APPEND_PHOTO(sheet = config[14], data = photo_rec)
 # sheet <- config[14]
 
 GS_GET_PHOTOS <- function(sheet) {
-  df_photos <- range_read(ss = sheet) %>% as.data.frame()
-  df_photos$DATE <- unlist(df_photos$DATE)
-  print("Photo list retrieved...")
+    if (gs4_has_token()) {
+      df_photos <- range_read(ss = sheet) %>% as.data.frame()
+      df_photos$DATE <- unlist(df_photos$DATE)
+      print("Photo list retrieved...")
+    } else {
+      return("No token found for authentication...photo list could not be retrieved")
+    }
 return(df_photos)
 }
