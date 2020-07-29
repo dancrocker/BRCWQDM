@@ -133,7 +133,7 @@ uploadPhoto <- function(file) {
       new_name <- glue("{site()}_{photo_date()}_{parameters_db$ABBRV[parameters_db$PARAMETER_NAME == par()]}_{format(now(),'%s')}.{stringr::str_sub(file, start = -3, end = -1)}")
     }
     fullname <- glue("{dataDir}/photos/{new_name}")
-
+    print(paste0("Photo renamed to: ", new_name))
     photo_rec <- tibble(SITE_CODE = site(),
                       DATE = photo_date(),
                       PARAMETER = par(),
