@@ -35,7 +35,7 @@ library("googlesheets4")
 
 ### Set required options and get token
 # httr::set_config(httr::config(http_version = 0))
-options(gargle_oauth_email = config[4],
+options(gargle_oauth_email = TRUE,
         gargle_oob_default   = TRUE)
 # gargle_oob_default = TRUE
 # gargle_oauth_cache = ".secrets"
@@ -51,7 +51,7 @@ gs_token <- readRDS(gs_tokenpath)
 ###                          WITH AUTH                              ####
 ########################################################################.
 ### Open authorized access to google sheets
-gs4_auth(email = config[4], use_oob = TRUE, token = gs_token)
+gs4_auth(use_oob = TRUE, token = gs_token)
 ### Some test data
 # photo_rec <- tibble(SITE_CODE = "The Site",
 #                       DATE = "2020-05-15",
