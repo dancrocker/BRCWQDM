@@ -34,7 +34,7 @@ gs4_deauth()
 #   )
 
 ### Set required options and get token
-httr::set_config(httr::config(http_version = 0))
+# httr::set_config(httr::config(http_version = 0))
 
 options(gargle_oauth_email = TRUE,
         gargle_oob_default   = TRUE)
@@ -54,13 +54,13 @@ options(gargle_oauth_email = TRUE,
 
 # paste0(dataDir, "brcwqdm-0fad5d12f18f.json")
 
-gs4_auth_configure(api_key = config[15])
+gs4_auth_configure(path = paste0(dataDir, "brcwqdm-0fad5d12f18f.json"), api_key = config[15])
   # bring your own app via JSON downloaded from Google Developers Console
   # this file has the same structure as the JSON from Google
 ### Open authorized access to google sheets
 gs4_auth(use_oob = TRUE,
-         path = config[15],
-         # path = paste0(dataDir, "brcwqdm-0fad5d12f18f.json"),
+         # path = config[15],
+         path = paste0(dataDir, "brcwqdm-0fad5d12f18f.json"),
          scopes = 'https://www.googleapis.com/auth/spreadsheets')
 ### Some test data
 # photo_rec <- tibble(SITE_CODE = "The Site",
