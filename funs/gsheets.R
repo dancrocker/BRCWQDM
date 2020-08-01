@@ -17,7 +17,7 @@ if (!interactive()) {
   gs4_deauth()
 }
 
-# gs4_deauth()
+gs4_deauth()
 ### Initial setup and options
 ### Code reference: https://github.com/jennybc/rsc-gsheets
 
@@ -73,7 +73,7 @@ gs4_auth(use_oob = TRUE,
 
 GS_APPEND_PHOTO <- function(sheet, data) {
   if (gs4_has_token()) {
-    sheet_append(ss = sheet, data,)
+    sheet_append(ss = sheet, data)
     GS_GET_PHOTOS(sheet)
     return(print("Photo record successfully added to list..."))
   } else {
