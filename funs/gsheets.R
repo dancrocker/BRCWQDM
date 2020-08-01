@@ -34,7 +34,8 @@ if (!interactive()) {
 #   )
 
 ### Set required options and get token
-# httr::set_config(httr::config(http_version = 0))
+httr::set_config(httr::config(http_version = 0))
+
 options(gargle_oauth_email = TRUE,
         gargle_oob_default   = TRUE)
 # gargle_oob_default = TRUE
@@ -51,10 +52,15 @@ options(gargle_oauth_email = TRUE,
 ###                          WITH AUTH                              ####
 ########################################################################.
 
+# gs4_user()
+# gs4_auth_configure(api_key = config[15],)
   # bring your own app via JSON downloaded from Google Developers Console
   # this file has the same structure as the JSON from Google
 ### Open authorized access to google sheets
-gs4_auth(use_oob = TRUE, path = paste0(dataDir, "brcwqdm-0fad5d12f18f.json"))
+gs4_auth(use_oob = TRUE,
+         path = config[15],
+         # path = paste0(dataDir, "brcwqdm-0fad5d12f18f.json"),
+         scopes = 'https://www.googleapis.com/auth/spreadsheets')
 ### Some test data
 # photo_rec <- tibble(SITE_CODE = "The Site",
 #                       DATE = "2020-05-15",
@@ -66,7 +72,7 @@ gs4_auth(use_oob = TRUE, path = paste0(dataDir, "brcwqdm-0fad5d12f18f.json"))
 
 GS_APPEND_PHOTO <- function(sheet, data) {
   if (gs4_has_token()) {
-    sheet_append(ss = sheet, data)
+    sheet_append(ss = sheet, data,)
     GS_GET_PHOTOS(sheet)
     return(print("Photo record successfully added to list..."))
   } else {
@@ -74,7 +80,7 @@ GS_APPEND_PHOTO <- function(sheet, data) {
   }
 }
 
-# GS_APPEND_PHOTO(sheet = config[14], data = photo_rec)
+GS_APPEND_PHOTO(sheet = config[14], data = photo_rec)
 # sheet <- config[14]
 
 GS_GET_PHOTOS <- function(sheet) {
