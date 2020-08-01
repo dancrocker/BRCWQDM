@@ -13,7 +13,7 @@ library("googlesheets4")
 ########################################################################.
 
 if (!interactive()) {
-  print("Googlesheets API being used non-interactively")
+  print(glue("Googlesheets API being used non-interactively at {Sys.time()}"))
   gs4_deauth()
 }
 
@@ -52,8 +52,9 @@ options(gargle_oauth_email = TRUE,
 ###                          WITH AUTH                              ####
 ########################################################################.
 
-# gs4_user()
-# gs4_auth_configure(api_key = config[15],)
+# paste0(dataDir, "brcwqdm-0fad5d12f18f.json")
+
+gs4_auth_configure(api_key = config[15])
   # bring your own app via JSON downloaded from Google Developers Console
   # this file has the same structure as the JSON from Google
 ### Open authorized access to google sheets
@@ -80,7 +81,7 @@ GS_APPEND_PHOTO <- function(sheet, data) {
   }
 }
 
-GS_APPEND_PHOTO(sheet = config[14], data = photo_rec)
+# GS_APPEND_PHOTO(sheet = config[14], data = photo_rec)
 # sheet <- config[14]
 
 GS_GET_PHOTOS <- function(sheet) {
