@@ -121,7 +121,7 @@ observeEvent(input$upload_photo,{
   }
 })
 
- # file <- paste0(dataDir, "photos/A-07-08-010_2020-07-23_WATD_1595547321.jpg")
+ # file <- paste0(dataDir, "photos/C-02-03-005_2020-07-30_WATC_1596153982.jpg")
  # file
 uploadPhoto <- function(file) {
   print(paste0("Photo File is: ", file))
@@ -132,7 +132,7 @@ uploadPhoto <- function(file) {
     } else {
       new_name <- glue("{site()}_{photo_date()}_{parameters_db$ABBRV[parameters_db$PARAMETER_NAME == par()]}_{format(now(),'%s')}.{stringr::str_sub(file, start = -3, end = -1)}")
     }
-    fullname <- glue("{dataDir}/photos/{new_name}")
+    fullname <- glue("{dataDir}photos/{new_name}")
     print(paste0("Photo renamed to: ", new_name))
     photo_rec <- tibble(SITE_CODE = site(),
                       DATE = photo_date(),

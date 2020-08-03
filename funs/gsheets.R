@@ -15,9 +15,10 @@ library("googlesheets4")
 if (!interactive()) {
   print(glue("Googlesheets API being used non-interactively at {Sys.time()}"))
   gs4_deauth()
+  # gs4_auth_configure(api_key = config[15],)
 }
 
-gs4_deauth()
+# gs4_deauth()
 ### Initial setup and options
 ### Code reference: https://github.com/jennybc/rsc-gsheets
 
@@ -34,7 +35,7 @@ gs4_deauth()
 #   )
 
 ### Set required options and get token
-# httr::set_config(httr::config(http_version = 0))
+httr::set_config(httr::config(http_version = 0))
 
 options(gargle_oauth_email = TRUE,
         gargle_oob_default   = TRUE)
@@ -52,16 +53,28 @@ options(gargle_oauth_email = TRUE,
 ###                          WITH AUTH                              ####
 ########################################################################.
 
-# paste0(dataDir, "brcwqdm-0fad5d12f18f.json")
+# app_auth <-  paste0(dataDir, "brcwqdm-0fad5d12f18f.json")
+#
+# google_app <- httr::oauth_app(
+#   "brcwqdm",
+#   key = config[16],
+#   secret = config[17]
+# )
+# gs4_auth_configure(app = google_app, api_key = google_key)
 
-gs4_auth_configure(path = paste0(dataDir, "brcwqdm-0fad5d12f18f.json"), api_key = config[15])
+gs4_auth_configure(api_key = config[15])
+# confirm the changes
+# gs4_oauth_app()
+# gs4_api_key()
+
   # bring your own app via JSON downloaded from Google Developers Console
   # this file has the same structure as the JSON from Google
 ### Open authorized access to google sheets
 gs4_auth(use_oob = TRUE,
-         # path = config[15],
-         path = paste0(dataDir, "brcwqdm-0fad5d12f18f.json"),
+         path = config[15],
+         # path = app_auth,
          scopes = 'https://www.googleapis.com/auth/spreadsheets')
+
 ### Some test data
 # photo_rec <- tibble(SITE_CODE = "The Site",
 #                       DATE = "2020-05-15",
