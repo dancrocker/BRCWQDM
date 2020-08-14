@@ -27,6 +27,8 @@ library("googlesheets4")
 # gs4_has_token()
 
 
+
+
 ########################################################################.
 ###                     AUTH VARS                                   ####
 ########################################################################.
@@ -34,12 +36,17 @@ library("googlesheets4")
 gs_tokenpath <- paste0(dataDir, "gs4_token.RDS")
 gs_token <- readRDS(gs_tokenpath)
 
-auth_json1 <-  paste0(dataDir, "api_creds.json")
+auth_json1 <-  paste0(dataDir, "api_creds_orig.json")
 # auth_json2 <-  paste0(dataDir, "brcwqdm-0fad5d12f18f.json")
-# auth_json3 <-  paste0(dataDir, "brcwqdm-cb75549bb9d4.json")
+auth_json3 <-  paste0(dataDir, "brcwqdm-cb75549bb9d4.json")
 
 gs_api <- config[15]
 gs_scope <- "https://www.googleapis.com/auth/spreadsheets"
+
+# token <- credentials_service_account(
+#   scopes = "https://www.googleapis.com/auth/spreadsheets",
+#   path = auth_json3
+# )
 
 ########################################################################.
 ###                      SET OPTIONS                               ####
@@ -52,13 +59,16 @@ if (!interactive()) {
 }
 
 ### Set required options and get token
-httr::set_config(httr::config(http_version = 0))
+httr::set_config(httr::config(http_version = 2))
 
 options(gargle_oauth_email = TRUE,
         gargle_oob_default   = TRUE)
 
-options("googleAuthR.client_id" = jsonlite::fromJSON(txt = auth_json1, simplifyVector = TRUE)[["client_id"]])
-options("googleAuthR.client_secret" = jsonlite::fromJSON(txt = auth_json1, simplifyVector = TRUE)[["client_secret"]])
+options(shiny.port = 3838)
+options(googleAuthR.redirect = "http://localhost:3838")
+
+# options("googlesheets.client_id" = jsonlite::fromJSON(txt = auth_json1, simplifyVector = TRUE)[["installed"]][["client_id"]])
+# options("googlesheets.client_secret" = jsonlite::fromJSON(txt = auth_json1, simplifyVector = TRUE)[["installed"]][["client_secret"]])
 
 ########################################################################.
 ###                     AUTH METHODS                                ####
@@ -77,6 +87,8 @@ options("googleAuthR.client_secret" = jsonlite::fromJSON(txt = auth_json1, simpl
 
 ### Method: gs4 (jennybc)
 ### Code reference: https://github.com/jennybc/rsc-gsheets
+
+# jsonlite::fromJSON(txt = auth_json1, simplifyVector = TRUE)[["installed"]][["client_id"]]
 
 
 # gs4_auth_configure(api_key = config[15],)
@@ -103,7 +115,8 @@ options("googleAuthR.client_secret" = jsonlite::fromJSON(txt = auth_json1, simpl
 ########################################################################.
 
 
-# info <- jsonlite::fromJSON(txt = auth_json1, simplifyVector = TRUE) [["installed"]]
+# info <- jsonlite::fromJSON(txt = auth_json1, simplifyVector = F) #[["installed"]]
+
 #
 # httr::oauth_app(
 #     appname = info$project_id,
@@ -118,17 +131,18 @@ options("googleAuthR.client_secret" = jsonlite::fromJSON(txt = auth_json1, simpl
 # )
 
 
-gs4_auth_configure(api_key = gs_api)
+
+
+gs4_auth_configure(api_key = jsonlite::fromJSON(txt = auth_json3, simplifyVector = TRUE)[["private_key"]])
 
 # oauth_app_from_json(path = app_auth)
 # confirm the changes
 # gs4_oauth_app()
 # gs4_api_key()
 
-
-gs4_auth(use_oob = TRUE,
-         path = gs_api,
-         scopes = gs_scope)
+# gs4_auth(use_oob = TRUE,
+#          path = gs_api,
+#          scopes = gs_scope)
 # Sys.setenv("GOOGLE_APPLICATION_CREDENTIALS" = app_auth)
 # Sys.getenv("GOOGLE_APPLICATION_CREDENTIALS")
 
