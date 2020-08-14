@@ -130,9 +130,6 @@ options(googleAuthR.redirect = "http://localhost:3838")
 #   secret = config[17]
 # )
 
-
-
-
 gs4_auth_configure(api_key = jsonlite::fromJSON(txt = auth_json3, simplifyVector = TRUE)[["private_key"]])
 
 # oauth_app_from_json(path = app_auth)
@@ -140,9 +137,9 @@ gs4_auth_configure(api_key = jsonlite::fromJSON(txt = auth_json3, simplifyVector
 # gs4_oauth_app()
 # gs4_api_key()
 
-# gs4_auth(use_oob = TRUE,
-#          path = gs_api,
-#          scopes = gs_scope)
+gs4_auth(use_oob = TRUE,
+         path = auth_json3,
+         scopes = gs_scope)
 # Sys.setenv("GOOGLE_APPLICATION_CREDENTIALS" = app_auth)
 # Sys.getenv("GOOGLE_APPLICATION_CREDENTIALS")
 
