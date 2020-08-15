@@ -33,8 +33,8 @@ library("googlesheets4")
 ###                     AUTH VARS                                   ####
 ########################################################################.
 
-gs_tokenpath <- paste0(dataDir, "gs4_token.RDS")
-gs_token <- readRDS(gs_tokenpath)
+# gs_tokenpath <- paste0(dataDir, "gs4_token.RDS")
+# gs_token <- readRDS(gs_tokenpath)
 
 auth_json1 <-  paste0(dataDir, "api_creds_orig.json")
 # auth_json2 <-  paste0(dataDir, "brcwqdm-0fad5d12f18f.json")
@@ -146,9 +146,6 @@ gs4_auth(use_oob = TRUE,
   # bring your own app via JSON downloaded from Google Developers Console
   # this file has the same structure as the JSON from Google
 ### Open authorized access to google sheets
-# gs4_auth(use_oob = TRUE,
-#          path = app_auth,
-#          scopes = 'https://www.googleapis.com/auth/spreadsheets')
 
 ### Some test data
 # photo_rec <- tibble(SITE_CODE = "The Site",
@@ -170,7 +167,6 @@ GS_APPEND_PHOTO <- function(sheet, data) {
 }
 
 # GS_APPEND_PHOTO(sheet = config[14], data = photo_rec)
-
 # sheet <- config[14]
 
 GS_GET_PHOTOS <- function(sheet) {
