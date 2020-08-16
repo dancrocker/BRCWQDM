@@ -123,7 +123,7 @@ SUBMIT_CSV <- function(zone, drop_path = "BRCWQDM/Submitted_Data_Staging"){
   file.copy(csv, file_path, overwrite = TRUE)
   ### Upload submitted comments to dropbox
   # drop_exists(path = drop_path, dtoken = drop_auth(rdstoken = tokenpath))
-  drop_upload(file = fn, path = drop_path, mode = "overwrite",
+  drop_upload(file = file_path, path = drop_path, mode = "overwrite",
               verbose = TRUE, dtoken = drop_auth(rdstoken = tokenpath))
   ### Delete the staged comments csv
   # file.rename(fn, paste0(submittedDataDir,"/",fn))
