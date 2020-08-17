@@ -59,7 +59,7 @@ if(launch_mode == "docker") {
   suppressPackageStartupMessages(
     ipak(packages)
   )
-  LocalDir <<- config[1]
+    LocalDir <<- config[1]
 }
 
   dataDir <<- paste0(LocalDir,"Data/")
@@ -1437,7 +1437,7 @@ observeEvent(input$submit, {
     NewCount <- SubmitActionCount() + 1
     SubmitActionCount(NewCount)
     print(paste0("Submit Action Count was ", SubmitActionCount()))
-    send_submit_Email()
+    send_submit_email()
     loadData()
     loadComments()
     rxdata$fileChoices <- fileChoices()
