@@ -25,7 +25,6 @@ library(dplyr)
 submitEmail <- function(){
 
   yr <- year(Sys.Date())
-
   # Get program coordinator name
   pc <- filter(assignments_db, YEAR == yr,
                ROLE == "Program Coordinator") %>% .$NAME

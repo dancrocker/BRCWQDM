@@ -1437,7 +1437,17 @@ observeEvent(input$submit, {
     NewCount <- SubmitActionCount() + 1
     SubmitActionCount(NewCount)
     print(paste0("Submit Action Count was ", SubmitActionCount()))
-    send_submit_email()
+    # if (launch_mode == "docker") {
+      showModal(
+        modalDialog(
+          "Please send an email to the program coordinator with notification that data has been submitted for review and import to the database.",
+          title = "Data submittal complete...",
+          easyClose = T
+        )
+      )
+    # } else {
+    #   send_submit_email()
+    # }
     loadData()
     loadComments()
     rxdata$fileChoices <- fileChoices()
@@ -1768,7 +1778,17 @@ output$update_db_text <- renderText("Use this button after making updates or edi
       ARCHIVE_SUBMITTED_DATA(data_file = input$selectFile)
       print(paste("Data file '", input$selectFile, "' archived."))
       BACKUP_DATABASE()
-      ImportEmail()
+      # if (launch_mode == "docker") {
+        showModal(
+          modalDialog(
+            "Please send an email to the field coordinators with notification that data has been imported to the database and can be reviewed in the app.",
+            title = "Data import complete...",
+            easyClose = T
+          )
+        )
+      # } else {
+      #   ImportEmail()
+      # }
       loadData()
       loadComments()
       rxdata$data_n_db <- readRDS(data_n_RDS)

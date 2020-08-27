@@ -45,7 +45,7 @@ write.table(x = df_data, file = stagedDataCSV,
 
 ### PROCESS COMMENTS ####
 if (file.exists(stagedCommentsCSV)) {
-  df_comments <-read.table(stagedCommentsCSV, stringsAsFactors = FALSE, header = T,  sep = " " , na.strings = "NA")
+  df_comments <- read.table(stagedCommentsCSV, stringsAsFactors = FALSE, header = T,  sep = " " , na.strings = "NA")
   if (nrow(df_comments) > 0) {
   ### Do any manipulations needed here...
 
