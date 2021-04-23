@@ -47,28 +47,23 @@ PHOTOS_UI <- function(id) {
 ###                       Server Function                           ####
 ########################################################################.
 
-PHOTOS <- function(input, output, session, photo_list) {
+PHOTOS <- function(input, output, session, photo_list, globalSession, mode = reactive(2)) {
 ns <- session$ns
-
+photo_recs <- reactive(photo_list())
 local_photo_dir <- paste0(dataDir,"photos")
 
-if(length(photo_list$SITE_CODE > 0)) {
-  photo_list$SITE_CODE <- paste0(sites_db$WATERBODY_NAME[match(photo_list$SITE_CODE, sites_db$BRC_CODE)], " (", photo_list$SITE_CODE, ")")
-  photo_list <- rename(photo_list, "SITE" = "SITE_CODE")
-} else {
-  print("There are no photos available for the photos table")
-}
-### Change photo_list back to reactive with () once rxdata used again
 photo_dt <- reactive({
-  req(length(photo_list$SITE_CODE > 0))
-  photo_list
+  d <- photo_recs() %>%
+    mutate(SITE_CODE = paste0(sites_db$WATERBODY_NAME[match(SITE_CODE, sites_db$BRC_CODE)], " (", SITE_CODE, ")")) %>%
+    dplyr::rename("SITE" = "SITE_CODE")
+  d$DATE <- force_tz(d$DATE, tzone = "America/New_York")
+  d
 })
-
-# v <- reactiveValues(photos = photo_dt())
 
 output$photos <- DT::renderDataTable({
  req(isTruthy(photo_dt()))
- datatable(photo_dt(), filter = "top", selection = 'single', rownames = F)
+ datatable(photo_dt(), filter = "top", selection = 'single', rownames = F) %>%
+    formatDate(columns = "DATE", method = 'toLocaleDateString')
 })
 
 browser_photo_loc <- reactive({
@@ -127,7 +122,7 @@ observeEvent(input$get_photo, {
                       br(),
                       h4(glue("Photographer: {browser_photographer()}")),
                       br(),
-                      h4(glue("Caption//tags: {browser_caption()}")),
+                      h4(glue("Caption/tags: {browser_caption()}")),
                )
              ), # end Fluid page
 

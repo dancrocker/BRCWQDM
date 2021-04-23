@@ -101,17 +101,13 @@ source(paste0(wdir, "/mods/mod_editDT.R"))
 source(paste0(wdir, "/funs/sendEmail.R"))
 source(paste0(wdir, "/mods/mod_add_comment.R"))
 source(paste0(wdir, "/mods/mod_add_photo.R"))
+source(paste0(wdir, "/mods/mod_add_sampler.R"))
 source(paste0(wdir, "/mods/mod_map.R"))
 source(paste0(wdir, "/funs/data_update.R"))
 source(paste0(wdir, "/mods/mod_photo_browser.R"))
 # source(paste0(wdir, "/mods/mod_event_viewer.R"))
 source(paste0(wdir, "/funs/dropB.R"))
 source(paste0(wdir, "/funs/gsheets.R"))
-
-### Get photos from googledrive ####
-photo_list <<- try(GS_GET_PHOTOS(sheet = config[14]))
-
-# photo_list <<-- data.frame("a" = c(6,5,4,3,2,1,7))
 
 ### Download database rds files from dropbox ####
 GET_DATABASE_DATA()
@@ -161,11 +157,18 @@ sites <<- sites_db$BRC_CODE
 names(sites) <- paste0(sites_db$WATERBODY_NAME, " - ", sites_db$SITE_NAME, " (", sites_db$BRC_CODE, ")")
 sites <<- sites
 
-samplers <<-  assignments_db %>%
-  filter(ROLE == "Field", YEAR ==  year(Sys.Date())) %>%
+samplers_db <<-  assignments_db %>%
+  filter(ROLE == "Field", YEAR >= (year(Sys.Date()) - 2)) %>%
    add_case(NAME = "BRC SamplerX") %>%
   .$NAME %>%
+  unique() %>%
   sort()
+
+rxdata <<- reactiveValues()
+### Get samplers from googledrive ####
+try(GS_GET_SAMPLERS(sheet = config[18])) # Updates rxdata$samplers
+### Get photos from googledrive ####
+try(GS_GET_PHOTOS(sheet = config[14])) # Updates rxdata$photos
 
 wea_choices <<- c("Storm (heavy rain)", "Rain (steady rain)",
                  "Showers (intermittent rain)", "Overcast","Clear/Sunny", "Other","Not Recorded")
@@ -179,8 +182,6 @@ wat_clarity_choices <<- c("Clear","Slight","Medium","Heavy", "Not Recorded")
 wat_erosion_choices <<- c("Undercut bank", "Slumping", "Erosional gullies in bank",
                          "Bridge or building undermining", "No erosion", "Not Recorded")
 depth_choices <<- c("Gage (Staff Plate-feet)", "Ruler (inches)", "Not Recorded", "No Datum")
-
-rxdata <<- reactiveValues()
 
 loadData <<- function() {
     if(file.exists(stagedDataCSV) == TRUE){
@@ -288,8 +289,11 @@ ui <- tagList(
                       column(width = 6,
                         selectInput("site", labelMandatory("Choose Sample Location:"), c("",sites), selected = "")
                       ),
-                      column(width = 6,
-                             selectInput("sampler", labelMandatory("Choose Sampler(s):"), multiple = T, choices = c("",samplers), selected = "")
+                      column(width = 4 ,
+                             uiOutput("sampler_UI")
+                      ),
+                      column(width = 2,
+                             ADD_SAMPLER_UI("add_sampler")
                       )
                     ),
                     fluidRow(
@@ -936,6 +940,7 @@ samplersRX <- reactive({
   req(input$sampler)
   paste0(input$sampler, collapse = "; ") %>% trimws()
   })
+
 # wea48RX <- reactive({
 #   req(input$wea48)
 #   paste(input$wea48, collapse = "; ") %>% trimws()
@@ -1188,6 +1193,13 @@ observeEvent(input$submit_comment,{
   saveComment(data = formatComment(), csvFile = stagedCommentsCSV, rdsFile = stagedCommentsRDS)
   shinyalert(title = "Comment Entered!", type = "success")
   removeModal()
+})
+
+### DYNAMIC UI COMPONTENTS ####
+
+output$sampler_UI <- renderUI({
+    selectInput("sampler", labelMandatory("Choose Sampler(s):"),
+                multiple = T, choices = c("", rxdata$samplers), selected = "")
 })
 
 
@@ -1909,8 +1921,9 @@ callModule(ADD_PHOTO, "add_photo_data_entry",
            mod_loc = "data entry",
            par = NULL)
 
+callModule(ADD_SAMPLER, "add_sampler", sitelist = sites)
 callModule(BRCMAP, "brc_map", sitelist = sites_db)
-callModule(PHOTOS, "photo_browser", photo_list = photo_list)
+callModule(PHOTOS, "photo_browser", photo_list = reactive(rxdata$photos))
 # callModule(EVENTS, "event_viewer")
 
 ### IMAGES ####
