@@ -105,7 +105,7 @@ source(paste0(wdir, "/mods/mod_add_sampler.R"))
 source(paste0(wdir, "/mods/mod_map.R"))
 source(paste0(wdir, "/funs/data_update.R"))
 source(paste0(wdir, "/mods/mod_photo_browser.R"))
-# source(paste0(wdir, "/mods/mod_event_viewer.R"))
+source(paste0(wdir, "/mods/mod_event_viewer.R"))
 source(paste0(wdir, "/funs/dropB.R"))
 source(paste0(wdir, "/funs/gsheets.R"))
 
@@ -454,7 +454,6 @@ ui <- tagList(
                     column(12,
                            ### This is to adjust the width of pop up "showmodal()" for DT modify table
                            tags$head(tags$style(HTML('
-
                                               .modal-lg {
                                               width: 1200px;
                                               }
@@ -595,9 +594,7 @@ ui <- tagList(
                    ),
                    tabPanel("Event Viewer",
                             column(12,
-                                   strong(h4("EVENT VIEWER...COMING SOON")),
-                                   br()
-                                   # EVENTS_UI("event_viewer")
+                                   EVENTS_UI("event_viewer")
                             )
                    ),
                    tabPanel("Transaction Log",
@@ -1924,7 +1921,7 @@ callModule(ADD_PHOTO, "add_photo_data_entry",
 callModule(ADD_SAMPLER, "add_sampler", sitelist = sites)
 callModule(BRCMAP, "brc_map", sitelist = sites_db)
 callModule(PHOTOS, "photo_browser", photo_list = reactive(rxdata$photos))
-# callModule(EVENTS, "event_viewer")
+callModule(EVENTS, "event_viewer")
 
 ### IMAGES ####
 
