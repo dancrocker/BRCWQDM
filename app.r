@@ -166,7 +166,7 @@ samplers_db <<-  assignments_db %>%
 
 rxdata <<- reactiveValues()
 ### Get samplers from googledrive ####
-try(GS_GET_SAMPLERS(sheet = config[18])) # Updates rxdata$samplers
+try(GS_GET_SAMPLERS(sheet = config[15])) # Updates rxdata$samplers
 ### Get photos from googledrive ####
 try(GS_GET_PHOTOS(sheet = config[14])) # Updates rxdata$photos
 

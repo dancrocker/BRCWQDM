@@ -97,7 +97,7 @@ observeEvent(input$save_sampler,{
                           ADDED_BY = app_user)
 
 # Append the sampler record to the Google sheets doc
-    GS_APPEND_SAMPLER(sheet = config[18], data = sampler_rec)
+    GS_APPEND_SAMPLER(sheet = config[15], data = sampler_rec)
     shinyalert(title = "Sampler Saved!", type = "success")
     removeModal()
   }

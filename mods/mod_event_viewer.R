@@ -71,7 +71,12 @@ fluidPage(
                           tableOutput(ns("event_comments"))
                    )
                  )
-      )
+        ),
+        tabPanel("Event Photos",
+                 column(12,
+                        PHOTOS_UI(ns("event_photos"))
+                 )
+        )
         # tabPanel("Plot Data", plotOutput("plot")),
         # tabPanel("Tabular Data", tableOutput("table"))
       )
@@ -82,7 +87,7 @@ fluidPage(
 } # End UI
 
 ########################################################################.
-###                         MODULUE SERVER                          ####
+###                         MODULE SERVER                          ####
 ########################################################################.
 
 EVENTS <- function(input, output, session) {
@@ -230,6 +235,7 @@ output$event_comments = renderTable(
      event_data_c(), colnames = TRUE
 )
 
+callModule(PHOTOS, "event_photos", photo_list = reactive(event_photos()))
 ########################################################################.
 ###                       Plot Data at this Location                ####
 ########################################################################.
@@ -239,7 +245,6 @@ output$event_comments = renderTable(
 # Make it an interactive dyegraph so user can hover on points etc
 # Try to highlight the point for this SEID
 # Execute in a modal box launched from a button?
-
 
 } # End Server
 

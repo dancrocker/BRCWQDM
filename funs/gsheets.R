@@ -10,7 +10,7 @@
 library("googlesheets4")
 
 auth_json <-  paste0(dataDir, "brcwqdm-cb75549bb9d4.json")
-gs_api <- config[15]
+# gs_api <- config[15]
 gs_scope <- "https://www.googleapis.com/auth/spreadsheets"
 
 ########################################################################.

@@ -53,11 +53,11 @@ photo_recs <- reactive(photo_list())
 local_photo_dir <- paste0(dataDir,"photos")
 
 photo_dt <- reactive({
-  d <- photo_recs() %>%
-    mutate(SITE_CODE = paste0(sites_db$WATERBODY_NAME[match(SITE_CODE, sites_db$BRC_CODE)], " (", SITE_CODE, ")")) %>%
-    dplyr::rename("SITE" = "SITE_CODE")
-  d$DATE <- force_tz(d$DATE, tzone = "America/New_York")
-  d
+    d <- photo_recs() %>%
+      mutate(SITE_CODE = paste0(sites_db$WATERBODY_NAME[match(SITE_CODE, sites_db$BRC_CODE)], " (", SITE_CODE, ")")) %>%
+      dplyr::rename("SITE" = "SITE_CODE")
+    d$DATE <- force_tz(d$DATE, tzone = "America/New_York")
+    d
 })
 
 output$photos <- DT::renderDataTable({
