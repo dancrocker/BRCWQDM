@@ -26,8 +26,10 @@ if (!interactive()) {
 ### Set required options and get token
 httr::set_config(httr::config(http_version = 2))
 
-options(gargle_oauth_email = TRUE,
-        gargle_oob_default   = TRUE)
+options(gargle_oauth_cache = dataDir,
+        gargle_oauth_email = TRUE,
+        gargle_oob_default  = TRUE,
+        gargle_verbosity = "debug")
 
 options(shiny.port = 3838)
 options(googleAuthR.redirect = "http://localhost:3838")
