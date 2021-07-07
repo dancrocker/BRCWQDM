@@ -157,8 +157,9 @@ sites <<- sites_db$BRC_CODE
 names(sites) <- paste0(sites_db$WATERBODY_NAME, " - ", sites_db$SITE_NAME, " (", sites_db$BRC_CODE, ")")
 sites <<- sites
 
+### Sampleer choices - From assignements in current year and year prior ####
 samplers_db <<-  assignments_db %>%
-  filter(ROLE == "Field", YEAR >= (year(Sys.Date()) - 2)) %>%
+  filter(ROLE == "Field", YEAR >= (year(Sys.Date()) - 1)) %>%
    add_case(NAME = "BRC SamplerX") %>%
   .$NAME %>%
   unique() %>%
