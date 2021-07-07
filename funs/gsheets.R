@@ -28,7 +28,7 @@ httr::set_config(httr::config(http_version = 2))
 
 options(gargle_oauth_cache = dataDir,
         gargle_oauth_email = TRUE,
-        gargle_oob_default  = TRUE,
+        # gargle_oob_default  = TRUE,
         gargle_verbosity = "debug")
 
 options(shiny.port = 3838)
@@ -38,10 +38,10 @@ options(googleAuthR.redirect = "http://localhost:3838")
 ###                          WITH AUTH                              ####
 ########################################################################.
 
-gs4_auth_configure(api_key = jsonlite::fromJSON(txt = auth_json, simplifyVector = TRUE)[["private_key"]])
+# gs4_auth_configure(api_key = jsonlite::fromJSON(txt = auth_json, simplifyVector = TRUE)[["private_key"]])
 
-gs4_auth(use_oob = TRUE,
-         path = auth_json,
+gs4_auth(path = auth_json,
+         # use_oob = TRUE,
          scopes = gs_scope)
 
 GS_APPEND_PHOTO <- function(sheet, data) {
