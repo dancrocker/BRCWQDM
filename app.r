@@ -24,7 +24,7 @@
 # When datatable modules are empty- disable buttons or remove entirely and display a helpful message
 
 print(paste0("BRCWQDM App lauched at ", Sys.time()))
-
+# options(error= recover)
 ### Load Libraries ####
 ipak <- function(pkg){
   new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
@@ -420,7 +420,7 @@ ui <- tagList(
                              checkboxInput("photos","Photos associated with sampling event?")
                       ),
                       column(width = 4,
-                             ADD_PHOTO_UI("add_photo_data_entry"),
+                             ADD_PHOTO_UI("add_photo_data_entry")
                       )
                     )
                 ) # End Well Panel

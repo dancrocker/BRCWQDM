@@ -60,7 +60,7 @@ GS_APPEND_PHOTO <- function(sheet, data) {
 GS_GET_PHOTOS <- function(sheet) {
     if (gs4_has_token()) {
       df_photos <- range_read(ss = sheet) %>% as.data.frame()
-      df_photos$DATE <- unlist(df_photos$DATE)
+      # df_photos$DATE <- unlist(df_photos$DATE)
 
       print("Photo list retrieved...")
     } else {
@@ -69,7 +69,9 @@ GS_GET_PHOTOS <- function(sheet) {
 rxdata$photos <<- df_photos
 }
 
-
+# GS_GET_PHOTOS(sheet = config[14])
+# df_photos <- range_read(ss = config[14]) %>% as.data.frame()
+              
 GS_APPEND_SAMPLER <- function(sheet, data) {
   if (gs4_has_token()) {
     sheet_append(ss = sheet, data)
