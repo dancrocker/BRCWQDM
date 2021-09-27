@@ -373,7 +373,7 @@ ui <- tagList(
                       column(width = 12,
                         fluidRow(
                           column(width = 3,
-                            numericInput("do","Dissolved Oxyen (mg/L) (C01):", value = NULL, min = 0, max = 25),
+                            numericInput("do","Dissolved Oxygen (mg/L) (C01):", value = NULL, min = 0, max = 25),
                             numericInput("o2","Oxygen Saturation (%) (C02):", value = NULL, min = 0, max = 100, step = 1),
                             ADD_COMMENT_UI("add_comment_chemical")
                             ),
