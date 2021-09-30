@@ -31,8 +31,8 @@ options(gargle_oauth_cache = dataDir,
         # gargle_oob_default  = TRUE,
         gargle_verbosity = "debug")
 
-options(shiny.port = 3838)
-options(googleAuthR.redirect = "http://localhost:3838")
+#options(shiny.port = 3838)
+#options(googleAuthR.redirect = "http://localhost:3838")
 
 ########################################################################.
 ###                          WITH AUTH                              ####
@@ -71,7 +71,7 @@ rxdata$photos <<- df_photos
 
 # GS_GET_PHOTOS(sheet = config[14])
 # df_photos <- range_read(ss = config[14]) %>% as.data.frame()
-              
+
 GS_APPEND_SAMPLER <- function(sheet, data) {
   if (gs4_has_token()) {
     sheet_append(ss = sheet, data)
