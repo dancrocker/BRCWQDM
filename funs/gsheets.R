@@ -34,6 +34,7 @@ options(gargle_oauth_cache = dataDir,
 # options(shiny.port = 3838)
 # options(googleAuthR.redirect = "http://localhost:3838")
 
+
 ########################################################################.
 ###                          WITH AUTH                              ####
 ########################################################################.
