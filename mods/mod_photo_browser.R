@@ -21,7 +21,8 @@ PHOTOS_UI <- function(id) {
   ns <- NS(id)
   tagList(
     useShinyjs(),
-    div(id = ns('form'),
+    div(
+      id = ns('form'),
       fluidPage(
         wellPanel(
           fluidRow(
@@ -35,7 +36,7 @@ PHOTOS_UI <- function(id) {
                    textOutput(ns("selected_photo"))
             )
           )
-        ), #End Well Panel
+        ),# End Well Panel
         br(),
         DT::dataTableOutput(ns("photos"))
       ) # End Fluid Page
@@ -122,7 +123,7 @@ observeEvent(input$get_photo, {
                       br(),
                       h4(glue("Photographer: {browser_photographer()}")),
                       br(),
-                      h4(glue("Caption/tags: {browser_caption()}")),
+                      h4(glue("Caption/tags: {browser_caption()}"))
                )
              ), # end Fluid page
 
