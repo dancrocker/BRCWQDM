@@ -29,7 +29,7 @@ print(paste0("BRCWQDM App lauched at ", Sys.time()))
 ipak <- function(pkg){
   new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
   if (length(new.pkg))
-    install.packages(new.pkg, dependencies = TRUE, repos="http://cran.rstudio.com/", quiet = T, verbose = F)
+    install.packages(new.pkg, dependencies = TRUE, repos="https://cloud.r-project.org", quiet = T, verbose = F)
   sapply(pkg, require, character.only = TRUE)
 }
 
