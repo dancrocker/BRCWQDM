@@ -89,5 +89,6 @@ GS_GET_SAMPLERS <- function(sheet) {
     } else {
       return("No token found for authentication...photo list could not be retrieved")
     }
-rxdata$samplers <<- c(samplers_db, df_samplers$FULL_NAME) %>% sort()
+   samplers <-  c(samplers_db, df_samplers$FULL_NAME) %>% sort()
+   return(samplers)
 }
