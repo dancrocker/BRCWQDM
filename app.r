@@ -165,9 +165,6 @@ samplers_db <<-  assignments_db %>%
   unique() %>%
   sort()
 
-### Get photos from googledrive ####
-try(GS_GET_PHOTOS(sheet = config[14])) # Updates rxdata$photos
-
 wea_choices <<- c("Storm (heavy rain)", "Rain (steady rain)",
                  "Showers (intermittent rain)", "Overcast","Clear/Sunny", "Other","Not Recorded")
 wat_appear_choices <<- c("Clear", "Milky", "Foamy", "Oily Sheen",
@@ -704,6 +701,9 @@ rxdata <<- reactiveValues()
 rxdata$fileChoices <- fileChoices()
 ### Get samplers from googledrive ####
 rxdata$samplers <<- try(GS_GET_SAMPLERS(sheet = config[15])) # Updates rxdata$samplers
+### Get photos from googledrive ####
+try(GS_GET_PHOTOS(sheet = config[14])) # Updates rxdata$photos
+
 selected_site <- reactive({
   input$site
   })
