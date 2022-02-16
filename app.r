@@ -29,7 +29,7 @@ print(paste0("BRCWQDM App lauched at ", Sys.time()))
 ipak <- function(pkg){
   new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
   if (length(new.pkg))
-    install.packages(new.pkg, dependencies = TRUE, repos="http://cran.rstudio.com/", quiet = T, verbose = F)
+    install.packages(new.pkg, dependencies = TRUE, repos="https://cloud.r-project.org", quiet = T, verbose = F)
   sapply(pkg, require, character.only = TRUE)
 }
 
@@ -167,7 +167,7 @@ samplers_db <<-  assignments_db %>%
 
 rxdata <<- reactiveValues()
 ### Get samplers from googledrive ####
-try(GS_GET_SAMPLERS(sheet = config[15])) # Updates rxdata$samplers
+rxdata$samplers <- try(GS_GET_SAMPLERS(sheet = config[15])) # Updates rxdata$samplers
 ### Get photos from googledrive ####
 try(GS_GET_PHOTOS(sheet = config[14])) # Updates rxdata$photos
 
