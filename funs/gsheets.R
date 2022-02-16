@@ -83,12 +83,13 @@ GS_APPEND_SAMPLER <- function(sheet, data) {
 }
 
 GS_GET_SAMPLERS <- function(sheet) {
-    if (gs4_has_token()) {
-      df_samplers <- range_read(ss = sheet) %>% as.data.frame()
-      print("List of samplers retrieved...")
-    } else {
-      return("No token found for authentication...photo list could not be retrieved")
-    }
-   samplers <-  c(samplers_db, df_samplers$FULL_NAME) %>% sort()
-   return(samplers)
+  if (gs4_has_token()) {
+    df_samplers <- range_read(ss = sheet) %>% as.data.frame()
+    print("List of samplers retrieved...")
+    samplers <-  c(samplers_db, df_samplers$FULL_NAME) %>% sort()
+    return(samplers)
+  } else {
+    samplers <- samplers_db %>% sort()
+    return("No token found for authentication...sampler list could not be retrieved from google sheets and sampler list may not be complete!")
+  }
 }

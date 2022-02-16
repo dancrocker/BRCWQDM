@@ -165,9 +165,6 @@ samplers_db <<-  assignments_db %>%
   unique() %>%
   sort()
 
-rxdata <<- reactiveValues()
-### Get samplers from googledrive ####
-rxdata$samplers <- try(GS_GET_SAMPLERS(sheet = config[15])) # Updates rxdata$samplers
 ### Get photos from googledrive ####
 try(GS_GET_PHOTOS(sheet = config[14])) # Updates rxdata$photos
 
@@ -703,9 +700,10 @@ fileChoices <- function(){
       #   NULL
       # }
     }
-
+rxdata <<- reactiveValues()
 rxdata$fileChoices <- fileChoices()
-
+### Get samplers from googledrive ####
+rxdata$samplers <<- try(GS_GET_SAMPLERS(sheet = config[15])) # Updates rxdata$samplers
 selected_site <- reactive({
   input$site
   })
@@ -930,7 +928,7 @@ observe({
 # })
 
 ### REACTIVE DATA ENTRY VALS ####
-### SAMPLEDATE-TIME CALC ####
+### SAMPLE DATE-TIME CALC ####
 SampleDT <- reactive({paste0(strftime(input$date, "%Y-%m-%d"), " ", strftime(input$time, "%H:%M"))})
 
 ### CONVERT MULIPLE SELECT INPUTS TO 1 STRING ####
