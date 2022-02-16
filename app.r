@@ -109,6 +109,9 @@ source(paste0(wdir, "/mods/mod_event_viewer.R"))
 source(paste0(wdir, "/funs/dropB.R"))
 source(paste0(wdir, "/funs/gsheets.R"))
 
+### Make reactive data list
+rxdata <<- reactiveValues()
+
 ### Download database rds files from dropbox ####
 GET_DATABASE_DATA()
 ### Download rds files cached on dropbox to local data folder and load these and any staged RDS files
@@ -157,7 +160,7 @@ sites <<- sites_db$BRC_CODE
 names(sites) <- paste0(sites_db$WATERBODY_NAME, " - ", sites_db$SITE_NAME, " (", sites_db$BRC_CODE, ")")
 sites <<- sites
 
-### Sampleer choices - From assignements in current year and year prior ####
+### Sampler choices - From assignements in current year and year prior ####
 samplers_db <<-  assignments_db %>%
   filter(ROLE == "Field", YEAR >= (year(Sys.Date()) - 2)) %>%
    add_case(NAME = "BRC SamplerX") %>%
@@ -697,7 +700,7 @@ fileChoices <- function(){
       #   NULL
       # }
     }
-rxdata <<- reactiveValues()
+
 rxdata$fileChoices <- fileChoices()
 ### Get samplers from googledrive ####
 rxdata$samplers <<- try(GS_GET_SAMPLERS(sheet = config[15])) # Updates rxdata$samplers

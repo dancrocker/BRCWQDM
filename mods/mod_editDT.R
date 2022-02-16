@@ -48,6 +48,7 @@ editableDTUI <- function(id) {
 ### EDIT TABLE FUNCTION ####
 
 editableDT <- function(input, output, session,
+                       samplers = rxdata$samplers,
                        data=reactive(NULL),
                        globalSession,
                        data_name,
