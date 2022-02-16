@@ -159,7 +159,7 @@ sites <<- sites
 
 ### Sampleer choices - From assignements in current year and year prior ####
 samplers_db <<-  assignments_db %>%
-  filter(ROLE == "Field", YEAR >= (year(Sys.Date()) - 1)) %>%
+  filter(ROLE == "Field", YEAR >= (year(Sys.Date()) - 2)) %>%
    add_case(NAME = "BRC SamplerX") %>%
   .$NAME %>%
   unique() %>%
