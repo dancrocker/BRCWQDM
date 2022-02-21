@@ -75,8 +75,8 @@ rxdata$photos <<- df_photos
 GS_APPEND_SAMPLER <- function(sheet, data) {
   if (gs4_has_token()) {
     sheet_append(ss = sheet, data)
-    GS_GET_SAMPLERS(sheet)
-    return(print("Sampler successfully added to list..."))
+    try(GS_GET_SAMPLERS(sheet))
+    print("Sampler successfully added to list...")
   } else {
     return("No token found for authentication...photo could not be added")
   }
@@ -86,10 +86,9 @@ GS_GET_SAMPLERS <- function(sheet) {
   if (gs4_has_token()) {
     df_samplers <- range_read(ss = sheet) %>% as.data.frame()
     print("List of samplers retrieved...")
-    samplers <-  c(samplers_db, df_samplers$FULL_NAME) %>% sort()
-    return(samplers)
+    rxdata$samplers <<- c(samplers_db, df_samplers$FULL_NAME) %>% sort()
   } else {
-    samplers <- samplers_db %>% sort()
-    return("No token found for authentication...sampler list could not be retrieved from google sheets and sampler list may not be complete!")
+    print("No token found for authentication...sampler list could not be retrieved from google sheets and sampler list may not be complete!")
+    rxdata$samplers <<- samplers_db %>% sort()
   }
 }
