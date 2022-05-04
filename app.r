@@ -410,13 +410,13 @@ ui <- tagList(
         bs_set_opts(panel_type = "primary", use_heading_link = TRUE) %>%
         bs_append(title = "OTHER SAMPLE INFORMATION", content =
                     wellPanel(fluidRow(
-                      column(width = 4,
+                      column(width = 6,
                              ADD_COMMENT_UI("add_comment_other")
                       ),
-                      column(width = 4,
-                             checkboxInput("photos","Photos associated with sampling event?")
-                      ),
-                      column(width = 4,
+                      # column(width = 4,
+                      #        checkboxInput("photos","Photos associated with sampling event?")
+                      # ),
+                      column(width = 6,
                              ADD_PHOTO_UI("add_photo_data_entry")
                       )
                     )
@@ -1174,7 +1174,7 @@ comment_par_choices <<- c("General Comment", data_fields$dt_cols[data_fields$tak
 
 formatComment <- function(){
   if(input$FM_comment == TRUE){
-    commenter <- input$sampler
+    commenter <- paste(input$sampler, collapse = "; ") %>% trimws()
   } else {
     commenter <- app_user
   }

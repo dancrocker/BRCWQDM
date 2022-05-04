@@ -58,7 +58,7 @@ saveComment <- function(data, csvFile, rdsFile) {
 
 formatComment <- function(){
   if(input$FM_comment == TRUE){
-    commenter <- sampler()
+    commenter <- paste(sampler(), collapse = "; ") %>% trimws()
   } else {
     commenter <- app_user
   }
