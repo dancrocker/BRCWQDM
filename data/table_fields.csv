@@ -29,7 +29,6 @@
 "e_coli_rep","E. coli Replicate","numeric","numericInput",,"yes",,"yes",,120,"yes","biological"
 "e_coli_lab_blank","E. coli Lab Blank","numeric","numericInput",,"yes",,"yes",,120,"yes","biological"
 "e_coli_field_blank","E. coli Field Blank","numeric","numericInput",,"yes",,"yes",,120,"yes","biological"
-"photos","Photos?","text","checkboxInput",,"yes",,"no",,100,"yes","other sample info"
 "Entered_By","Entered By","text","textInput",,"no",,"no",,140,"no","other sample info"
 "SITE","Comment Site","factor","selectInput","no","yes",,"no","sites",350,"yes","comment module"
 "DATE","Date","text","textInput",,"yes",,"no",,150,"yes","comment module"
