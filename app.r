@@ -141,8 +141,8 @@ table_fields <<- readr::read_csv(paste0(wdir,"/data/table_fields.csv"), col_type
   input_section = col_character()
 ))
 
-data_fields <<- table_fields[1:32,]
-comment_fields <<- table_fields[33:37,]
+data_fields <<- table_fields[1:31,]
+comment_fields <<- table_fields[32:36,]
 
 ### DATA FIELDS ####
 fieldsASIS <<- data_fields$shiny_input[data_fields$as_is == "yes"]
