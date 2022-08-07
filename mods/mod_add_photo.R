@@ -32,7 +32,7 @@ ADD_PHOTO_UI <- function(id){
 
 ADD_PHOTO <- function(input, output, session, site, photo_date, mod_loc, par = NULL) {
 ### Function args are brought in from outside of module scope... par only from data
-par_choices <-  c("General", table_fields$dt_cols[table_fields$take_comments =="yes"])
+par_choices <-  c("General", parameters_db$PARAMETER_NAME)
 
 ### Module locations: mod_loc:
 #  1. "data entry"
