@@ -101,7 +101,7 @@ observeEvent(input$get_photo, {
      if(!length(rec())) {
        shinyalert("Oops!", "Please select a record in order to view a photo!", type = "error")
      } else {
-       local_imgs <- list.files(local_photo_dir, pattern=".png|.jpg|.img", full.names = FALSE)
+       local_imgs <- list.files(local_photo_dir, pattern=".png|.jpg|.img|.jpeg", full.names = FALSE)
        if(!photo() %in% local_imgs) {
          try(GET_PHOTO(photo = rec()) # Add more error handling here - shouldn't trigger error, unless files removed from dropbox
          )
