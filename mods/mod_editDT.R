@@ -49,12 +49,12 @@ editableDTUI <- function(id) {
 
 editableDT <- function(input, output, session,
                        samplers = rxdata$samplers,
-                       data=reactive(NULL),
+                       data = reactive(NULL),
                        globalSession,
                        data_name,
-                       inputwidth=reactive(100),
+                       inputwidth = reactive(100),
                        edit_cols,
-                       mode=reactive(2)) {
+                       mode = reactive(2)) {
 
 
   deleted<-deleted1<-edited<-edited1<-added<-added1<-updated1<-updated<-restored<-restored1<-c()
@@ -248,15 +248,15 @@ observeEvent(input$add_comment_mod, {
           # print(data_name)
          if(data_name == "stagedData"){
            ### Read the updated table back and refresh the DT
-            dt <- read.table(csvFile, stringsAsFactors = TRUE, header = T, sep = " ")
-            loadAll()
-            rxdata$stagedComments <- readRDS(rdsFile)
+           dt <- read.table(csvFile, stringsAsFactors = TRUE, header = T, sep = " ")
+           refreshComments()
+           rxdata$stagedComments <- readRDS(rdsFile)
          } else {
            ### Read the updated table back and refresh the DT
-                dt <- read.table(csvFile, stringsAsFactors = FALSE, header = T,  sep = " " , na.strings = "NA")
-                df <- comm_csv2df(dt, comment_fields) ### saves RDS file as data.frame
-                saveRDS(df, submittedCommentsRDS)
-              rxdata$submittedComments <- readRDS(rdsFile)
+           dt <- read.table(csvFile, stringsAsFactors = FALSE, header = T,  sep = " " , na.strings = "NA")
+           df <- comm_csv2df(dt, comment_fields) ### saves RDS file as data.frame
+           saveRDS(df, submittedCommentsRDS)
+           rxdata$submittedComments <- readRDS(rdsFile)
          }
     }
 
@@ -408,7 +408,7 @@ observeEvent(input$save_comment,{
         x[ids,i]=as.POSIXct(input[[myname[i]]],tz=tz,origin="1970-01-01")
       }
       if (i == 31) {
-        x[ids,i] = entered_by() # This was needed because this column kept getting deleted it is non-editable
+        x[ids,i] <- entered_by() # This was needed because this column kept getting deleted it is non-editable
       }
 
     }
@@ -589,7 +589,7 @@ observeEvent(input$save_comment,{
       }
       do.call(tagList,mylist)
     } else{
-      h4("You can edit data after select one row in datatable.")
+      h4("You can only edit data after selecting one row in the datatable.")
     }
   })
 

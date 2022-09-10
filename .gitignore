@@ -6,3 +6,4 @@ BRC_Launch.R
 BRCWQDM.Rproj
 .httr-oauth
 .secrets
+brc_gsheets_people_import.R
