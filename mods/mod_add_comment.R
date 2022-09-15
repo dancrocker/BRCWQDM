@@ -52,7 +52,6 @@ saveComment <- function(data, csvFile, rdsFile) {
                        qmethod = "d", append = FALSE)
          }
          dt <- read.table(csvFile, stringsAsFactors = TRUE, header = T, sep = " ")
-         loadAll()
          rxdata$stagedComments <- readRDS(rdsFile)
   }
 

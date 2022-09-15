@@ -419,7 +419,13 @@ observeEvent(input$save_comment,{
       updated<<-x
       updateTextInput(session,"result",value="updated")
     }
-    #updateCheckboxInput(session,"showEdit",value=FALSE)
+    # updateCheckboxInput(session,"showEdit", value=FALSE)
+    # updateSelectInput(session = session,
+    #                   inputId = "selectFile",
+    #                   label = "Choose submitted data to process and import:",
+    #                   choices = rxdata$fileChoices,
+    #                   selected = input$selectFile)
+    # session$sendCustomMessage('unbind-DT', 'origTable')
   })
 
   observeEvent(input$Close,{
@@ -427,7 +433,7 @@ observeEvent(input$save_comment,{
     updateSelectInput(session = session,
                       inputId = "selectFile",
                       label = "Choose submitted data to process and import:",
-                      choices = fileChoices(),
+                      choices = rxdata$fileChoices,
                       selected = input$selectFile)
     session$sendCustomMessage('unbind-DT', 'origTable')
   })
