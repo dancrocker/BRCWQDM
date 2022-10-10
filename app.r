@@ -33,10 +33,10 @@ ipak <- function(pkg){
   sapply(pkg, require, character.only = TRUE)
 }
 
-packages <- c("shiny","shinyjs", "shinyFiles", "shinyTime", "shinyalert","shinydashboard","rmarkdown", "knitr", "tidyselect", "lubridate",
+packages <- c("shiny","shinyjs", "shinyFiles", "shinyTime", "shinyalert","shinydashboard", "shinycssloaders","rmarkdown", "knitr", "tidyselect", "lubridate",
               "plotly", "leaflet", "RColorBrewer", "data.table", "DT", "scales", "stringr", "shinythemes", "ggthemes", "tidyr",
               "dplyr", "magrittr", "httr", "tibble", "bsplus", "readxl", "rdrop2", "RSQLite", "readr", "purrr", "htmlwidgets", "ggplot2",
-              "pool", "curl", "glue","googlesheets4", "fs")
+              "pool", "curl", "glue","googlesheets4", "fs", "rpivotTable", "xts", "htmltools", "dygraphs")
 
 # install.packages("https://github.com/jeroen/curl/archive/master.tar.gz", repos = NULL)
 # update.packages("curl", repos="http://cran.rstudio.com/", quiet = T, verbose = F)
@@ -91,9 +91,6 @@ peopleRDS <<- paste0(rdsFiles,"people_db.rds")
 parametersRDS <<- paste0(rdsFiles,"parameters_db.rds")
 assignmentsRDS <<- paste0(rdsFiles,"assignments_db.rds")
 
-### From edit module ####
-useShinyalert()
-
 ### SOURCE EXTERNAL SCRIPTS ####
 source(paste0(wdir, "/funs/csv2df.R"))
 source(paste0(wdir, "/funs/editableDT_modFuns.R"))
@@ -108,7 +105,7 @@ source(paste0(wdir, "/mods/mod_photo_browser.R"))
 source(paste0(wdir, "/mods/mod_event_viewer.R"))
 source(paste0(wdir, "/funs/dropB.R"))
 source(paste0(wdir, "/funs/gsheets.R"))
-
+source(paste0(wdir, "/mods/mod_data_explorer.R"))
 ### Make reactive data list
 rxdata <<- reactiveValues()
 
@@ -118,6 +115,7 @@ GET_DATABASE_DATA()
 LOAD_DB_RDS()
 
 data_num_db <-  readRDS(data_n_RDS)
+parameters_db <- readRDS(parametersRDS)
 ### Change to the last record date (rds file)
 last_update <- data_num_db$DATE_TIME %>% max()
 
@@ -460,7 +458,6 @@ ui <- tagList(
                            # br(),
                            ### tags$head() is to customize the download button
                            tags$head(tags$style(".butt{background-color:#222f5b;} .butt{color: #e6ebef;}")),
-                           useShinyalert(),
                            actionButton(inputId = "SaveStagedData",label = "Save", width = "245px", class="butt"),
                            editableDTUI("stagedDataDT")
                     ),
@@ -483,7 +480,6 @@ ui <- tagList(
                            # br(),
                            ### tags$head() is to customize the download button
                            tags$head(tags$style(".butt{background-color:#222f5b;} .butt{color: #e6ebef;}")),
-                           useShinyalert(),
                            actionButton(inputId = "SaveStagedComments",label = "Save", width = "245px", class="butt"),
                            # downloadButton("Trich_csv", "Download in CSV", class="butt"),
                            # Set up shinyalert
@@ -595,11 +591,16 @@ ui <- tagList(
                                    EVENTS_UI("event_viewer")
                             )
                    ),
+                   tabPanel("Data Explorer",
+                            column(12,
+                                   EXPLORER_UI("data_explorer")
+                            )
+                   ),
                    tabPanel("Transaction Log",
                             fluidRow(downloadButton("download_trans_log", "Download table as csv"), align = "center"),
                             DTOutput("data_trans_log_db")
-                   )
-                 )  # End Tab Panel
+                   )  # End Tab Panel
+                 ) # End Tabset Panel
           ) # End Col
         ) # End Fluid row
     ), # End Tab Panel
@@ -702,10 +703,19 @@ fileChoices <- function(){
     }
 
 rxdata$fileChoices <- fileChoices()
+
 ### Get samplers from googledrive ####
-rxdata$samplers <<- try(GS_GET_SAMPLERS(sheet = config[15])) # Updates rxdata$samplers
+if(exists("testing")) {
+  print("Testing mode is on ... no downloads from google sheets")
+} else {
+    try(GS_GET_SAMPLERS(sheet = config[15])) # Updates rxdata$samplers
+}
+# rxdata$samplers <<- try(GS_GET_SAMPLERS(sheet = config[15])) # Updates rxdata$samplers
+
 ### Get photos from googledrive ####
-try(GS_GET_PHOTOS(sheet = config[14])) # Updates rxdata$photos
+if(!exists("testing")) {
+  try(GS_GET_PHOTOS(sheet = config[14])) # Updates rxdata$photos
+}
 
 selected_site <- reactive({
   input$site
@@ -1284,7 +1294,6 @@ if (user_role %in% c("Program Coordinator", "App Developer")){
                       # br(),
                       ### tags$head() is to customize the download button
                       tags$head(tags$style(".butt{background-color:#222f5b;} .butt{color: #e6ebef;}")),
-                      useShinyalert(),
                       actionButton(inputId = "SaveSubmittedData",label = "Save", width = "245px", class="butt"),
                       editableDTUI("submittedDataDT")
                ),
@@ -1307,7 +1316,6 @@ if (user_role %in% c("Program Coordinator", "App Developer")){
                       # br(),
                       ### tags$head() is to customize the download button
                       tags$head(tags$style(".butt{background-color:#222f5b;} .butt{color: #e6ebef;}")),
-                      useShinyalert(),
                       actionButton(inputId = "SaveSubmittedComments",label = "Save", width = "245px", class="butt"),
                       # Set up shinyalert
                       editableDTUI("submittedCommentsDT")
@@ -1991,6 +1999,7 @@ callModule(ADD_SAMPLER, "add_sampler", sitelist = sites)
 callModule(BRCMAP, "brc_map", sitelist = sites_db)
 callModule(PHOTOS, "photo_browser", photo_list = reactive(rxdata$photos))
 callModule(EVENTS, "event_viewer")
+callModule(EXPLORER, "data_explorer", data = data_num_db)
 
 ### IMAGES ####
 

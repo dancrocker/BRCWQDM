@@ -57,7 +57,7 @@ photo_dt <- reactive({
     d <- photo_recs() %>%
       mutate(SITE_CODE = paste0(sites_db$WATERBODY_NAME[match(SITE_CODE, sites_db$BRC_CODE)], " (", SITE_CODE, ")")) %>%
       dplyr::rename("SITE" = "SITE_CODE")
-    d$DATE <- force_tz(d$DATE, tzone = "America/New_York")
+    # d$DATE <- force_tz(d$DATE, tzone = "America/New_York")
     d
 })
 
