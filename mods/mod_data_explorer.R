@@ -141,10 +141,10 @@ d3 <- reactive({
   observe({
     req(input$site)
     req(input$pars)
-    if (input$site == "") {
+    if ("" %in% input$site) {
        shinyjs::disable("make_plot")
     } else {
-      if (input$pars == "") {
+      if ("" %in% input$pars) {
         shinyjs::disable("make_plot")
       } else {
         shinyjs::enable("make_plot")
