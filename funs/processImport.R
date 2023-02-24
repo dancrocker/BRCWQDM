@@ -187,9 +187,13 @@ if(!is.null(df_comments)){
 ### Match the comments to data_t or data_n records
 # Change parameter names back to shiny inputs then convert to database parameter names
 data_c <- df_comments
-data_c$PARAMETER[data_c$PARAMETER != "General Comment"] <- table_fields$shiny_input[match(data_c$PARAMETER[data_c$PARAMETER != "General Comment"], table_fields$dt_cols)]
-data_c$PARAMETER[data_c$PARAMETER != "General Comment"] <- parameters_db$PARAMETER_NAME[match(data_c$PARAMETER[data_c$PARAMETER != "General Comment"], parameters_db$SHINY_OBJ)]
+# data_c$PARAMETER[data_c$PARAMETER != "General Comment"] <- table_fields$shiny_input[match(data_c$PARAMETER[data_c$PARAMETER != "General Comment"], table_fields$dt_cols)]
+# data_c$PARAMETER[data_c$PARAMETER != "General Comment"] <- parameters_db$PARAMETER_NAME[match(data_c$PARAMETER[data_c$PARAMETER != "General Comment"], parameters_db$SHINY_OBJ)]
 # at this point there should onl|y be NAs for same # as GenComm
+if(any(!data_c$PARAMETER %in% parameters_db$PARAMETER_NAME)) {
+  stop("Comment parameters do not match database parameters...contact app developer to debug.")
+}
+
 if(data_c$PARAMETER[is.na(data_c$PARAMETER)] %>% length() %>%  as.numeric() > 0){
   poolClose(pool)
   stop("There are non-matching shiny-objects or parameter names that need to be resolved before proceeding!")
