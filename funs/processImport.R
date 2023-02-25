@@ -184,23 +184,25 @@ data_t <- data_t %>%
 
 # First make sure there are comments
 if(!is.null(df_comments)){
-### Match the comments to data_t or data_n records
+# If so, proceed...
 # Change parameter names back to shiny inputs then convert to database parameter names
+par_updates <- c(parameters_db$PARAMETER_NAME, "General Comment") # Need to skip parameter names that could be in older submitted files, like "Prior Weather", which were changed
+
 data_c <- df_comments
-data_c$Parameter[data_c$Parameter != "General Comment"] <- table_fields$shiny_input[match(data_c$Parameter[data_c$Parameter != "General Comment"], table_fields$dt_cols)]
-data_c$Parameter[data_c$Parameter != "General Comment"] <- parameters_db$PARAMETER_NAME[match(data_c$Parameter[data_c$Parameter != "General Comment"], parameters_db$SHINY_OBJ)]
+data_c$PARAMETER[!data_c$PARAMETER %in% par_updates] <- table_fields$shiny_input[match(data_c$PARAMETER[!data_c$PARAMETER %in% par_updates], table_fields$dt_cols)]
+data_c$PARAMETER[!data_c$PARAMETER %in% par_updates] <- parameters_db$PARAMETER_NAME[match(data_c$PARAMETER[!data_c$PARAMETER %in% par_updates], parameters_db$SHINY_OBJ)]
 
 # at this point there should onl|y be NAs for same # as GenComm
-if(any(!data_c$PARAMETER %in% parameters_db$PARAMETER_NAME)) {
+if(any(!data_c$Parameter %in% parameters_db$PARAMETER_NAME)) {
   stop("Comment parameters do not match database parameters...contact app developer to debug.")
 }
 
-if(data_c$PARAMETER[is.na(data_c$PARAMETER)] %>% length() %>%  as.numeric() > 0){
+if(data_c$Parameter[is.na(data_c$Parameter)] %>% length() %>%  as.numeric() > 0){
   poolClose(pool)
   stop("There are non-matching shiny-objects or parameter names that need to be resolved before proceeding!")
 }
-
-join_data <- distinct(data[,c("DATE","SITE_BRC_CODE","SEID")])
+### Match the comments to data_t or data_n records
+join_data <- distinct(data[, c("DATE","SITE_BRC_CODE","SEID")])
 # Bring in SEID from data using a join, add ID col, reduce cols to DB cols and rename
 data_c <- data_c %>%
   left_join(join_data, by = c("DATE", "SITE" = "SITE_BRC_CODE")) %>%
