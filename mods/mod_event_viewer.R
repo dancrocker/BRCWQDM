@@ -90,7 +90,7 @@ fluidPage(
 ###                         MODULE SERVER                          ####
 ########################################################################.
 
-EVENTS <- function(input, output, session) {
+EVENTS <- function(input, output, session, photo_list, globalSession, mode = reactive(2)) {
 
 ns <- session$ns
 
@@ -100,7 +100,7 @@ data_t_db <- readRDS(data_t_RDS)
 data_c_db <- readRDS(data_c_RDS)
 data_trans_log_db <- readRDS(trans_log_RDS)
 params_db <-  readRDS(parametersRDS)
-
+photo_recs <- reactive(photo_list())
 ### Placeholder for photos
 ### The photo list needs to combine the gsheets records with the database records
 # photos_db <- readRDS(photos_list)# These is the database photos
@@ -191,10 +191,9 @@ num_bio <- reactive({
 })
 
 # Photos CAT = BOOLEAN (pending) or just photos
-
 event_photos <- reactive({
-  rxdata$photos %>%
-  filter(SITE_CODE == event_site_code(), DATE == as_date(event_date_time()))
+  photo_recs() %>%
+  filter(SITE_CODE == event_site_code(), DATE == as.character(as_date(ymd_hm(event_date_time()))))
 })
 ### REACTIVE OUTPUTS ####
 ### Date UI ####

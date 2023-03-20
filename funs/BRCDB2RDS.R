@@ -30,6 +30,7 @@ sites_db<- dbReadTable(pool, "sites")
 people_db <- dbReadTable(pool, "people")
 parameters_db <- dbReadTable(pool, "parameters")
 assignments_db <- dbReadTable(pool,"assignments")
+photos_db <- dbReadTable(pool,"photos")
 
 poolClose(pool)
 rm(db)
@@ -38,6 +39,8 @@ saveRDS(sites_db, paste0(LocalDir,"Data/rdsFiles/sites_db.rds"))
 saveRDS(people_db, paste0(LocalDir,"Data/rdsFiles/people_db.rds"))
 saveRDS(parameters_db, paste0(LocalDir,"Data/rdsFiles/parameters_db.rds"))
 saveRDS(assignments_db, paste0(LocalDir,"Data/rdsFiles/assignments_db.rds"))
+saveRDS(photos_db, paste0(LocalDir,"Data/rdsFiles/photos_db.rds"))
+
 source("funs/dropB.R")
 # Upload the rds files to dropbox
 UPLOAD_RDS()

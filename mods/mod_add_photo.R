@@ -30,7 +30,7 @@ ADD_PHOTO_UI <- function(id){
 # Photo is pushed to dropbox photo repository
 # Photo data record is appended to google sheets table
 
-ADD_PHOTO <- function(input, output, session, site, photo_date, mod_loc, par = NULL) {
+ADD_PHOTO <- function(input, output, session, site, photo_date, mod_loc, par = NULL, photos) {
 ### Function args are brought in from outside of module scope... par only from data
 par_choices <-  c("General", parameters_db$PARAMETER_NAME)
 
@@ -144,7 +144,8 @@ uploadPhoto <- function(file) {
     # Add the photo to dropbox
     UPLOAD_PHOTO(file = file, name = fullname)
     # Append the photo record to the Google sheets doc
-    GS_APPEND_PHOTO(sheet = config[14], data = photo_rec)
+    GS_APPEND_PHOTO(sheet = config[14], data = photo_rec, photos = photos)
+    return(glue("Photos were passed to function: {exists(photos)}"))
   } else {
     stop("The file does not exist! Please choose another file.")
   }

@@ -44,10 +44,10 @@ gs4_auth(path = auth_json,
          # use_oob = TRUE,
          scopes = gs_scope)
 
-GS_APPEND_PHOTO <- function(sheet, data) {
+GS_APPEND_PHOTO <- function(sheet, data, photos) {
   if (gs4_has_token()) {
     sheet_append(ss = sheet, data)
-    GS_GET_PHOTOS(sheet)
+    GS_GET_PHOTOS(sheet, photos = photos)
     return(print("Photo record successfully added to list..."))
   } else {
     return("No token found for authentication...photo could not be added")
@@ -57,16 +57,27 @@ GS_APPEND_PHOTO <- function(sheet, data) {
 # GS_APPEND_PHOTO(sheet = config[14], data = photo_rec)
 # sheet <- config[14]
 
-GS_GET_PHOTOS <- function(sheet) {
+GS_GET_PHOTOS <- function(sheet, photos) {
     if (gs4_has_token()) {
       df_photos <- range_read(ss = sheet) %>% as.data.frame()
       # df_photos$DATE <- unlist(df_photos$DATE)
 
       print("Photo list retrieved...")
     } else {
+      df_photos <- NULL
       return("No token found for authentication...photo list could not be retrieved")
     }
-rxdata$photos <<- df_photos
+    if (nrow(df_photos) == 0) {
+      all_photos <- photos %>%
+        select(-ID) %>%
+        distinct()
+    } else {
+      all_photos <- bind_rows(photos, df_photos) %>%
+        select(-ID) %>%
+        distinct()
+    }
+
+  rxdata$photos <<- all_photos
 }
 
 # GS_GET_PHOTOS(sheet = config[14])

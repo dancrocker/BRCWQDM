@@ -90,6 +90,7 @@ sitesRDS <<- paste0(rdsFiles,"sites_db.rds")
 peopleRDS <<- paste0(rdsFiles,"people_db.rds")
 parametersRDS <<- paste0(rdsFiles,"parameters_db.rds")
 assignmentsRDS <<- paste0(rdsFiles,"assignments_db.rds")
+photosRDS <<- paste0(rdsFiles,"photos_db.rds")
 
 ### SOURCE EXTERNAL SCRIPTS ####
 source(paste0(wdir, "/funs/csv2df.R"))
@@ -108,7 +109,6 @@ source(paste0(wdir, "/funs/gsheets.R"))
 source(paste0(wdir, "/mods/mod_data_explorer.R"))
 ### Make reactive data list
 rxdata <<- reactiveValues()
-
 ### Download database rds files from dropbox ####
 GET_DATABASE_DATA()
 ### Download rds files cached on dropbox to local data folder and load these and any staged RDS files
@@ -116,6 +116,7 @@ LOAD_DB_RDS()
 
 data_num_db <-  readRDS(data_n_RDS)
 parameters_db <- readRDS(parametersRDS)
+
 ### Change to the last record date (rds file)
 last_update <- data_num_db$DATE_TIME %>% max()
 
@@ -711,10 +712,12 @@ if(exists("testing")) {
     try(GS_GET_SAMPLERS(sheet = config[15])) # Updates rxdata$samplers
 }
 # rxdata$samplers <<- try(GS_GET_SAMPLERS(sheet = config[15])) # Updates rxdata$samplers
+photos_db <- readRDS(photosRDS)
+rxdata$photos <- photos_db
 
 ### Get photos from googledrive ####
 if(!exists("testing")) {
-  try(GS_GET_PHOTOS(sheet = config[14])) # Updates rxdata$photos
+  try(GS_GET_PHOTOS(sheet = config[14], photos = photos_db)) # Updates rxdata$photos
 }
 
 selected_site <- reactive({
@@ -1993,12 +1996,13 @@ callModule(ADD_PHOTO, "add_photo_data_entry",
            site = selected_site,
            photo_date = selected_date,
            mod_loc = "data entry",
-           par = NULL)
+           par = NULL,
+           photos = photos_db)
 
 callModule(ADD_SAMPLER, "add_sampler", sitelist = sites)
 callModule(BRCMAP, "brc_map", sitelist = sites_db)
 callModule(PHOTOS, "photo_browser", photo_list = reactive(rxdata$photos))
-callModule(EVENTS, "event_viewer")
+callModule(EVENTS, "event_viewer", photo_list = reactive(rxdata$photos))
 callModule(EXPLORER, "data_explorer", data = data_num_db)
 
 ### IMAGES ####

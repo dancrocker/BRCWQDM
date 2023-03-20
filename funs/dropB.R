@@ -4,7 +4,6 @@ library(rdrop2)
 library(tibble)
 library(lubridate)
 
-
 ### This setting is very important - if not set then random connection errors occur
 httr::set_config(httr::config(http_version = 0))
 
@@ -20,17 +19,19 @@ tokenpath <- paste0(LocalDir, "Data/dropb_token.RDS")
 drop_auth(rdstoken = tokenpath)
 
 ### Function to Load DB RDS Files ####
-LOAD_DB_RDS <- function(){
+LOAD_DB_RDS <- function() {
+local_data_dir <- paste0(LocalDir,"Data/rdsFiles")
+  if(!exists("testing")) {
+
 ### List Drop Box files ####
 dropb_root_dir <- config[12]
 safe_dir_check <- purrr::safely(drop_dir, otherwise = FALSE, quiet = TRUE)
 dir_listing <- safe_dir_check(path = paste0(dropb_root_dir, "/AppFiles"),
                               recursive = FALSE, dtoken = drop_auth(rdstoken = tokenpath))
-  if (FALSE %in% dir_listing$result) {
+if (FALSE %in% dir_listing$result) {
   print("Dropbox connection failed trying to get data RDS files. Check internet connection and verify database RDS files have been uploaded to the correct location on dropbox")
 } else {
   files <- dir_listing$result
-  local_data_dir <- paste0(LocalDir,"Data/rdsFiles")
   # # Get info from dropbox RDS files:
   rds_info_path <- paste0(local_data_dir,"/rds_info.rds")
   dbox_rds_info <- tibble(`rds_file` = files$name, `timestamp` = files$server_modified)
@@ -40,9 +41,18 @@ dir_listing <- safe_dir_check(path = paste0(dropb_root_dir, "/AppFiles"),
   if(file.exists(rds_info_path)){ # File exists - compare each file - datestamp to the dropbox version, if drop
     # box is newer - download and overwrite, if not, then skip
     local_rds_info <- readRDS(rds_info_path)
-    for (i in seq_along(paths)) {
-      fn <- files$name[i]
-      ts <- files$server_modified[i]
+    for (i in seq_along(dbox_rds_info$rds_file)) {
+      fn <- dbox_rds_info$rds_file[i]
+      ts <- dbox_rds_info$timestamp[i]
+      ### if the rds record is missing, get it and add it to local rds info
+      if (!fn %in% local_rds_info$rds_file) {
+        print(paste0(fn, " does not exist, downloading rds file from Dropbox."))
+        drop_download(path = paths[i], local_path = local_data_dir, overwrite = TRUE,
+                      dtoken =  drop_auth(rdstoken = tokenpath))
+        local_rds_info <- local_rds_info %>%
+          bind_rows(dbox_rds_info[i,])
+      }
+      ### If the timestamp is not equivalent to dropbox, download and overwrite
       if(local_rds_info$timestamp[local_rds_info$rds_file == fn] == ts){
         print(paste0(fn, " already up to date, skipping download and moving to next file."))
         next
@@ -58,7 +68,9 @@ dir_listing <- safe_dir_check(path = paste0(dropb_root_dir, "/AppFiles"),
     lapply(files$path_display, drop_download, local_path = local_data_dir, overwrite = TRUE,
            dtoken =  drop_auth(rdstoken = tokenpath))
   }
-
+  return("Testing Mode Off...Dropbox checked for RDS file update")
+}
+}
   ### Load rds files ####
   ### Make a list of all the .rds files using full path
   rds_files <- list.files(local_data_dir, full.names = TRUE , pattern = "\\.rds$")
@@ -72,7 +84,7 @@ dir_listing <- safe_dir_check(path = paste0(dropb_root_dir, "/AppFiles"),
   list2env(data ,.GlobalEnv)
   ### Remove data
   rm(data)
-}
+  return("Testing Mode On....Skipping RDS file check")
 }
 
 SUBMIT_CSV <- function(zone, drop_path = "BRCWQDM/Submitted_Data_Staging"){
@@ -230,6 +242,11 @@ GET_DATABASE_DATA <- function(){
 # GET_DATABASE_DATA()
 
 ARCHIVE_SUBMITTED_DATA <- function(data_file){
+
+  if(exists("testing")) {
+    return("Testing Mode On....skiping ARCHIVE_SUBMITTED_DATA")
+  }
+
  ### List Drop Box files ###
 d_file <- str_replace(data_file, pattern = paste0(submittedDataDir,"/"),"")
 c_file <- str_replace(d_file,"_SubmittedData_","_SubmittedComments_")
@@ -291,6 +308,10 @@ if (FALSE %in% dir_listing$result) {
 # data_file
 
 UPLOAD_RDS <- function(){
+
+  if(exists("testing")) {
+    return("Testing Mode On....skiping UPLOAD_RDS")
+  }
 ### This function will upload the database RDS files to Dropbox
 ### This should be called after any updates to site, people, parameter, or assignment tables
 
@@ -301,7 +322,7 @@ drop_path <- "BRCWQDM/AppFiles"
   peopleRDS <- paste0(LocalDir,"Data/rdsFiles/people_db.rds")
   parametersRDS <- paste0(LocalDir,"Data/rdsFiles/parameters_db.rds")
   assignmentsRDS <- paste0(LocalDir,"Data/rdsFiles/assignments_db.rds")
-
+  photosRDS <- paste0(LocalDir,"Data/rdsFiles/photos_db.rds")
 
   drop_upload(file = sitesRDS, path = drop_path, mode = "overwrite",
               verbose = TRUE, dtoken = drop_auth(rdstoken = tokenpath))
@@ -311,12 +332,17 @@ drop_path <- "BRCWQDM/AppFiles"
               verbose = TRUE, dtoken = drop_auth(rdstoken = tokenpath))
   drop_upload(file = assignmentsRDS, path = drop_path, mode = "overwrite",
               verbose = TRUE, dtoken = drop_auth(rdstoken = tokenpath))
+  drop_upload(file = photosRDS, path = drop_path, mode = "overwrite",
+              verbose = TRUE, dtoken = drop_auth(rdstoken = tokenpath))
 return("RDS files successfully copied to Dropbox")
 }
 
 UPLOAD_DB_DATA_RDS <- function(){
 ### This function will upload the database RDS files to Dropbox - this should
 
+  if(exists("testing")) {
+    return("Testing Mode On....skiping UPLOAD_DB_DATA_RDS")
+  }
 dropb_root_dir <- config[12]
 drop_path <- "BRCWQDM/DB_Tables_RDS"
 
@@ -350,6 +376,10 @@ return(upload_msg)
 # UPLOAD_DB_DATA_RDS()
 
 BACKUP_DATABASE <- function(){
+
+  if(exists("testing")) {
+    return("Testing Mode On....skiping ARCHIVE_SUBMITTED_DATA")
+  }
   db_path <- paste0(dataDir,"BRC_Database/BRCWQDB.sqlite")
   ### Dropbox backup directory:
   dropb_root_dir <- config[12]
@@ -400,6 +430,10 @@ UPLOAD_PHOTO <- function(file, name) {
 }
 
 GET_PHOTO <- function(photo){
+
+  if(exists("testing")) {
+    return("Testing Mode On....skiping GET_PHOTO")
+  }
   # photo <- "C-02-03-040_2020-07-13_GEN_1594688860.jpg" ### Test image
   local_data_dir <- paste0(LocalDir,"Data/photos")
   if(dir.exists(local_data_dir)) {

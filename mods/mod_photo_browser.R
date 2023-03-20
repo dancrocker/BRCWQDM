@@ -51,6 +51,7 @@ PHOTOS_UI <- function(id) {
 PHOTOS <- function(input, output, session, photo_list, globalSession, mode = reactive(2)) {
 ns <- session$ns
 photo_recs <- reactive(photo_list())
+# print(glimpse(photo_recs()))
 local_photo_dir <- paste0(dataDir,"photos")
 
 photo_dt <- reactive({
@@ -63,8 +64,8 @@ photo_dt <- reactive({
 
 output$photos <- DT::renderDataTable({
  req(isTruthy(photo_dt()))
- datatable(photo_dt(), filter = "top", selection = 'single', rownames = F) %>%
-    formatDate(columns = "DATE", method = 'toLocaleDateString')
+ datatable(photo_dt(), filter = "top", selection = 'single', rownames = F) #%>%
+    # formatDate(columns = "DATE", method = 'toLocaleDateString')
 })
 
 browser_photo_loc <- reactive({
