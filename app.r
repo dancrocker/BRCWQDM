@@ -116,7 +116,7 @@ LOAD_DB_RDS()
 
 data_num_db <-  readRDS(data_n_RDS)
 parameters_db <- readRDS(parametersRDS)
-
+sites_db <- readRDS(sitesRDS)
 ### Change to the last record date (rds file)
 last_update <- data_num_db$DATE_TIME %>% max()
 
