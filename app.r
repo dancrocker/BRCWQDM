@@ -110,13 +110,13 @@ source(paste0(wdir, "/mods/mod_data_explorer.R"))
 ### Make reactive data list
 rxdata <<- reactiveValues()
 ### Download database rds files from dropbox ####
-GET_DATABASE_DATA()
+# GET_DATABASE_DATA()
 ### Download rds files cached on dropbox to local data folder and load these and any staged RDS files
 LOAD_DB_RDS()
 
-data_num_db <-  readRDS(data_n_RDS)
-parameters_db <- readRDS(parametersRDS)
-sites_db <- readRDS(sitesRDS)
+# data_num_db <-  readRDS(data_n_RDS)
+# parameters_db <- readRDS(parametersRDS)
+# sites_db <- readRDS(sitesRDS)
 ### Change to the last record date (rds file)
 last_update <- data_num_db$DATE_TIME %>% max()
 

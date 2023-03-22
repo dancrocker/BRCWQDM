@@ -68,7 +68,7 @@ if (FALSE %in% dir_listing$result) {
     lapply(files$path_display, drop_download, local_path = local_data_dir, overwrite = TRUE,
            dtoken =  drop_auth(rdstoken = tokenpath))
   }
-  return("Testing Mode Off...Dropbox checked for RDS file update")
+  print("Testing Mode Off...Dropbox checked for RDS file update")
 }
 }
   ### Load rds files ####
@@ -84,7 +84,7 @@ if (FALSE %in% dir_listing$result) {
   list2env(data ,.GlobalEnv)
   ### Remove data
   rm(data)
-  return("Testing Mode On....Skipping RDS file check")
+  return("RDS files loaded to BRC App session")
 }
 
 SUBMIT_CSV <- function(zone, drop_path = "BRCWQDM/Submitted_Data_Staging"){
