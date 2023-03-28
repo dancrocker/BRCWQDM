@@ -67,7 +67,7 @@ poolClose(pool)
 
 ### PROCESS SUBMITTED DATA ####
 
-# data_file =  paste0(submittedDataDir,"/","Headwaters_SubmittedData_Nov_2022.csv")
+# data_file =  paste0(submittedDataDir,"/","Mid-Reach_SubmittedData_Apr_2022.csv")
 
 PROCESS2 <- function(data_file){
 
@@ -82,7 +82,10 @@ if (file.exists(comment_csv)){
 }
 
 ### Recalculate Water depths to decimal feet (keep depth measurement type as is)
-df_data$depth_meas[df_data$depth_type == "Ruler (inches)"] <- round(df_data$depth_meas[df_data$depth_type == "Ruler (inches)"]/12, 2)
+# First make sure the values are character
+df_data$depth_meas <- as.character(df_data$depth_meas)
+### Convert to numbmer, convert to ft, then convert back to character
+df_data$depth_meas[df_data$depth_type == "Ruler (inches)"] <- as.character(round(as.numeric(df_data$depth_meas[df_data$depth_type == "Ruler (inches)"])/12, 2))
 
 ### Make the db connection
 pool <- dbPool(drv = RSQLite::SQLite(), dbname = db)
