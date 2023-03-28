@@ -67,7 +67,7 @@ poolClose(pool)
 
 ### PROCESS SUBMITTED DATA ####
 
-# data_file =  paste0(submittedDataDir,"/","Test-Reach_SubmittedData_Mar_2020.csv")
+# data_file =  paste0(submittedDataDir,"/","Headwaters_SubmittedData_Nov_2022.csv")
 
 PROCESS2 <- function(data_file){
 
@@ -80,6 +80,10 @@ if (file.exists(comment_csv)){
 } else {
   df_comments <- NULL
 }
+
+### Recalculate Water depths to decimal feet (keep depth measurement type as is)
+df_data$depth_meas[df_data$depth_type == "Ruler (inches)"] <- round(df_data$depth_meas[df_data$depth_type == "Ruler (inches)"]/12, 2)
+
 ### Make the db connection
 pool <- dbPool(drv = RSQLite::SQLite(), dbname = db)
 
@@ -138,7 +142,8 @@ rep_pars <- parameters_db$PARAMETER_NAME[str_detect(parameters_db$PARAMETER_NAME
 
 data <- data %>%
    filter(!(PARAMETER %in% rep_pars & RESULT == -999999),
-          !(PARAMETER == "Water Depth" & RESULT == -999999))
+          !(PARAMETER == "Water Depth" & RESULT == -999999),
+          !RESULT == -999999)
 
 ### NA Parameters are those that don't match parameters table
 # QC check boxes mostly
@@ -166,7 +171,7 @@ data_n <- data_n %>% mutate("ID" = lastNumID + row_number())
 data_n <- data_n %>%
   mutate("UNITS" = parameters_db$UNITS[match(.$PARAMETER, parameters_db$PARAMETER_NAME)]) %>%
   select(-c("IMPORTED_BY","IMPORT_DATE")) %>%
-  select(col_data_num)
+  select(all_of(col_data_num))
 
 ########################################################################.
 ###                           DATA_T                                ####
@@ -176,7 +181,7 @@ data_t <- data[data$PARAMETER %in% text_pars, c("SEID","SITE_BRC_CODE","DATE_TIM
 data_t <- data_t %>%
   arrange(SEID, PARAMETER) %>%
    mutate("ID" = lastTextID + row_number()) %>%
-  select(col_data_text)
+  select(all_of(col_data_text))
 
 ########################################################################.
 ###                           DATA_C                                ####
