@@ -154,6 +154,33 @@ data <- data %>%
   filter(!is.na(PARAMETER), !is.na(RESULT), RESULT != "NULL", RESULT != "") %>%
   mutate("DATE" = str_trunc(.$DATE_TIME, width = 10, side = "right", ellipsis = ""))
 
+########################################################################.
+###                           Check Duplicates                      ####
+########################################################################.
+
+## Make sure it is unique within the data file - if not then exit function and send warning
+dupecheck <- which(duplicated(data$UNIQUE_ID))
+dupes <- data$UNIQUE_ID[dupecheck] # These are the dupes
+
+if (length(dupes) > 0){
+  # Exit function and send a warning to userlength(dupes) # number of dupes
+  stop(paste("This data file contains", length(dupes),
+             "records that appear to be duplicates. Eliminate all duplicates before proceeding.",
+             "The duplicate records include:", paste(head(dupes, 15), collapse = ", ")), call. = FALSE)
+}
+### Make sure records are not already in DB ####
+unq_ids_db <- c(data_num_db$UNIQUE_ID, data_text_db$UNIQUE_ID)
+dupes2 <-  data[data$UNIQUE_ID %in% unq_ids_db,]
+
+if (nrow(dupes2) > 0){
+  # Exit function and send a warning to user
+  stop(paste("This data file contains", nrow(dupes2),
+             "records that appear to already exist in the database!
+Eliminate all duplicates before proceeding.",
+             "The duplicate records include:", paste(head(dupes2$UNIQUE_ID, 15), collapse = ", ")), call. = FALSE)
+}
+rm(unq_ids_db)
+
 ### Split data by type - numerical vs text ####
 num_pars <- parameters_db$PARAMETER_NAME[parameters_db$UNITS != "text"]
 text_pars <- parameters_db$PARAMETER_NAME[parameters_db$UNITS == "text"]
