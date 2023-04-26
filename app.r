@@ -1183,7 +1183,11 @@ comment_par_choices <<- c("General Comment", data_fields$dt_cols[data_fields$tak
    observeEvent(input$SaveSubmittedData,{
      req(submitted_df())
      csv <- submitted_df() ### This is the current state of DT
-     names(csv) <- data_fields$shiny_input # Change col names back to csv format
+     if("E. coli" %in% names(csv)) {
+       names(csv) <- data_fields$shiny_input # Change col names back to csv format
+     } else {
+       names(csv) <- data_fields$shiny_input[c(1:26, 31)]
+     }
      ### Set the file name
      file <- input$selectFile
      #### overwrite table as well ... write.table
@@ -1397,7 +1401,7 @@ if (user_role %in% c("Program Coordinator", "App Developer")){
 
 output$submitted_data_dt <- renderDataTable(
   rxdata$submittedData %>% datatable(editable = FALSE, rownames = FALSE,
-                              colnames = data_fields$dt_cols, selection = "single",
+                              colnames = data_fields$dt_cols[data_fields$shiny_input %in% names(rxdata$submittedData)], selection = "single",
                               options = list(searching = TRUE, lengthChange = TRUE))
 )
 
@@ -1446,7 +1450,7 @@ output$table.process1.data <- renderDataTable({
 
 })
 
-# Processed Flag Table - Only make table if processing is successful
+# Processed comment Table - Only make table if processing is successful
 output$table.process1.comments <- renderDataTable({
   req(try(!is.null(processedComments1())))
   processedComments1() %>% datatable(editable = FALSE, rownames = FALSE,
@@ -1760,10 +1764,14 @@ output$admin_tools.UI <- renderUI({
 if (user_role %in% c("Program Coordinator", "App Developer")){
   fluidRow(
     column(6,
-           verbatimTextOutput("testing_mode_text"),
+           h4("Testing mode turns off all app email alerts"),
            checkboxInput("testing_mode", label = "Turn on testing mode", value = FALSE),
-           verbatimTextOutput("update_db_text"),
-           actionButton(inputId = "update_db_rds",label = "UPDATE DATABASE TABLES", width = "245px", class="butt")
+           h4("Use this button after making updates or edits in the BRCWQ Database (SQLite)."),
+           h4("RDS File updates: sites, people, parameters, assignments, photos."),
+           actionButton(inputId = "update_db_rds",label = "UPDATE DATABASE TABLES", width = "500px", class="butt"),
+           h4("Use this button after editing monitoring data in the BRCWQ Database (SQLite)."),
+           h4("RDS File updates: data_num, data_text, data_comments, trans_log."),
+           actionButton(inputId = "update_data_rds",label = "UPDATE DATABASE DATA", width = "500px", class="butt")
     ))
 }
 })
@@ -1776,116 +1784,126 @@ observeEvent(input$testing_mode, {
   }
 })
 
-output$testing_mode_text <- renderText("Testing mode turns off all app email alerts")
-output$update_db_text <- renderText("Use this button after making updates or edits in the BRCWQ Database.")
+# output$testing_mode_text <- renderText()
+# output$update_db_text <- renderText()
+# output$update_data_text <- renderText()
 
-  observeEvent(input$update_db_rds, {
-    source("funs/BRCDB2RDS.R", local = T)
-    msg <- MAKE_DB_RDS()
-      showModal(modalDialog(
-          title = "Database file update ...",
-          h4(msg)
-      ))
-  })
+observeEvent(input$update_db_rds, {
+  source("funs/BRCDB2RDS.R", local = T)
+  msg <- MAKE_DB_RDS()
+  showModal(modalDialog(
+    title = "Database rds files updating ...",
+    h4(msg)
+  ))
+})
 
-  # Text for Process Data Error or Successful
-  process.status2 <- reactive({
-    if(input$selectFile != file.processed2()){
-      " "
-    }else if(inherits(try(dfs_to_import()), "try-error")){
-      geterrmessage()
-    }else{
-      paste0('The file was successfully processed!')
-    }
-  })
+observeEvent(input$update_data_rds, {
+  source("funs/data_update.R", local = T)
+  msg <- DATA_UPDATE()
+  showModal(modalDialog(
+    title = "Database rds files updating ...",
+    h4(msg)
+  ))
+})
 
-  # Text Output
-  output$text.process2.status <- renderText({process.status2()})
+# Text for Process Data Error or Successful
+process.status2 <- reactive({
+  if(input$selectFile != file.processed2()) {
+    " "
+  } else if (inherits(try(dfs_to_import()), "try-error")){
+    geterrmessage()
+  } else {
+    paste0('The file was successfully processed!')
+  }
+})
 
-  # Show import button and tables when process button is pressed
-  # Use of req() later will limit these to only show when process did not create an error)
-  # observeEvent(input$process2, {
-  #   # req(process.status2() == 'The file was successfully processed!')
-  #   show('import')
-  #   # show('table.process.wq')
-  #   # show('table.process.flag')
-  # })
+# Text Output
+output$text.process2.status <- renderText({process.status2()})
+
+# Show import button and tables when process button is pressed
+# Use of req() later will limit these to only show when process did not create an error)
+# observeEvent(input$process2, {
+#   # req(process.status2() == 'The file was successfully processed!')
+#   show('import')
+#   # show('table.process.wq')
+#   # show('table.process.flag')
+# })
 
   ### Import Data
 
-  # Import Action Button - Will only be shown when a file is processed successfully
-  output$import.UI <- renderUI({
-    req(process.status2() == 'The file was successfully processed!')
-    actionButton(inputId = "import",
-                 label = paste("Import", str_replace(input$selectFile, paste0(submittedDataDir,"/"), ""), "Data"),
-                 width = '500px')
-  })
+# Import Action Button - Will only be shown when a file is processed successfully
+output$import.UI <- renderUI({
+  req(process.status2() == 'The file was successfully processed!')
+  actionButton(inputId = "import",
+               label = paste("Import", str_replace(input$selectFile, paste0(submittedDataDir,"/"), ""), "Data"),
+               width = '500px')
+})
 ########################################################################.
 ###                             IMPORT DATA                         ####
 ########################################################################.
-  observeEvent(input$import, {
-    showModal(busyModal(msg = "Importing data ..."))
-    source("funs/processImport.R", local = T)
-    out <- tryCatch(IMPORT_DATA(dfs_to_import()),
-                    error=function(cond) {
-                      import_err <<- paste("Import Failed - There was an error at ", Sys.time(),
-                      "...\n ", cond)
-                      print(import_err)
-                      return(1)
-                    },
-                    warning=function(cond) {
-                      import_err <<- paste("Import process completed with warnings...\n", cond)
-                      print(import_err)
-                      return(2)
-                    },
-                    finally={
-                      message(paste("Import Process Complete"))
-                    }
-    )
+observeEvent(input$import, {
+  showModal(busyModal(msg = "Importing data ..."))
+  source("funs/processImport.R", local = T)
+  out <- tryCatch(IMPORT_DATA(dfs_to_import()),
+                  error=function(cond) {
+                    import_err <<- paste("Import Failed - There was an error at ", Sys.time(),
+                                         "...\n ", cond)
+                    print(import_err)
+                    return(1)
+                  },
+                  warning=function(cond) {
+                    import_err <<- paste("Import process completed with warnings...\n", cond)
+                    print(import_err)
+                    return(2)
+                  },
+                  finally={
+                    message(paste("Import Process Complete"))
+                  }
+  )
 
-    if (out == 1){
-      removeModal()
-      import_msg <<- paste0("Import Failed!  There was a error ... Check log file and review submitted data files and existing database records.")
-      showModal(modalDialog(
-          title = "Import Failed...",
-          h4(import_msg)
-        ))
-      } else {
-      removeModal()
-      import_msg <<- paste0("Successful import of '", str_replace(input$selectFile, paste0(submittedDataDir,"/"), ""), "' to the BRCWQDM Database!")
-      print(paste0("Data Import Successful at ", Sys.time()))
-      print(paste("Data file '", input$selectFile, "' imported."))
-      showModal(modalDialog(
-          title = "Import Successful...",
-          h4(import_msg)
-        ))
-      NewCount <- ImportActionCount() + 1
-      ImportActionCount(NewCount)
-      print(paste0("Import Action Count was ", ImportActionCount()))
-      ARCHIVE_SUBMITTED_DATA(data_file = input$selectFile)
-      print(paste("Data file '", input$selectFile, "' archived."))
-      BACKUP_DATABASE()
-      if (launch_mode == "docker") {
-        showModal(
-          modalDialog(
-            "Please send an email to the field coordinators with notification that data has been imported to the database and can be reviewed in the app.",
-            title = "Data import complete...",
-            easyClose = T
-          )
+  if (out == 1){
+    removeModal()
+    import_msg <<- paste0("Import Failed!  There was a error ... Check log file and review submitted data files and existing database records.")
+    showModal(modalDialog(
+      title = "Import Failed...",
+      h4(import_msg)
+    ))
+  } else {
+    removeModal()
+    import_msg <<- paste0("Successful import of '", str_replace(input$selectFile, paste0(submittedDataDir,"/"), ""), "' to the BRCWQDM Database!")
+    print(paste0("Data Import Successful at ", Sys.time()))
+    print(paste("Data file '", input$selectFile, "' imported."))
+    showModal(modalDialog(
+      title = "Import Successful...",
+      h4(import_msg)
+    ))
+    NewCount <- ImportActionCount() + 1
+    ImportActionCount(NewCount)
+    print(paste0("Import Action Count was ", ImportActionCount()))
+    ARCHIVE_SUBMITTED_DATA(data_file = input$selectFile)
+    print(paste("Data file '", input$selectFile, "' archived."))
+    BACKUP_DATABASE()
+    if (launch_mode == "docker") {
+      showModal(
+        modalDialog(
+          "Please send an email to the field coordinators with notification that data has been imported to the database and can be reviewed in the app.",
+          title = "Data import complete...",
+          easyClose = T
         )
-      } else {
-        ImportEmail()
-      }
-      refreshData()
-      refreshComments()
-      rxdata$stagedData <<- readRDS(stagedDataRDS)
-      rxdata$stagedComments <<- readRDS(stagedCommentsRDS)
-      rxdata$data_n_db <- readRDS(data_n_RDS)
-      rxdata$data_t_db <- readRDS(data_t_RDS)
-      rxdata$data_c_db <- readRDS(data_c_RDS)
-      rxdata$fileChoices <- fileChoices()
+      )
+    } else {
+      ImportEmail()
     }
-  })
+    refreshData()
+    refreshComments()
+    rxdata$stagedData <<- readRDS(stagedDataRDS)
+    rxdata$stagedComments <<- readRDS(stagedCommentsRDS)
+    rxdata$data_n_db <- readRDS(data_n_RDS)
+    rxdata$data_t_db <- readRDS(data_t_RDS)
+    rxdata$data_c_db <- readRDS(data_c_RDS)
+    rxdata$fileChoices <- fileChoices()
+  }
+})
 
   ### Function to send ImportEmail
   ImportEmail <- function() {

@@ -26,7 +26,13 @@
 data_csv2df <- function(data, data_fields){
   ### Read the RDS File
   mydata <- data
-  names(mydata) <- as.character(data_fields$dt_cols)
+
+  if("e_coli" %in% names(mydata)) {
+    names(mydata) <- as.character(data_fields$dt_cols)
+  } else {
+    names(mydata) <- as.character(data_fields$dt_cols[c(1:26, 31)])
+  }
+
   # names(mydata)
   ### Convert to Dataframe
   mydata <- data.frame(mydata, stringsAsFactors = F, check.names = F)
