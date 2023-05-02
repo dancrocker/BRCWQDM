@@ -60,8 +60,6 @@ GS_APPEND_PHOTO <- function(sheet, data, photos) {
 GS_GET_PHOTOS <- function(sheet, photos) {
     if (gs4_has_token()) {
       df_photos <- range_read(ss = sheet) %>% as.data.frame()
-      # df_photos$DATE <- unlist(df_photos$DATE)
-
       print("Photo list retrieved...")
     } else {
       df_photos <- NULL
@@ -69,12 +67,12 @@ GS_GET_PHOTOS <- function(sheet, photos) {
     }
     if (nrow(df_photos) == 0) {
       all_photos <- photos %>%
-        select(-ID) %>%
-        distinct()
-    } else {
+          select(-ID) %>%
+          distinct()
+      } else {
       all_photos <- bind_rows(photos, df_photos) %>%
-        select(-ID) %>%
-        distinct()
+          select(-ID) %>%
+          distinct()
     }
 
   rxdata$photos <<- all_photos

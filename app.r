@@ -712,7 +712,7 @@ if(exists("testing")) {
     try(GS_GET_SAMPLERS(sheet = config[15])) # Updates rxdata$samplers
 }
 # rxdata$samplers <<- try(GS_GET_SAMPLERS(sheet = config[15])) # Updates rxdata$samplers
-photos_db <- readRDS(photosRDS)
+photos_db <<- readRDS(photosRDS)
 rxdata$photos <- photos_db
 
 ### Get photos from googledrive ####
