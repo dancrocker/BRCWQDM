@@ -178,7 +178,7 @@ wat_NAV_choices <<- c("None", "Light", "Medium", "Heavy", "Not Recorded")
 wat_clarity_choices <<- c("Clear","Slight","Medium","Heavy", "Not Recorded")
 wat_erosion_choices <<- c("Undercut bank", "Slumping", "Erosional gullies in bank",
                          "Bridge or building undermining", "No erosion", "Not Recorded")
-depth_choices <<- c("Gage (Staff Plate-feet)", "Ruler (inches)", "Not Recorded", "No Datum")
+depth_choices <<- c("Gage (Staff Plate-feet)", "Ruler (inches)", "Not Recorded", "Dry (No Flow)", "No Datum")
 
 refreshData <<- function() {
     if(file.exists(stagedDataCSV) == TRUE){
@@ -1683,7 +1683,7 @@ observeEvent(input$submit, {
 
   output$data_num_db <- DT::renderDT({
     req(!is.null(rxdata$data_n_db))
-    DT::datatable(rxdata$data_n_db, rownames = F)
+    DT::datatable(rxdata$data_n_db, filter = "top", rownames = F)
   },
   options = list(autoWidth = TRUE,
                  # scrollX = T,

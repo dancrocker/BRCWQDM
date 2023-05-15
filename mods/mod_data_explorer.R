@@ -216,7 +216,7 @@ dg_plot <- function(data) {
 ########################################################################.
   output$data3 <- renderDataTable({
     req(!is.null(d3()))
-    datatable(d3(), rownames = F) %>%
+    datatable(d3(), rownames = F, filter = "top") %>%
     formatDate(columns = "DATE_TIME", method = 'toLocaleString')
   },
   options = list(autoWidth = TRUE,
