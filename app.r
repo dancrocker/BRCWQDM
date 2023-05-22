@@ -1535,7 +1535,14 @@ observeEvent(input$submit, {
         )
       )
     } else {
-      send_submit_email()
+      # send_submit_email()
+       showModal(
+        modalDialog(
+          "Please send an email to the program coordinator with notification that data has been submitted for review and import to the database.",
+          title = "Data submittal complete...",
+          easyClose = T
+        )
+      )
     }
     refreshData()
     refreshComments()
