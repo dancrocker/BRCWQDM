@@ -252,8 +252,9 @@ ui <- tagList(
              }'
     ),
 
-    shinyjs::useShinyjs(),
-    shinyjs::inlineCSS(appCSS),
+  shinyjs::useShinyjs(),
+  useShinyalert(),
+  shinyjs::inlineCSS(appCSS),
 
   ### Create the Top Navigation Bar as well as define aesthetics
   navbarPage("Blackstone River Coalition Water Quality Data Management", position = "fixed-top",
@@ -1177,6 +1178,7 @@ comment_par_choices <<- c("General Comment", data_fields$dt_cols[data_fields$tak
      df <- data_csv2df(data, data_fields) ### saves RDS file as data.frame
      saveRDS(df, stagedDataRDS)
      rxdata$stagedData <<- readRDS(stagedDataRDS)
+     print("Staged data csv file saved")
      shinyalert(title = "Saved!", type = "success")
   })
 

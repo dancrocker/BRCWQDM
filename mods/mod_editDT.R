@@ -475,12 +475,13 @@ observeEvent(input$save_comment,{
       #   if("factor" %in% myclass[[i]]){
           # updateSelectInput(session,myname,
       #                       choices=levels(mydf[[i]]),selected=mydf[1,i])
-        } else if("Date" %in% myclass[[i]]){
+        } else if("Date" %in% myclass[[i]]) {
           updateDateInput(session,myname,value=mydf[1,i])
-        } else if("logical" %in% myclass[[i]]){
-          if(is.na(mydf[1,i])) myvalue=FALSE
-          else myvalue=mydf[1,i]
-          updateCheckboxInput(session,myname,value=myvalue)
+        #} else if("logical" %in% myclass[[i]]){
+          # if(is.na(mydf[1,i]))
+          #   myvalue = NA_real_
+          # else myvalue=mydf[1,i]
+          # updateNumericInput(session,myname,value=myvalue)
         } else { # c("numeric","integer","charater")
 
           mywidth=(((max(nchar(mydf2[[i]]),defaultlen,na.rm=TRUE)*8) %/% input$width2)+1)*input$width2
@@ -577,10 +578,10 @@ observeEvent(input$save_comment,{
                                          # choices=levels(mydf[[i]]),selected=mydf[1,i],width=input$width2)
         } else if("Date" %in% myclass[[i]]){
           mylist[[i+addno]]=dateInput3(ns(myname),myname,value=mydf[1,i],width=input$width2)
-        } else if("logical" %in% myclass[[i]]){
-          if(is.na(mydf[1,i])) myvalue=FALSE
-          else myvalue=mydf[1,i]
-          mylist[[i+addno]]=checkboxInput3(ns(myname),myname,value=myvalue,width=input$width2)
+        # } else if("logical" %in% myclass[[i]]){
+        #   if(is.na(mydf[1,i])) myvalue=FALSE
+        #   else myvalue=mydf[1,i]
+        #   mylist[[i+addno]]=checkboxInput3(ns(myname),myname,value=myvalue,width=input$width2)
         } else { # c("numeric","integer","charater")
           #cat("max(nchar(mydf2[[i]]))=",max(nchar(mydf2[[i]])))
           #cat("\n",mydf2[[i]][which.max(nchar(mydf2[[i]]))],"\n")
