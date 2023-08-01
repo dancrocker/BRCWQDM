@@ -101,3 +101,27 @@ GS_GET_SAMPLERS <- function(sheet) {
     rxdata$samplers <<- samplers_db %>% sort()
   }
 }
+
+GS_APPEND_TRAINING_LOG <- function(sheet, data) {
+  if (gs4_has_token()) {
+    sheet_append(ss = sheet, data)
+    try(GS_GET_TRAINING_LOG(sheet))
+    print("Training log record successfully added...")
+  } else {
+    return("No token found for authentication...photo could not be added")
+  }
+}
+
+GS_GET_TRAINING_LOG <- function(sheet) {
+  if (gs4_has_token()) {
+    df_training_log <- range_read(ss = sheet) %>% as.data.frame()
+    print("Training log retrieved...")
+    rxdata$training_log <<- df_training_log
+    # rxdata$tlog <<- c(training_log_db, df_tlog) ### combine gs with db recs once data in database
+  } else {
+    print("No token found for authentication...training log could not be retrieved from google sheets!")
+  }
+}
+
+# GS_GET_TRAINING_LOG(sheet = config[16])
+# df_training_log <- range_read(ss = config[16]) %>% as.data.frame()

@@ -100,6 +100,7 @@ source(paste0(wdir, "/funs/sendEmail.R"))
 source(paste0(wdir, "/mods/mod_add_comment.R"))
 source(paste0(wdir, "/mods/mod_add_photo.R"))
 source(paste0(wdir, "/mods/mod_add_sampler.R"))
+source(paste0(wdir, "/mods/mod_add_tlog.R"))
 source(paste0(wdir, "/mods/mod_map.R"))
 source(paste0(wdir, "/funs/data_update.R"))
 source(paste0(wdir, "/mods/mod_photo_browser.R"))
@@ -114,6 +115,7 @@ rxdata <<- reactiveValues()
 ### Download rds files cached on dropbox to local data folder and load these and any staged RDS files
 LOAD_DB_RDS()
 
+people_db <- readRDS(peopleRDS)
 # data_num_db <-  readRDS(data_n_RDS)
 # parameters_db <- readRDS(parametersRDS)
 # sites_db <- readRDS(sitesRDS)
@@ -122,7 +124,6 @@ last_update <- data_num_db$DATE_TIME %>% max()
 
 ### AS IS fields require no manipulation and can go directly to outputs
 ### Date and Time and any other QC'd values need to come from reactive elements
-
 remote_data_dir <- paste0(getwd(),"/data/")
 
 table_fields <<- readr::read_csv(paste0(wdir,"/data/table_fields.csv"), col_types = cols(
@@ -633,6 +634,18 @@ ui <- tagList(
            )
          )
     ),
+    ### TRAINING LOG TAB ####
+    tabPanel("TRAINING LOG",
+      fluidRow(
+           column(2, imageOutput("brc_logo9", height = 80), align = "left"),
+           column(8,  h2("BRC Volunteer Training Log", align = "center")),
+           column(2, imageOutput("zap_logo9", height = 80), align = "right")
+         ),
+      fluidRow(column(12,
+                      TLOG_UI("tlog")
+      )
+      )
+    ),
     ### INSTRUCTIONS TAB ####
     tabPanel("INSTRUCTIONS",
       fluidRow(
@@ -716,10 +729,14 @@ if(exists("testing")) {
 photos_db <<- readRDS(photosRDS)
 rxdata$photos <- photos_db
 
-### Get photos from googledrive ####
+### Get photos from google sheets ####
 if(!exists("testing")) {
   try(GS_GET_PHOTOS(sheet = config[14], photos = photos_db)) # Updates rxdata$photos
 }
+
+### Get training log from google sheets ####
+  # * This creates rxdata$training_log for the first time ----
+try(GS_GET_TRAINING_LOG(sheet = config[16]))
 
 selected_site <- reactive({
   input$site
@@ -1958,6 +1975,7 @@ observeEvent(input$import, {
   #     ui = h4(import_msg)
   #   )
   # })
+
 ### REPORTS ####
 
   observeEvent(input$email_test,{
@@ -1981,7 +1999,7 @@ observeEvent(input$import, {
         h2(class = "animated infinite pulse", msg)
         )
     )
-  }
+ }
 
 ### MODULE CALLS ####
 callModule(ADD_COMMENT, "add_comment_physical",
@@ -2027,6 +2045,7 @@ callModule(ADD_PHOTO, "add_photo_data_entry",
            photos = photos_db)
 
 callModule(ADD_SAMPLER, "add_sampler", sitelist = sites)
+callModule(TLOG, "tlog", people = people_db$FULL_NAME, samplers = reactive(rxdata$samplers), train_log = reactive(rxdata$training_log))
 callModule(BRCMAP, "brc_map", sitelist = sites_db)
 callModule(PHOTOS, "photo_browser", photo_list = reactive(rxdata$photos))
 callModule(EVENTS, "event_viewer", photo_list = reactive(rxdata$photos))
@@ -2051,6 +2070,8 @@ callModule(EXPLORER, "data_explorer", data = data_num_db)
   output$zap_logo7 <- renderImage({list(src = "www/zap_logo.gif", width= "76", height= "59")}, deleteFile = FALSE)
   output$brc_logo8 <- renderImage({list(src = "www/BRC_logo_River.jpg", width= "160", height= "80")}, deleteFile = FALSE)
   output$zap_logo8 <- renderImage({list(src = "www/zap_logo.gif", width= "76", height= "59")}, deleteFile = FALSE)
+  output$brc_logo9 <- renderImage({list(src = "www/BRC_logo_River.jpg", width= "160", height= "80")}, deleteFile = FALSE)
+  output$zap_logo9 <- renderImage({list(src = "www/zap_logo.gif", width= "76", height= "59")}, deleteFile = FALSE)
 
 ### SESSION END ####
 # Code to stop app when browser session window closes
