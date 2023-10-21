@@ -407,7 +407,7 @@ observeEvent(input$save_comment,{
         if(!is.null(attr(x[ids,i],"tzone"))) tz=attr(x[ids,i],"tzone")
         x[ids,i]=as.POSIXct(input[[myname[i]]],tz=tz,origin="1970-01-01")
       }
-      if (i == 31) {
+      if (i == 35) {
         x[ids,i] <- entered_by() # This was needed because this column kept getting deleted it is non-editable
       }
 

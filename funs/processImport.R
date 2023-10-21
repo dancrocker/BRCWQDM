@@ -19,11 +19,10 @@ library("tidyr")
 library("magrittr")
 library("stringr")
 
-# source(paste0(wdir, "/funs/data_update.R"))
-
+# files <- list.files(submittedDataDir, full.names = TRUE)
+# files
+# data_csv <- files[115]
 ### ISSUES TO RESOLVE ####
-  # Convert inches to ft for water depths or include both?
-  # How to handle non-detects - what do they come in like? Flag?
 
 ### CONFIG ####
 # config # This is defined in the launch script
@@ -50,12 +49,7 @@ pool <- dbPool(drv = RSQLite::SQLite(), dbname = db)
 ### GET LATEST DATA FROM DATABASE ####
 
 #### NOTE - might change to local RDS files instead? ####
-
-# dbListTables(pool)
-# sites_db <- dbReadTable(pool, "sites")
-# people_db <- dbReadTable(pool, "people")
 parameters_db <- dbReadTable(pool, "parameters")
-# assignments_db <- dbReadTable(pool,"site_assignments")
 trans_log_db <- dbReadTable(pool,"trans_log")
 
 ### Get sample data - this will need to fetch 2 tables - numeric and text
@@ -67,7 +61,7 @@ poolClose(pool)
 
 ### PROCESS SUBMITTED DATA ####
 
-# data_file =  paste0(submittedDataDir,"/","Mid-Reach_SubmittedData_Apr_2022.csv")
+# data_file <- paste0(submittedDataDir,"/","Mid-Reach_SubmittedData_Apr_2022.csv")
 
 PROCESS2 <- function(data_file){
 
@@ -81,7 +75,8 @@ if (file.exists(comment_csv)){
   df_comments <- NULL
 }
 
-### Recalculate Water depths to decimal feet (keep depth measurement type as is)
+# * Calculate Water depths to decimal feet ----
+### R (keep depth measurement type as is)
 # First make sure the values are character
 df_data$depth_meas <- as.character(df_data$depth_meas)
 ### Convert to numbmer, convert to ft, then convert back to character
@@ -97,28 +92,28 @@ col_data_comments <- names(data_comments_db)
 col_trans_log <- names(trans_log_db)
 
 ### Get last transaction ID from trans_log
-lastTransLogID <- suppressWarnings(trans_log_db$ID %>% max() %>% as.numeric())
+lastTransLogID <- suppressWarnings(trans_log_db$ID %>% max(na.rm = TRUE) %>% as.numeric())
 if(is.infinite(lastTransLogID)) {
   lastTransLogID <- 0
 }
 ### Get the last nueric data ID
-lastNumID <- suppressWarnings(data_num_db$ID %>% max() %>% as.numeric())
+lastNumID <- suppressWarnings(data_num_db$ID %>% max(na.rm = TRUE) %>% as.numeric())
 if(is.infinite(lastNumID)){
   lastNumID <-  0
 }
 ### Get the last text data ID
-lastTextID <- suppressWarnings(data_text_db$ID %>% max() %>% as.numeric())
+lastTextID <- suppressWarnings(data_text_db$ID %>% max(na.rm = TRUE) %>% as.numeric())
 if(is.infinite(lastTextID)){
   lastTextID <-  0
 }
 ### Get the last comment data ID
-lastCommentID <- suppressWarnings(data_comments_db$ID %>% max() %>% as.numeric())
+lastCommentID <- suppressWarnings(data_comments_db$ID %>% max(na.rm = TRUE) %>% as.numeric())
 if(is.infinite(lastCommentID)){
   lastCommentID <-  0
 }
 
 ### Get the last sample event ID - the new SEID starts at lastSEID + 1
-lastSEID <- suppressWarnings(data_num_db$SEID %>% max() %>% as.numeric())
+lastSEID <- suppressWarnings(data_num_db$SEID %>% max(na.rm = TRUE) %>% as.numeric())
 if(is.infinite(lastSEID)){
   lastSEID <-  0
 }
@@ -136,13 +131,45 @@ data <- df_data %>%
          "IMPORTED_BY"= config[2]) %>%
   dplyr::rename("DATE_TIME" = SampleDateTime, "SITE_BRC_CODE" = site)
 
+### If any AQL values are present add them to the CENSOR_VAL col by the appropriate parameter
+### Likewise, for any E. coli value, if it is 1, then populate the CENSOR_VAL column with 1, if... all others 0
+
+aql_recs <- data %>%
+  filter(PARAMETER %in% c("aql_e_coli", "aql_e_coli_field_rep", "aql_e_coli_lab_rep")) %>%
+  select(c(SEID, PARAMETER, RESULT)) %>%
+  filter(RESULT != -999999) %>%
+  filter(RESULT != 0) %>%
+  rename("CENSOR_VAL" = "RESULT") %>%
+  drop_na()
+### Recode the aql values to match with their corresponding parameter
+aql_recs$PARAMETER <- recode(aql_recs$PARAMETER, "aql_e_coli" = "e_coli" ,
+                                                  "aql_e_coli_field_rep" = "e_coli_field_rep",
+                                                  "aql_e_coli_lab_rep" = "e_coli_lab_rep")
+
+### If there are aql censored values then join them to the Parameter they belong to
+if(nrow(aql_recs) > 0) {
+  data <- data %>%
+    left_join(aql_recs)
+} else {
+  data <- data %>%
+    mutate("CENSOR_VAL" = NA_character_)
+}
+
+### make a vector of the bacteria parameters
+bio_params <- parameters_db$SHINY_OBJ[parameters_db$CATEGORY == "Biological"]
+
+### if any of them have a result of 1, then updated Censor Val to 1
+data$CENSOR_VAL[data$PARAMETER %in% bio_params & data$RESULT == "1"] <- "1"
+
+### Code all other results as not censored
+data$CENSOR_VAL[is.na(data$CENSOR_VAL)] <- "0"
+
 ### Convert the logical values to integers: 1=TRUE 0=False
 data$RESULT <- recode(data$RESULT, "TRUE" = "1", "FALSE" = "0")
 data$PARAMETER <- parameters_db$PARAMETER_NAME[match(data$PARAMETER,parameters_db$SHINY_OBJ)]
 
-### Filter out null Replicates and any null water depths for No_datum sites
+### Filter out null Replicates/blanks and any null water depths for No_datum sites
 rep_pars <- parameters_db$PARAMETER_NAME[str_detect(parameters_db$PARAMETER_NAME, pattern = "Replicate")]
-
 data <- data %>%
    filter(!(PARAMETER %in% rep_pars & RESULT == -999999),
           !(PARAMETER == "Water Depth" & RESULT == -999999),
@@ -175,7 +202,7 @@ if (length(dupes) > 0){
 unq_ids_db <- c(data_num_db$UNIQUE_ID, data_text_db$UNIQUE_ID)
 dupes2 <-  data[data$UNIQUE_ID %in% unq_ids_db,]
 
-if (nrow(dupes2) > 0){
+if (nrow(dupes2) > 0) {
   # Exit function and send a warning to user
   stop(paste("This data file contains", nrow(dupes2),
              "records that appear to already exist in the database!

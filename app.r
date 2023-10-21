@@ -34,7 +34,7 @@ ipak <- function(pkg){
 }
 
 packages <- c("shiny","shinyjs", "shinyFiles", "shinyTime", "shinyalert","shinydashboard", "shinycssloaders","rmarkdown", "knitr", "tidyselect", "lubridate",
-              "plotly", "leaflet", "RColorBrewer", "data.table", "DT", "scales", "stringr", "shinythemes", "ggthemes", "tidyr",
+              "plotly", "leaflet", "RColorBrewer", "data.table", "DT", "scales", "stringr", "shinythemes", "ggthemes", "tidyr", "tibble",
               "dplyr", "magrittr", "httr", "tibble", "bsplus", "readxl", "rdrop2", "RSQLite", "readr", "purrr", "htmlwidgets", "ggplot2",
               "pool", "curl", "glue","googlesheets4", "fs", "rpivotTable", "xts", "htmltools", "dygraphs")
 
@@ -110,8 +110,11 @@ source(paste0(wdir, "/funs/gsheets.R"))
 source(paste0(wdir, "/mods/mod_data_explorer.R"))
 ### Make reactive data list
 rxdata <<- reactiveValues()
+
 ### Download database rds files from dropbox ####
-# GET_DATABASE_DATA()
+# This checks for updated rds files for data and comments and updates local files if out of date
+GET_DATABASE_DATA()
+
 ### Download rds files cached on dropbox to local data folder and load these and any staged RDS files
 LOAD_DB_RDS()
 
@@ -126,23 +129,24 @@ last_update <- data_num_db$DATE_TIME %>% max()
 ### Date and Time and any other QC'd values need to come from reactive elements
 remote_data_dir <- paste0(getwd(),"/data/")
 
-table_fields <<- readr::read_csv(paste0(wdir,"/data/table_fields.csv"), col_types = cols(
-  shiny_input = col_character(),
-  dt_cols = col_character(),
-  col_type = col_character(),
-  col_input = col_character(),
-  input_mult = col_character(),
-  editable = col_character(),
-  pcode = col_character(),
-  take_comments = col_character(),
-  choices = col_character(),
-  input_width = col_double(),
-  as_is = col_character(),
-  input_section = col_character()
-))
+table_fields <<- readr::read_csv(paste0(wdir,"/data/table_fields.csv"),
+                                 col_types = cols(
+                                   shiny_input = col_character(),
+                                   dt_cols = col_character(),
+                                   col_type = col_character(),
+                                   col_input = col_character(),
+                                   input_mult = col_character(),
+                                   editable = col_character(),
+                                   pcode = col_character(),
+                                   take_comments = col_character(),
+                                   choices = col_character(),
+                                   input_width = col_double(),
+                                   as_is = col_character(),
+                                   input_section = col_character()
+                                 ))
 
-data_fields <<- table_fields[1:31,]
-comment_fields <<- table_fields[32:36,]
+data_fields <<- table_fields[1:35,]
+comment_fields <<- table_fields[36:40,]
 
 ### DATA FIELDS ####
 fieldsASIS <<- data_fields$shiny_input[data_fields$as_is == "yes"]
@@ -184,7 +188,7 @@ depth_choices <<- c("Gage (Staff Plate-feet)", "Ruler (inches)", "Not Recorded",
 refreshData <<- function() {
     if(file.exists(stagedDataCSV) == TRUE){
       data <- read.table(stagedDataCSV, stringsAsFactors = FALSE, header = T,  sep = " " , na.strings = "NA")
-      df <- data_csv2df(data, data_fields) ### saves RDS file as data.frame
+      df <- data_csv2df(data, data_fields, stagedDataCSV) ### saves RDS file as data.frame
       saveRDS(df, stagedDataRDS)
       rxdata$stagedData <- readRDS(stagedDataRDS)
     } else {
@@ -281,6 +285,7 @@ ui <- tagList(
     div(id = "form",
       bs_accordion(id = "sample_inputs") %>%
         bs_set_opts(panel_type = "primary", use_heading_link = TRUE) %>%
+        # * Sample Event Info ----
         bs_append(title = "SAMPLE EVENT INFO", content =
                 wellPanel(fluidRow(
                   column(width = 12,
@@ -309,6 +314,7 @@ ui <- tagList(
                   ) #End col
                 )) # End Well Panel and FR
         ) %>%
+          # * Physical Parameters ----
         bs_set_opts(panel_type = "primary", use_heading_link = TRUE) %>%
         bs_append(title = "PHYSICAL PARAMETERS", content =
                 wellPanel(fluidRow(
@@ -346,6 +352,7 @@ ui <- tagList(
                   ) #End col
                 )) # End Well Panel and FR
         ) %>%
+        # * Depth Parameters ----
         bs_set_opts(panel_type = "primary", use_heading_link = TRUE) %>%
         bs_append(title = "DEPTH PARAMETERS", content =
                 wellPanel(fluidRow(
@@ -365,6 +372,7 @@ ui <- tagList(
                   ))#End FR
                 ) # End Well Panel
         ) %>%
+        # * Chemical Parameters ----
         bs_set_opts(panel_type = "primary", use_heading_link = TRUE) %>%
         bs_append(title = "CHEMICAL PARAMETERS", content =
                     wellPanel(fluidRow(
@@ -372,8 +380,7 @@ ui <- tagList(
                         fluidRow(
                           column(width = 3,
                             numericInput("do","Dissolved Oxygen (mg/L) (C01):", value = NULL, min = 0, max = 25),
-                            numericInput("o2","Oxygen Saturation (%) (C02):", value = NULL, min = 0, max = 100, step = 1),
-                            ADD_COMMENT_UI("add_comment_chemical")
+                            numericInput("o2","Oxygen Saturation (%) (C02):", value = NULL, min = 0, max = 100, step = 1)
                             ),
                           column(width = 3,
                              numericInput("no3","Nitrate (mg/L)(C03.A):", value = NULL, min = 0, max = 20),
@@ -386,28 +393,36 @@ ui <- tagList(
                           ),
                           column(width = 3,
                              numericInput("conduct", "Specific Conductivity (uS/cm)(C05.A):", value = NULL, min = 0, max = 10000, step = 1),
-                             numericInput("conduct_rep", "Specific Conductivity Replicate (uS/cm)(C05.B):", value = NULL, min = 0, max = 10000, step = 1)
+                             numericInput("conduct_rep", "Specific Conductivity Replicate (uS/cm)(C05.B):", value = NULL, min = 0, max = 10000, step = 1),
+                             ADD_COMMENT_UI("add_comment_chemical")
                           ))
                       )
                     )) # End Well Panel and FR
         ) %>%
+        # * Biological Parameters ----
         bs_set_opts(panel_type = "primary", use_heading_link = TRUE) %>%
         bs_append(title = "BIOLOGICAL PARAMETERS", content =
                     wellPanel(fluidRow(
                       column(width = 12,
+                        em("Note - A value of 1 will automatically be flagged as below detection (<)"),
                         fluidRow(
-                          column(width = 4,
-                            numericInput("e_coli", "E. coli (MPN/100mL) (B01):", value = NULL, min = 0, max = 25),
-                            numericInput("e_coli_rep", "E. coli - Replicate (MPN/100mL) (B02):", value = NULL, min = 0, max = 100, step = 1),
-                            ADD_COMMENT_UI("add_comment_biological")
+                          column(width = 6,
+                            numericInput("e_coli", "E. coli (MPN/100mL) (B01):", value = NULL, min = 0, max = 25000),
+                            checkboxInput("aql_e_coli", label = "Check this box if the result above represents the upper quantification limit (>)", value = FALSE),
+                            numericInput("e_coli_field_rep", "E. coli - Field Replicate (MPN/100mL) (B05):", value = NULL, min = 0, max = 25000),
+                            checkboxInput("aql_e_coli_field_rep", label = "Check this box if the result above represents the upper quantification limit (>)", value = FALSE),
+                            numericInput("e_coli_lab_rep", "E. coli - Lab Replicate (MPN/100mL) (B02):", value = NULL, min = 0, max = 25000),
+                            checkboxInput("aql_e_coli_lab_rep", label = "Check this box if the result above represents the upper quantification limit (>)", value = FALSE)
                             ),
-                          column(width = 4,
-                             numericInput("e_coli_lab_blank", "E. coli - Lab Blank (MPN/100mL) (B03):", value = NULL, min = 0, max = 20),
-                             numericInput("e_coli_field_blank", "E. coli - Field Blank (MPN/100mL) (B04):", value = NULL, min = 0, max = 20)
+                          column(width = 6,
+                            numericInput("e_coli_field_blank", "E. coli - Field Blank (MPN/100mL) (B04):", value = NULL, min = 0, max = 25000),
+                            numericInput("e_coli_lab_blank", "E. coli - Lab Blank (MPN/100mL) (B03):", value = NULL, min = 0, max = 25000),
+                            ADD_COMMENT_UI("add_comment_biological")
                           ))
                       )
                     )) # End Well Panel and FR
         ) %>%
+        # * Other Sample Information ----
         bs_set_opts(panel_type = "primary", use_heading_link = TRUE) %>%
         bs_append(title = "OTHER SAMPLE INFORMATION", content =
                     wellPanel(fluidRow(
@@ -423,6 +438,7 @@ ui <- tagList(
                     )
                 ) # End Well Panel
         ),
+        # * Enter Record ----
         tags$head(tags$script(src = "message-handler.js")),
         actionButton("enter", "Enter Record", class = "btn-primary"),
         shinyjs::hidden(
@@ -448,6 +464,7 @@ ui <- tagList(
            column(2, imageOutput("zap_logo2", height = 80), align = "right")
          ),
          tabsetPanel(
+           # * Staged Data ----
            tabPanel("STAGED DATA", type = "pills",
                   fluidRow(
                     column(12,
@@ -469,6 +486,7 @@ ui <- tagList(
                     )
                   )
                 ), # END DATA tp
+           # * Staged Comments ----
                 tabPanel("STAGED COMMENTS", type = "pills",
                   fluidRow(
                     column(12,
@@ -490,6 +508,7 @@ ui <- tagList(
                     )
                   )
                 ), # End tp
+           # * Process and Submit ----
                 tabPanel("PROCESS & SUBMIT", value = 'process_submit', type = "pills",
                   fluidRow(
                     column(12,
@@ -825,10 +844,10 @@ output$selectFile_ui <- renderUI({
   observeEvent(input$selectFile, {
     req(input$selectFile != "")
     data_csv <<- input$selectFile
-    comment_csv <<- str_replace(data_csv,"_SubmittedData_","_SubmittedComments_")
+    comment_csv <<- str_replace(data_csv,"Data_","Comments_")
 
     data <- read.table(data_csv, stringsAsFactors = FALSE, header = T,  sep = " " , na.strings = "NA")
-    df <- data_csv2df(data, data_fields) ### saves RDS file as data.frame
+    df <- data_csv2df(data, data_fields, file = data_csv) ### saves RDS file as data.frame
     saveRDS(df, submittedDataRDS)
     rxdata$submittedData <- readRDS(submittedDataRDS)
   if (file.exists(comment_csv)) {
@@ -1008,7 +1027,11 @@ output$depth <- renderUI({
 formData <- reactive({
   data <- sapply(fieldsASIS, function(x) input[[x]])
   data <- c(data, "SampleDateTime" = SampleDT(), "sampler" = samplersRX(), wat_appear = wat_appearRX(),
-            erosion =  erosionRX(), wat_odor = wat_odorRX(), "Entered_By" = app_user)
+            erosion =  erosionRX(), wat_odor = wat_odorRX(),
+            aql_e_coli = as.integer(input$aql_e_coli)*2,
+            aql_e_coli_field_rep = as.integer(input$aql_e_coli_field_rep)*2,
+            aql_e_coli_lab_rep = as.integer(input$aql_e_coli_lab_rep)*2,
+            "Entered_By" = app_user)
   data <- data[col_names] %>% as.character()
   data <- t(data)
   data
@@ -1192,7 +1215,7 @@ comment_par_choices <<- c("General Comment", data_fields$dt_cols[data_fields$tak
                 qmethod = "d", append = FALSE)
      ### Read the updated table back and refresh the DT
      data <- read.table(stagedDataCSV, stringsAsFactors = FALSE, header = T,  sep = " " , na.strings = "NA")
-     df <- data_csv2df(data, data_fields) ### saves RDS file as data.frame
+     df <- data_csv2df(data = data, data_fields = data_fields, file = stagedDataCSV) ### saves RDS file as data.frame
      saveRDS(df, stagedDataRDS)
      rxdata$stagedData <<- readRDS(stagedDataRDS)
      print("Staged data csv file saved")
@@ -1202,11 +1225,11 @@ comment_par_choices <<- c("General Comment", data_fields$dt_cols[data_fields$tak
    observeEvent(input$SaveSubmittedData,{
      req(submitted_df())
      csv <- submitted_df() ### This is the current state of DT
-     if("E. coli" %in% names(csv)) {
+     # if("E. coli" %in% names(csv)) {
        names(csv) <- data_fields$shiny_input # Change col names back to csv format
-     } else {
-       names(csv) <- data_fields$shiny_input[c(1:26, 31)]
-     }
+     # } else {
+       # names(csv) <- data_fields$shiny_input[c(1:26, 32)]
+     # }
      ### Set the file name
      file <- input$selectFile
      #### overwrite table as well ... write.table
@@ -1215,7 +1238,7 @@ comment_par_choices <<- c("General Comment", data_fields$dt_cols[data_fields$tak
                  qmethod = "d", append = FALSE)
     ### Read the updated table back and refresh the DT
      data <- read.table(file, stringsAsFactors = FALSE, header = T,  sep = " " , na.strings = "NA")
-     df <- data_csv2df(data, data_fields) ### saves RDS file as data.frame
+     df <- data_csv2df(data = data, data_fields = data_fields, file = file) ### saves RDS file as data.frame
      saveRDS(df, submittedDataRDS)
      rxdata$submittedData <- readRDS(submittedDataRDS)
      shinyalert(title = "Saved!", type = "success")
@@ -1294,15 +1317,12 @@ observeEvent(input$submit_comment,{
 })
 
 ### DYNAMIC UI COMPONTENTS ####
-
 output$sampler_UI <- renderUI({
     selectInput("sampler", labelMandatory("Choose Sampler(s):"),
                 multiple = T, choices = c("", rxdata$samplers), selected = "")
 })
 
-
 ### SUBMITTED DATA UI ####
-
 output$submitted_data.UI <- renderUI({
 if (user_role %in% c("Program Coordinator", "App Developer")){
   tabsetPanel(
@@ -1333,7 +1353,6 @@ if (user_role %in% c("Program Coordinator", "App Developer")){
                column(12,
                       ### This is to adjust the width of pop up "showmodal()" for DT modify table
                       tags$head(tags$style(HTML('
-
                                               .modal-lg {
                                               width: 1200px;
                                               }
@@ -1525,7 +1544,6 @@ observeEvent(input$submit, {
                   }
   )
   # submitFailed <- is.na(out)
-
   if (out == 1){
      removeModal()
       print(submit_err)
@@ -1713,7 +1731,7 @@ observeEvent(input$submit, {
   },
   options = list(autoWidth = TRUE,
                  # scrollX = T,
-                 columnDefs = (list(list(width = '100px', targets =c (0, 1)),
+                 columnDefs = (list(list(width = '100px', targets = c (0, 1)),
                                     list(width = '200px', targets = c(7))
                                     )
                                )

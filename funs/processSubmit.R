@@ -19,7 +19,7 @@ PROCESS1 <- function(){
 df_data <- read.table(stagedDataCSV, stringsAsFactors = FALSE, header = T,  sep = " " , na.strings = "NA")
 
 t_fields <- table_fields %>%
- filter(row_number() <= 31)
+ filter(row_number() <= 35)
 
 # Which columns have numeric data?
 num_cols <- t_fields$shiny_input[t_fields$col_type == "numeric"]
@@ -68,6 +68,3 @@ dfs$comments <- df_comments
 
 return(dfs)
 }
-
-
-
