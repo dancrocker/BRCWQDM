@@ -30,7 +30,9 @@ rx_training_log <- reactive(train_log())
 
 output$training_log <- DT::renderDataTable({
   req(isTruthy(rx_training_log()))
-  datatable(rx_training_log(), filter = "top", selection = 'single', rownames = F) %>%
+  t <- rx_training_log()
+  t$ACTIVITY_DATE <- force_tz(t$ACTIVITY_DATE, tzone = "America/New_York")
+  datatable(t, filter = "top", selection = 'single', rownames = F) %>%
     formatDate(columns = "ACTIVITY_DATE", method = 'toLocaleDateString')
 })
 
