@@ -30,11 +30,10 @@ ns <- NS(id)
   # )
     tagList(
     selectInput(ns("map_type"), "Map Style:",
-                               choices=c(providers$Stamen.TonerLite,
-                                         providers$CartoDB.Positron,
+                               choices=c(providers$CartoDB.Positron,
                                          providers$Esri.NatGeoWorldMap,
                                          providers$Esri.WorldImagery),
-                               selected = providers$Stamen.TonerLite), # See Note 4
+                               selected = providers$CartoDB.Positron), # See Note 4
 
     leafletOutput(ns("map"), height = 500)
  ) # end taglist
