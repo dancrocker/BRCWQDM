@@ -21,70 +21,69 @@ drop_auth(rdstoken = tokenpath)
 ### Function to Load DB RDS Files ####
 LOAD_DB_RDS <- function() {
 local_data_dir <- paste0(LocalDir,"Data/rdsFiles")
-  if(!exists("testing")) {
+if(!exists("testing")) {
+  ### List Drop Box files ####
+  dropb_root_dir <- config[12]
+  safe_dir_check <- purrr::safely(drop_dir, otherwise = FALSE, quiet = TRUE)
+  dir_listing <- safe_dir_check(path = paste0(dropb_root_dir, "/AppFiles"),
+                                recursive = FALSE, dtoken = drop_auth(rdstoken = tokenpath))
+  if (FALSE %in% dir_listing$result) {
+    msg <- "Dropbox connection failed trying to get data RDS files. Check internet connection and verify database RDS files have been uploaded to the correct location on dropbox"
+  } else {
+    files <- dir_listing$result
+    # # Get info from dropbox RDS files:
+    rds_info_path <- paste0(local_data_dir,"/rds_info.rds")
+    dbox_rds_info <- tibble(`rds_file` = files$name, `timestamp` = files$server_modified)
+    paths <- files$path_display
 
-### List Drop Box files ####
-dropb_root_dir <- config[12]
-safe_dir_check <- purrr::safely(drop_dir, otherwise = FALSE, quiet = TRUE)
-dir_listing <- safe_dir_check(path = paste0(dropb_root_dir, "/AppFiles"),
-                              recursive = FALSE, dtoken = drop_auth(rdstoken = tokenpath))
-if (FALSE %in% dir_listing$result) {
-  print("Dropbox connection failed trying to get data RDS files. Check internet connection and verify database RDS files have been uploaded to the correct location on dropbox")
-} else {
-  files <- dir_listing$result
-  # # Get info from dropbox RDS files:
-  rds_info_path <- paste0(local_data_dir,"/rds_info.rds")
-  dbox_rds_info <- tibble(`rds_file` = files$name, `timestamp` = files$server_modified)
-  paths <- files$path_display
-
-  ### Save all updated database RDS files to Local Data Cache ####
-  if(file.exists(rds_info_path)){ # File exists - compare each file - datestamp to the dropbox version, if drop
-    # box is newer - download and overwrite, if not, then skip
-    local_rds_info <- readRDS(rds_info_path)
-    for (i in seq_along(dbox_rds_info$rds_file)) {
-      fn <- dbox_rds_info$rds_file[i]
-      ts <- dbox_rds_info$timestamp[i]
-      ### if the rds record is missing, get it and add it to local rds info
-      if (!fn %in% local_rds_info$rds_file) {
-        print(paste0(fn, " does not exist, downloading rds file from Dropbox."))
-        drop_download(path = paths[i], local_path = local_data_dir, overwrite = TRUE,
-                      dtoken =  drop_auth(rdstoken = tokenpath))
-        local_rds_info <- local_rds_info %>%
-          bind_rows(dbox_rds_info[i,])
-      }
-      ### If the timestamp is not equivalent to dropbox, download and overwrite
-      if(local_rds_info$timestamp[local_rds_info$rds_file == fn] == ts){
-        print(paste0(fn, " already up to date, skipping download and moving to next file."))
-        next
-      } else {
-        print(paste0(fn, " out of date, downloading more recent version from Dropbox."))
-        drop_download(path = paths[i], local_path = local_data_dir, overwrite = TRUE,
-                      dtoken =  drop_auth(rdstoken = tokenpath))
-      } # End Else
-    } # End loop
-    saveRDS(object = dbox_rds_info, file = rds_info_path)
-  } else { # rds info file does not exist, download all rds files (overwrite) as well as the rds info tibble
-    saveRDS(object = dbox_rds_info, file = rds_info_path)
-    lapply(files$path_display, drop_download, local_path = local_data_dir, overwrite = TRUE,
-           dtoken =  drop_auth(rdstoken = tokenpath))
+    ### Save all updated database RDS files to Local Data Cache ####
+    if(file.exists(rds_info_path)){ # File exists - compare each file - datestamp to the dropbox version, if drop
+      # box is newer - download and overwrite, if not, then skip
+      local_rds_info <- readRDS(rds_info_path)
+      for (i in seq_along(dbox_rds_info$rds_file)) {
+        fn <- dbox_rds_info$rds_file[i]
+        ts <- dbox_rds_info$timestamp[i]
+        ### if the rds record is missing, get it and add it to local rds info
+        if (!fn %in% local_rds_info$rds_file) {
+          print(paste0(fn, " does not exist, downloading rds file from Dropbox."))
+          drop_download(path = paths[i], local_path = local_data_dir, overwrite = TRUE,
+                        dtoken =  drop_auth(rdstoken = tokenpath))
+          local_rds_info <- local_rds_info %>%
+            bind_rows(dbox_rds_info[i,])
+        }
+        ### If the timestamp is not equivalent to dropbox, download and overwrite
+        if(local_rds_info$timestamp[local_rds_info$rds_file == fn] == ts){
+          print(paste0(fn, " already up to date, skipping download and moving to next file."))
+          next
+        } else {
+          print(paste0(fn, " out of date, downloading more recent version from Dropbox."))
+          drop_download(path = paths[i], local_path = local_data_dir, overwrite = TRUE,
+                        dtoken =  drop_auth(rdstoken = tokenpath))
+        } # End Else
+      } # End loop
+      saveRDS(object = dbox_rds_info, file = rds_info_path)
+    } else { # rds info file does not exist, download all rds files (overwrite) as well as the rds info tibble
+      saveRDS(object = dbox_rds_info, file = rds_info_path)
+      lapply(files$path_display, drop_download, local_path = local_data_dir, overwrite = TRUE,
+             dtoken =  drop_auth(rdstoken = tokenpath))
+    }
+    print("Testing Mode Off...Dropbox checked for RDS file update, and RDS files loaded to global environment")
   }
-  print("Testing Mode Off...Dropbox checked for RDS file update")
 }
-}
-  ### Load rds files ####
-  ### Make a list of all the .rds files using full path
-  rds_files <- list.files(local_data_dir, full.names = TRUE , pattern = "\\.rds$")
-  ### create an object that contains all of the rds files
-  data <- lapply(rds_files, readRDS)
-  ### Make a list of the df names by eliminating extension from files
-  df_names <- gsub(".rds", "", list.files(local_data_dir, pattern = "\\.rds$"))
-  # name each df in the data object appropriately
-  names(data) <- df_names
-  ### Extract each element of the data object into the global environment
-  list2env(data ,.GlobalEnv)
-  ### Remove data
-  rm(data)
-  return("RDS files loaded to BRC App session")
+### Load rds files ####
+### Make a list of all the .rds files using full path
+rds_files <- list.files(local_data_dir, full.names = TRUE , pattern = "\\.rds$")
+### create an object that contains all of the rds files
+data <- lapply(rds_files, readRDS)
+### Make a list of the df names by eliminating extension from files
+df_names <- gsub(".rds", "", list.files(local_data_dir, pattern = "\\.rds$"))
+# name each df in the data object appropriately
+names(data) <- df_names
+### Extract each element of the data object into the global environment
+list2env(data ,.GlobalEnv)
+### Remove data
+msg <- "TESTING MODE IS ON - Existing database RDS files loaded without checking for updates!"
+return(msg)
 }
 
 SUBMIT_CSV <- function(zone, drop_path = "BRCWQDM/Submitted_Data_Staging"){

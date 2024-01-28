@@ -41,7 +41,7 @@ ADD_COMMENT <- function(input, output, session, input_section, site, comment_dat
     }
   })
 
-saveComment <- function(data, csvFile, rdsFile) {
+saveComment <- function(data, csvFile) {
          if(file.exists(csvFile)){
            write.table(x = data, file = csvFile,
                        row.names = FALSE, quote = TRUE, append = TRUE,
@@ -51,8 +51,6 @@ saveComment <- function(data, csvFile, rdsFile) {
                        row.names = FALSE, col.names = comm_col_names, quote = TRUE,
                        qmethod = "d", append = FALSE)
          }
-         dt <- read.table(csvFile, stringsAsFactors = TRUE, header = T, sep = " ")
-         rxdata$stagedComments <- readRDS(rdsFile)
   }
 
 formatComment <- function(){
@@ -63,12 +61,12 @@ formatComment <- function(){
   }
   comment <- tibble(SITE = site(), DATE = comment_date(), PARAMETER = input$comment_par,
                     COMMENTER = commenter, COMMENT_TEXT = input$comment_text)
-  # glimpse(comment)
   return(comment)
 }
 
 observeEvent(input$save_comment,{
-  saveComment(data = formatComment(), csvFile = stagedCommentsCSV, rdsFile = stagedCommentsRDS)
+  saveComment(data = formatComment(), csvFile = stagedCommentsCSV)
+  print(refreshComments())
   shinyalert(title = "Comment Entered!", type = "success")
   removeModal()
 })

@@ -335,9 +335,8 @@ observeEvent(input$save_comment,{
       updateTextInput(session,"result",value="updated")
     }
     updateNumericInput(session,"page",value=(i-1)%/%10+1)
-
-
   })
+
 ### DELETE ROW ####
   observeEvent(input$delRow,{
     ns <- session$ns
@@ -399,9 +398,9 @@ observeEvent(input$save_comment,{
       } else {
         try(x[ids,i] <- input[[myname[i]]])
       }
-      # if("numeric" %in% class(x[ids,i])){
-      #   x[ids,i]=as.numeric(input[[myname[i]]])
-      # }
+      if("numeric" %in% class(x[ids,i])){
+        x[ids,i]=as.numeric(input[[myname[i]]])
+      }
       if("POSIXct" %in% class(x[ids,i])){
         tz=""
         if(!is.null(attr(x[ids,i],"tzone"))) tz=attr(x[ids,i],"tzone")

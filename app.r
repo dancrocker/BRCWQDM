@@ -129,21 +129,7 @@ last_update <- data_num_db$DATE_TIME %>% max()
 ### Date and Time and any other QC'd values need to come from reactive elements
 remote_data_dir <- paste0(getwd(),"/data/")
 
-table_fields <<- readr::read_csv(paste0(wdir,"/data/table_fields.csv"),
-                                 col_types = cols(
-                                   shiny_input = col_character(),
-                                   dt_cols = col_character(),
-                                   col_type = col_character(),
-                                   col_input = col_character(),
-                                   input_mult = col_character(),
-                                   editable = col_character(),
-                                   pcode = col_character(),
-                                   take_comments = col_character(),
-                                   choices = col_character(),
-                                   input_width = col_double(),
-                                   as_is = col_character(),
-                                   input_section = col_character()
-                                 ))
+table_fields <<- readr::read_csv(paste0(wdir,"/data/table_fields.csv"))
 
 data_fields <<- table_fields[1:35,]
 comment_fields <<- table_fields[36:40,]
@@ -185,38 +171,64 @@ wat_erosion_choices <<- c("Undercut bank", "Slumping", "Erosional gullies in ban
                          "Bridge or building undermining", "No erosion", "Not Recorded")
 depth_choices <<- c("Gage (Staff Plate-feet)", "Ruler (inches)", "Not Recorded", "Dry (No Flow)", "No Datum")
 
+### See Ref article here: https://github.com/daattali/shiny-server/blob/master/mimic-google-form/app.R
+### SAVE DATA TO CSV ####
+saveData <<- function(data, csvFile) {
+  if(file.exists(csvFile)){
+    write.table(x = data, file = csvFile,
+                row.names = FALSE, quote = TRUE, na = "", append = TRUE,
+                col.names = FALSE, qmethod = "d")
+  } else {
+    write.table(x = data, file = csvFile,
+                row.names = FALSE, col.names = col_names, na = "", quote = TRUE,
+                qmethod = "d", append = FALSE)
+  }
+  return("Record added to staged data.")
+}
+### SAVE COMMENT TO CSV ####
+saveComment <- function(data, csvFile) {
+  if(file.exists(csvFile)){
+    write.table(x = data, file = csvFile,
+                row.names = FALSE, quote = TRUE, append = TRUE,
+                col.names = FALSE, qmethod = "d")
+  } else {
+    write.table(x = data, file = csvFile,
+                row.names = FALSE, col.names = comm_col_names, quote = TRUE,
+                qmethod = "d", append = FALSE)
+  }
+  return("Comment added to staged comments")
+}
+
 refreshData <<- function() {
     if(file.exists(stagedDataCSV) == TRUE){
       data <- read.table(stagedDataCSV, stringsAsFactors = FALSE, header = T,  sep = " " , na.strings = "NA")
       df <- data_csv2df(data, data_fields, stagedDataCSV) ### saves RDS file as data.frame
       saveRDS(df, stagedDataRDS)
-      rxdata$stagedData <- readRDS(stagedDataRDS)
+      rxdata$stagedData <<- df
+      msg <- "Loading staged data ..."
     } else {
-      rxdata$stagedData <- NULL
-      df <- NULL
+      rxdata$stagedData <<- NULL
+      msg <- "There were no prior staged data to load ..."
     }
-    return(df)
+    return(msg)
   }
 
   refreshComments <<- function() {
     if(file.exists(stagedCommentsCSV) == TRUE){
-      data <- read.table(stagedCommentsCSV, stringsAsFactors = FALSE, sep = " " ,header = T)
+      data <- read.table(stagedCommentsCSV, stringsAsFactors = FALSE, sep = " " , header = T)
       df <- comm_csv2df(data, comment_fields) ### saves RDS file as data.frame
       saveRDS(df, stagedCommentsRDS)
-      rxdata$stagedComments <- readRDS(stagedCommentsRDS)
+      rxdata$stagedComments <<- df
+      msg <- "Loading staged comments ..."
     } else {
-      rxdata$stagedComments <- NULL
-      df <- NULL
+      rxdata$stagedComments <<- NULL
+      msg <- "There were no prior staged comments to load ..."
     }
-    return(df)
+    return(msg)
   }
 
-    # loadAll <<- function(){
-    #   loadData()
-    #   loadComments()
-    # }
-  refreshData()
-  refreshComments()
+  print(refreshData())
+  print(refreshComments())
 
 ### CSS ####
 appCSS <-   ".mandatory_star { color: red; }
@@ -232,6 +244,7 @@ labelMandatory <- function(label) {
 }
 SubmitActionCount <- reactiveVal(0)
 ImportActionCount <-  reactiveVal(0)
+
 ### End Global Scope ####
 ### NOTES FOR UI AND SERVER ####
     # User enters records in form
@@ -242,7 +255,6 @@ ImportActionCount <-  reactiveVal(0)
     # The submit button executes a process function which does all calculations
     # A preview table shows up in a new tab, which cannot be edited
     # The final csv file is moved from staged to processed folder (can be edited and reprocessed if needed)
-
 
 ### UI ####
 ui <- tagList(
@@ -314,7 +326,7 @@ ui <- tagList(
                   ) #End col
                 )) # End Well Panel and FR
         ) %>%
-          # * Physical Parameters ----
+        # * Physical Parameters ----
         bs_set_opts(panel_type = "primary", use_heading_link = TRUE) %>%
         bs_append(title = "PHYSICAL PARAMETERS", content =
                 wellPanel(fluidRow(
@@ -332,14 +344,14 @@ ui <- tagList(
                           ADD_COMMENT_UI("add_comment_physical")
                         ),
                         column(width = 3,
-                          checkboxGroupInput("wat_appear", "Water Appearance (P05):", choices = wat_appear_choices),
+                          checkboxGroupInput("wat_appear", "Water Appearance (P05):", choices = wat_appear_choices, selected = "Not Recorded"),
                           textAreaInput("comm_P05", labelMandatory("Comments for Water Appearance (P05):"), placeholder = "Describe 'other'"),
                           radioButtons("wat_trash", "Presence of Trash (P06):", choices = wat_trash_choices, selected = "Not Recorded")
                         ),
                         column(width = 3,
-                          checkboxGroupInput("erosion", "Stream bank/infrastructure erosion (P07):", choices = wat_erosion_choices),
+                          checkboxGroupInput("erosion", "Stream bank/infrastructure erosion (P07):", choices = wat_erosion_choices, selected = "Not Recorded"),
                           textAreaInput("comm_P07", labelMandatory("Comments for Erosion (P07):"), placeholder = "Describe 'other'"),
-                          checkboxGroupInput("wat_odor", "Water Odor (P08):", choices = wat_odor_choices),
+                          checkboxGroupInput("wat_odor", "Water Odor (P08):", choices = wat_odor_choices, selected = "Not Recorded"),
                           textAreaInput("comm_P08", labelMandatory("Comments for Water Odor (P08):"), placeholder = "Describe 'other'")
                         ),
                         column(width = 3,
@@ -433,29 +445,31 @@ ui <- tagList(
                       #        checkboxInput("photos","Photos associated with sampling event?")
                       # ),
                       column(width = 6,
-                             ADD_PHOTO_UI("add_photo_data_entry")
+                             ADD_PHOTO_UI("add_photo_data_entry"),
                       )
                     )
                 ) # End Well Panel
         ),
-        # * Enter Record ----
-        tags$head(tags$script(src = "message-handler.js")),
-        actionButton("enter", "Enter Record", class = "btn-primary"),
-        shinyjs::hidden(
-          span(id = "enter_msg", "Adding record entry ..."),
-          div(id = "error",
-                div(br(), tags$b("Error: "), span(id = "error_msg"))
-            )
-          )
-    ), # End div
-        shinyjs::hidden(
-          div(
-            id = "thankyou_msg",
-            h3("Thanks, your record was entered successfully!"),
-            actionLink("enter_another", "Enter another record")
-          )# End div
-        )
-    ), # End TabPanel
+
+      # * Enter Record ----
+    tags$head(tags$script(src = "message-handler.js")),
+    actionButton("enter", "Enter Record", class = "btn-primary"),
+    shinyjs::hidden(
+      span(id = "enter_msg", "Adding record entry ..."),
+      div(id = "error",
+          div(br(), tags$b("Error: "), span(id = "error_msg"))
+      ) # End div error
+    )
+    ), # End div form
+    shinyjs::hidden(
+      div(id = "thankyou_msg",
+          h3("Thanks, your record was entered successfully!"),
+          actionLink("enter_another", "Enter another record")
+      )# End div thankyou_msg
+    )
+
+  ), # End TabPanel
+
   ### STAGED DATA TAB ####
   tabPanel("STAGED DATA",
            fluidRow(
@@ -597,7 +611,7 @@ ui <- tagList(
                    ),
                    tabPanel("Text Data",
                             fluidRow(downloadButton("download_data_text", "Download table as csv"), align = "center"),
-                          DTOutput("data_text_db")
+                            DTOutput("data_text_db")
                    ),
                    tabPanel("Comments",
                             fluidRow(downloadButton("download_data_comments", "Download table as csv"), align = "center"),
@@ -681,15 +695,15 @@ ui <- tagList(
     ),
     ### ADMIN TOOLS ####
     tabPanel("ADMIN TOOLS",
-        fluidRow(
-           column(2, imageOutput("brc_logo8", height = 80), align = "left"),
-           column(8,  h2("Admin Tools", align = "center")),
-           column(2, imageOutput("zap_logo8", height = 80), align = "right")
-         ),
-    uiOutput("admin_tools.UI")
+             fluidRow(
+               column(2, imageOutput("brc_logo8", height = 80), align = "left"),
+               column(8,  h2("Admin Tools", align = "center")),
+               column(2, imageOutput("zap_logo8", height = 80), align = "right")
+             ),
+             uiOutput("admin_tools.UI")
     )
+  ) # End navbar Menu
   ) # End navbar page
-  )
 ) # End UI - taglist
 
 ####################################################.
@@ -739,10 +753,11 @@ fileChoices <- function(){
 rxdata$fileChoices <- fileChoices()
 
 ### Get samplers from googledrive ####
-if(exists("testing")) {
+if(!exists("testing")) {
   print("Testing mode is on ... no downloads from google sheets")
+  rxdata$samplers <<- samplers_db %>% sort()
 } else {
-    try(GS_GET_SAMPLERS(sheet = config[15])) # Updates rxdata$samplers
+  try(GS_GET_SAMPLERS(sheet = config[15])) # Updates rxdata$samplers
 }
 # rxdata$samplers <<- try(GS_GET_SAMPLERS(sheet = config[15])) # Updates rxdata$samplers
 photos_db <<- readRDS(photosRDS)
@@ -867,6 +882,7 @@ output$selectFile_ui <- renderUI({
   shinyjs::hide("comm_P05")
   shinyjs::hide("comm_P07")
   shinyjs::hide("comm_P08")
+
 ### SHOW HIDDEN COMMENTS ####
 observeEvent(input$wea48, {
   if("Other" %in% input$wea48){
@@ -883,7 +899,8 @@ observeEvent(input$wea48, {
       selected = "Not Recorded"
     )
   }
-})###
+})
+
 observeEvent(input$wea_now, {
   if("Other" %in% input$wea_now){
       shinyjs::show("comm_P02")
@@ -893,6 +910,7 @@ observeEvent(input$wea_now, {
       fieldsMandatory <- fieldsMandatory[fieldsMandatory != "comm_P02"]
   }
 })
+
 observeEvent(input$wea_now, {
   if("Not Recorded" %in% input$wea_now){
      updateCheckboxGroupInput(session, "wea_now",
@@ -900,7 +918,7 @@ observeEvent(input$wea_now, {
     )
   }
 })
-###
+
 observeEvent(input$wat_appear, {
   if("Other" %in% input$wat_appear){
       shinyjs::show("comm_P05")
@@ -917,7 +935,7 @@ observeEvent(input$wat_appear, {
     )
   }
 })
-###
+
 observeEvent(input$erosion, {
   if("Other" %in% input$erosion){
       shinyjs::show("comm_P07")
@@ -934,7 +952,7 @@ observeEvent(input$erosion, {
     )
   }
 })
-###
+
 observeEvent(input$wat_odor, {
   if("Other" %in% input$wat_odor){
       shinyjs::show("comm_P08")
@@ -944,6 +962,7 @@ observeEvent(input$wat_odor, {
     fieldsMandatory <- fieldsMandatory[fieldsMandatory != "comm_P08"]
   }
 })
+
 observeEvent(input$wat_odor, {
   if("Not Recorded" %in% input$wat_odor){
      updateCheckboxGroupInput(session, "wat_odor",
@@ -951,7 +970,7 @@ observeEvent(input$wat_odor, {
     )
   }
 })
-###
+
 observeEvent(input$wat_clarity, {
   if("Not Recorded" %in% input$wat_clarity){
       updateCheckboxGroupInput(session, "wat_clarity",
@@ -972,12 +991,9 @@ observe({
   # enable/disable the enter button
   shinyjs::toggleState(id = "enter", condition = mandatoryFilled)
 })
-### STAGED DATA CREATION ####
-# stagedData <- eventReactive(input$enter,{
-#     loadData()
-# })
 
 ### REACTIVE DATA ENTRY VALS ####
+
 ### SAMPLE DATE-TIME CALC ####
 SampleDT <- reactive({paste0(strftime(input$date, "%Y-%m-%d"), " ", strftime(input$time, "%H:%M"))})
 
@@ -995,23 +1011,24 @@ samplersRX <- reactive({
 #   req(input$wea_now)
 #   paste(input$wea_now, collapse = "; ") %>% trimws()
 #   })
+
 wat_appearRX <- reactive({
   req(input$wat_appear)
   paste0(input$wat_appear, collapse = "; ") %>% trimws()
-  })
+})
 erosionRX <- reactive({
   req(input$erosion)
   paste0(input$erosion, collapse = "; ") %>% trimws()
-  })
+})
 wat_odorRX <- reactive({
   req(input$wat_odor)
   paste0(input$wat_odor, collapse = "; ") %>% trimws()
-  })
+})
 
 depth_typeRX <- reactive({
   req(input$depth_type)
   input$depth_type
-  })
+})
 
 output$depth <- renderUI({
   req(depth_typeRX() %in% c("Ruler (inches)", "Gage (Staff Plate-feet)"))
@@ -1026,140 +1043,116 @@ output$depth <- renderUI({
 ### FORM DATA ####
 formData <- reactive({
   data <- sapply(fieldsASIS, function(x) input[[x]])
-  data <- c(data, "SampleDateTime" = SampleDT(), "sampler" = samplersRX(), wat_appear = wat_appearRX(),
-            erosion =  erosionRX(), wat_odor = wat_odorRX(),
+  data <- c(data,
+            SampleDateTime = SampleDT(),
+            sampler = samplersRX(),
+            wat_appear = wat_appearRX(),
+            erosion =  erosionRX(),
+            wat_odor = wat_odorRX(),
             aql_e_coli = as.integer(input$aql_e_coli)*2,
             aql_e_coli_field_rep = as.integer(input$aql_e_coli_field_rep)*2,
             aql_e_coli_lab_rep = as.integer(input$aql_e_coli_lab_rep)*2,
-            "Entered_By" = app_user)
+            Entered_By = app_user)
+
   data <- data[col_names] %>% as.character()
-  data <- t(data)
+  data <- t(data) %>% as.data.frame()
   data
 })
 
-### OBSERVE ENTER RECORD ####
-# observeEvent(input$enter, {
-#   # loadData()
-#   shinyjs::reset("form")
-#   shinyjs::hide("form")
-#   shinyjs::show("thankyou_msg")
-# })
-### SAVE DATA TO CSV ####
-saveData <- function(data, csvFile, rdsFile) {
-  # csvFile <- stagedDataCSV
- # Strip out any commas
-  # data <- str_replace_all(data, pattern = ",", replacement = "..")
-  # Set the csvFile using data data, so each data has its own csv.
-  # If the name exists then append the records from that csv using rbind and save the fle
-  # csvFile <- paste0("BRC_StagedData.csv") #come up with better name - like "BRC_StagedData_Apr2019_R1.csv"
-  if(file.exists(csvFile)){
-    write.table(x = data, file = csvFile,
-                row.names = FALSE, quote = TRUE, na = "", append = TRUE,
-                col.names = FALSE, qmethod = "d")
-  } else {
-    write.table(x = data, file = csvFile,
-                row.names = FALSE, col.names = col_names, na = "", quote = TRUE,
-                qmethod = "d", append = FALSE)
-  }
-  refreshData()
-  rxdata$stagedData <<- readRDS(stagedDataRDS)
-  write_other_comments()
-  refreshComments()
-  rxdata$stagedComments <<- readRDS(stagedCommentsRDS)
-}
+### OTHER COMMENTS ####
+### Build comment records for "other comments"
+# other_comments <-  c("comm_P01","comm_P02", "comm_P05", "comm_P07", "comm_P08")
 
-observeEvent(input$enter_another, {
-  shinyjs::show("form")
-  shinyjs::hide("thankyou_msg")
-})
+# prep_other_comments <- function() {
+#   # Make an empty table with the proper structure for comments
+#   t_other_comments <- tibble(SITE = NA_character_,
+#                              DATE = NA_character_,
+#                              PARAMETER = NA_character_,
+#                              COMMENTER = NA_character_,
+#                              COMMENT_TEXT = NA_character_) %>%
+#     slice(-1)
+#   # loop through "other" inputs and if not null or blank, write a comment to the table
+#   for(i in other_comments) {
+#     # Get the parameter name based on the input ID
+#     comm_par <- switch(i,
+#                       "comm_P01" = "Prior Weather",
+#                       "comm_P02" = "Current Weather",
+#                       "comm_P05" = "Water Appearance",
+#                       "comm_P07" = "Erosion",
+#                       "comm_P08" = "Water Odor"
+#                       )
+#     # Evaluate input value and add the record if not null or blank
+#     if(!is.null(input[[i]]) || input[[i]] != "") {
+#       t_other_comments <-  t_other_comments %>%
+#         add_case(SITE = selected_site(),
+#                  DATE = paste0(strftime(input$date, "%Y-%m-%d")),
+#                  PARAMETER = comm_par,
+#                  COMMENTER = samplersRX(),
+#                  COMMENT_TEXT = input[[i]]
+#         )
+#     }
+#   }
+#
+#   t_other_comments <-  t_other_comments %>%
+#     filter(COMMENT_TEXT != "")
+#
+#   ### If there were no "other" values then return NULL
+#   if(nrow(t_other_comments) == 0) {
+#     t_other_comments <- NULL
+#   }
+#   return(t_other_comments)
+# }
 
-### ENTER RECORD EVENT ####
+# write_other_comments <- function() {
+#   data <- prep_other_comments()
+#   if(!is.null(data)) {
+#     if(file.exists(file.path(stagedCommentsCSV))){
+#       write.table(x = data, file = stagedCommentsCSV,
+#                   row.names = FALSE, quote = TRUE, append = TRUE,
+#                   col.names = FALSE, qmethod = "d")
+#     } else {
+#       write.table(x = data, file = stagedCommentsCSV,
+#                   row.names = FALSE, col.names = comm_col_names, quote = TRUE,
+#                   qmethod = "d", append = FALSE)
+#     }
+#     write_comment_msg <- "Other comments processed..."
+#   } else {
+#     write_comment_msg <- "No other comments created..."
+#   }
+#   return(write_comment_msg)
+# }
+
+# ### ENTER RECORD EVENT ####
 observeEvent(input$enter, {
+
   shinyjs::disable("enter")
   shinyjs::show("enter_msg")
   shinyjs::hide("error")
 
   tryCatch({
-    saveData(formData(),  csvFile = stagedDataCSV, rdsFile = stagedDataRDS)
+    saveData(data = formData(),  csvFile = stagedDataCSV)
     shinyjs::reset("form")
     shinyjs::hide("form")
-    shinyjs::show("thankyou_msg")
+    shinyjs::show("thankyou_msg", anim = TRUE, animType = "slide")
   },
   error = function(err) {
-    shinyjs::html("error_msg", err$message)
+    shinyjs::html("error_msg", err$message, add = TRUE)
     shinyjs::show(id = "error", anim = TRUE, animType = "fade")
   },
   finally = {
     shinyjs::enable("enter")
     shinyjs::hide("enter_msg")
   })
+    print(refreshData())
 })
 
-### OTHER COMMENTS ####
-### Build comment records for "other comments"
-other_comments <-  c("comm_P01","comm_P02", "comm_P05", "comm_P07", "comm_P08")
+### ENTER ANOTHER RECORD ####
+observeEvent(input$enter_another, {
+  shinyjs::show("form")
+  shinyjs::hide("thankyou_msg")
+})
 
-prep_other_comments <- function() {
-  # Make an empty table with the proper structure for comments
-  t_other_comments <- tibble(SITE = NA_character_,
-                             DATE = NA_character_,
-                             PARAMETER = NA_character_,
-                             COMMENTER = NA_character_,
-                             COMMENT_TEXT = NA_character_) %>%
-    slice(-1)
-  # loop through "other" inputs and if not null or blank, write a comment to the table
-  for(i in other_comments) {
-    # Get the parameter name based on the input ID
-    comm_par <- switch(i,
-                      "comm_P01" = "Prior Weather",
-                      "comm_P02" = "Current Weather",
-                      "comm_P05" = "Water Appearance",
-                      "comm_P07" = "Erosion",
-                      "comm_P08" = "Water Odor"
-                      )
-    # Evaluate input value and add the record if not null or blank
-    if(!is.null(input[[i]]) || input[[i]] != "") {
-      t_other_comments <-  t_other_comments %>%
-        add_case(SITE = selected_site(),
-                 DATE = paste0(strftime(input$date, "%Y-%m-%d")),
-                 PARAMETER = comm_par,
-                 COMMENTER = samplersRX(),
-                 COMMENT_TEXT = input[[i]]
-        )
-    }
-  }
-
-  t_other_comments <-  t_other_comments %>%
-    filter(COMMENT_TEXT != "")
-
-  ### If there were no "other" values then return NULL
-  if(nrow(t_other_comments) == 0) {
-    t_other_comments <- NULL
-  }
-
-  return(t_other_comments)
-}
-
-write_other_comments <- function() {
-  data <- prep_other_comments()
-  if(!is.null(data)) {
-    if(file.exists(file.path(stagedCommentsCSV))){
-      write.table(x = data, file = stagedCommentsCSV,
-                  row.names = FALSE, quote = TRUE, append = TRUE,
-                  col.names = FALSE, qmethod = "d")
-    } else {
-      write.table(x = data, file = stagedCommentsCSV,
-                  row.names = FALSE, col.names = comm_col_names, quote = TRUE,
-                  qmethod = "d", append = FALSE)
-    }
-  } else {
-    print("No other comments created...")
-  }
-  return("Other comments processed...")
-}
-
-###
-
+### UPDATE INPUTS ####
 update_inputs <- function() {
    updateRadioButtons(session, "wea48", "Weather Last 48 Hours (P01):", choices = wea_choices, selected = "Not Recorded")
    updateRadioButtons(session, "wea_now", "Weather at time of sample (P02):", choices = wea_choices, selected = "Not Recorded")
@@ -1175,124 +1168,83 @@ observe({
   update_inputs()
 })
 
-
-# action to take when enter button is pressed
-# observeEvent(input$enter, {
-#   saveData(formData())
-# })
-# tableData <- if(input$enter == 0){
-#   tableData <- loadData()
-#   tableData <- data.frame(tableData, stringsAsFactors = F)
-#   tableData
-# } else {
-#   tableData <- stagedData()
-#   tableData <- data.frame(tableData, stringsAsFactors = F)
-#   tableData
-# }
-
-
-### DT OUTPUT ####
-# output$stagingTable <- renderDT({
-#   # req(tableData()),
-#   dt <- datatable(tableData(), editable = F, rownames = FALSE,
-#                   colnames = dt_names, selection = "single",
-#   options = list(searching = FALSE, lengthChange = FALSE))
-#   # server = FALSE #%>%
-#     # formatDate("SampleDateTime", method = "toLocaleString")
-#    }
-
 ### COMMENT CHOICES ####
 comment_par_choices <<- c("General Comment", data_fields$dt_cols[data_fields$take_comments =="yes"])
 
-  ### save Staged Data to RDS and CSV ####
-  observeEvent(input$SaveStagedData,{
-    req(staged_df())
-    csv <- staged_df()
-    names(csv) <- data_fields$shiny_input
-    #### overwrite table as well ... write.table
-    write.table(x = csv, file = stagedDataCSV,
-                row.names = FALSE, col.names = TRUE, quote = TRUE,
-                qmethod = "d", append = FALSE)
-     ### Read the updated table back and refresh the DT
-     data <- read.table(stagedDataCSV, stringsAsFactors = FALSE, header = T,  sep = " " , na.strings = "NA")
-     df <- data_csv2df(data = data, data_fields = data_fields, file = stagedDataCSV) ### saves RDS file as data.frame
-     saveRDS(df, stagedDataRDS)
-     rxdata$stagedData <<- readRDS(stagedDataRDS)
-     print("Staged data csv file saved")
-     shinyalert(title = "Saved!", type = "success")
-  })
+### save Staged Data to RDS and CSV ####
+observeEvent(input$SaveStagedData,{
+  req(staged_df())
+  csv <- staged_df()
+  names(csv) <- data_fields$shiny_input
+  #### overwrite table as well ... write.table
+  write.table(x = csv, file = stagedDataCSV,
+              row.names = FALSE, col.names = TRUE, quote = TRUE,
+              qmethod = "d", append = FALSE)
+  ### Read the updated table back and refresh the DT
+  data <- read.table(stagedDataCSV, stringsAsFactors = FALSE, header = T,  sep = " " , na.strings = "NA")
+  df <- data_csv2df(data = data, data_fields = data_fields, file = stagedDataCSV) ### saves RDS file as data.frame
+  saveRDS(df, stagedDataRDS)
+  rxdata$stagedData <<- readRDS(stagedDataRDS)
+  print("Staged data csv file saved")
+  shinyalert(title = "Saved!", type = "success")
+})
 
-   observeEvent(input$SaveSubmittedData,{
-     req(submitted_df())
-     csv <- submitted_df() ### This is the current state of DT
-     # if("E. coli" %in% names(csv)) {
-       names(csv) <- data_fields$shiny_input # Change col names back to csv format
-     # } else {
-       # names(csv) <- data_fields$shiny_input[c(1:26, 32)]
-     # }
-     ### Set the file name
-     file <- input$selectFile
-     #### overwrite table as well ... write.table
-     write.table(x = csv, file = file,
-                 row.names = FALSE, col.names = TRUE, quote = TRUE,
-                 qmethod = "d", append = FALSE)
-    ### Read the updated table back and refresh the DT
-     data <- read.table(file, stringsAsFactors = FALSE, header = T,  sep = " " , na.strings = "NA")
-     df <- data_csv2df(data = data, data_fields = data_fields, file = file) ### saves RDS file as data.frame
-     saveRDS(df, submittedDataRDS)
-     rxdata$submittedData <- readRDS(submittedDataRDS)
-     shinyalert(title = "Saved!", type = "success")
-   })
+observeEvent(input$SaveSubmittedData,{
+  req(submitted_df())
+  csv <- submitted_df() ### This is the current state of DT
+  # if("E. coli" %in% names(csv)) {
+  names(csv) <- data_fields$shiny_input # Change col names back to csv format
+  # } else {
+  # names(csv) <- data_fields$shiny_input[c(1:26, 32)]
+  # }
+  ### Set the file name
+  file <- input$selectFile
+  #### overwrite table as well ... write.table
+  write.table(x = csv, file = file,
+              row.names = FALSE, col.names = TRUE, quote = TRUE,
+              qmethod = "d", append = FALSE)
+  ### Read the updated table back and refresh the DT
+  data <- read.table(file, stringsAsFactors = FALSE, header = T,  sep = " " , na.strings = "NA")
+  df <- data_csv2df(data = data, data_fields = data_fields, file = file) ### saves RDS file as data.frame
+  saveRDS(df, submittedDataRDS)
+  rxdata$submittedData <- readRDS(submittedDataRDS)
+  shinyalert(title = "Saved!", type = "success")
+})
 
-   ### Save Staged Comments to RDS and CSV ####
-   observeEvent(input$SaveStagedComments,{
-     req(staged_comments())
-     csv <- staged_comments()
-     names(csv) <- comment_fields$shiny_input
-     #### overwrite table as well ... write.table
-     write.table(x = csv, file = stagedCommentsCSV,
-                 row.names = FALSE, col.names = TRUE, quote = TRUE,
-                 qmethod = "d", append = FALSE)
-     # saveRDS(object = staged_(), stagedDataRDS)
-     ### Read the updated table back and refresh the DT
-     data <- read.table(stagedCommentsCSV, stringsAsFactors = FALSE, header = T,  sep = " " , na.strings = "NA")
-     df <- comm_csv2df(data, comment_fields) ### saves RDS file as data.frame
-     saveRDS(df, stagedCommentsRDS)
-     rxdata$stagedComments <- readRDS(stagedCommentsRDS)
-     shinyalert(title = "Saved!", type = "success")
-   })
+### Save Staged Comments to RDS and CSV ####
+observeEvent(input$SaveStagedComments,{
+  req(staged_comments())
+  csv <- staged_comments()
+  names(csv) <- comment_fields$shiny_input
+  #### overwrite table as well ... write.table
+  write.table(x = csv, file = stagedCommentsCSV,
+              row.names = FALSE, col.names = TRUE, quote = TRUE,
+              qmethod = "d", append = FALSE)
+  # saveRDS(object = staged_(), stagedDataRDS)
+  ### Read the updated table back and refresh the DT
+  data <- read.table(stagedCommentsCSV, stringsAsFactors = FALSE, header = T,  sep = " " , na.strings = "NA")
+  df <- comm_csv2df(data, comment_fields) ### saves RDS file as data.frame
+  saveRDS(df, stagedCommentsRDS)
+  rxdata$stagedComments <- readRDS(stagedCommentsRDS)
+  shinyalert(title = "Saved!", type = "success")
+})
 
-   ### Save Submitted Comments to RDS and CSV ####
-   observeEvent(input$SaveSubmittedComments,{
-     req(submitted_comments())
-     csv <- submitted_comments()
-     names(csv) <- comment_fields$shiny_input
-     file <- str_replace(input$selectFile, "_SubmittedData_","_SubmittedComments_")
-     #### overwrite table as well ... write.table
-     write.table(x = csv, file = file , row.names = FALSE, col.names = TRUE, quote = TRUE,
-                 qmethod = "d", append = FALSE)
-     ### Read the updated table back and refresh the DT
-     data <- read.table(file, stringsAsFactors = FALSE, header = T,  sep = " " , na.strings = "NA")
-     df <- comm_csv2df(data, comment_fields) ### saves RDS file as data.frame
-     saveRDS(df, submittedCommentsRDS)
-     rxdata$submittedComments <- readRDS(submittedCommentsRDS)
-     shinyalert(title = "Saved!", type = "success")
-   })
-
-  saveComment <- function(data, csvFile, rdsFile) {
-         if(file.exists(csvFile)){
-           write.table(x = data, file = csvFile,
-                       row.names = FALSE, quote = TRUE, append = TRUE,
-                       col.names = FALSE, qmethod = "d")
-         } else {
-           write.table(x = data, file = csvFile,
-                       row.names = FALSE, col.names = comm_col_names, quote = TRUE,
-                       qmethod = "d", append = FALSE)
-         }
-         dt <- read.table(csvFile, stringsAsFactors = TRUE, header = T, sep = " ")
-         refreshComments()
-         rxdata$stagedComments <- readRDS(rdsFile)
-  }
+### Save Submitted Comments to RDS and CSV ####
+observeEvent(input$SaveSubmittedComments,{
+  req(submitted_comments())
+  csv <- submitted_comments()
+  names(csv) <- comment_fields$shiny_input
+  file <- str_replace(input$selectFile, "_SubmittedData_","_SubmittedComments_")
+  #### overwrite table as well ... write.table
+  write.table(x = csv, file = file , row.names = FALSE, col.names = TRUE, quote = TRUE,
+              qmethod = "d", append = FALSE)
+  ### Read the updated table back and refresh the DT
+  data <- read.table(file, stringsAsFactors = FALSE, header = T,  sep = " " , na.strings = "NA")
+  df <- comm_csv2df(data, comment_fields) ### saves RDS file as data.frame
+  saveRDS(df, submittedCommentsRDS)
+  rxdata$submittedComments <- readRDS(submittedCommentsRDS)
+  shinyalert(title = "Saved!", type = "success")
+})
 
 formatComment <- function(){
   if(input$FM_comment == TRUE){
@@ -1302,7 +1254,6 @@ formatComment <- function(){
   }
   comment <- tibble(SITE = input$site, DATE = input$date, PARAMETER = input$comment_par,
                     COMMENTER = commenter, COMMENT_TEXT = input$comment_text)
-  # glimpse(comment)
   return(comment)
 }
 
@@ -1311,7 +1262,8 @@ formatComment <- function(){
   # Also hold records in rds file
   # Need ability to edit comments?
 observeEvent(input$submit_comment,{
-  saveComment(data = formatComment(), csvFile = stagedCommentsCSV, rdsFile = stagedCommentsRDS)
+  saveComment(data = formatComment(), csvFile = stagedCommentsCSV)
+  print(refreshComments())
   shinyalert(title = "Comment Entered!", type = "success")
   removeModal()
 })
@@ -1583,8 +1535,8 @@ observeEvent(input$submit, {
     }
     refreshData()
     refreshComments()
-    rxdata$stagedData <<- readRDS(stagedDataRDS)
-    rxdata$stagedComments <<- readRDS(stagedCommentsRDS)
+    # rxdata$stagedData <<- readRDS(stagedDataRDS)
+    # rxdata$stagedComments <<- readRDS(stagedCommentsRDS)
     rxdata$fileChoices <- fileChoices()
   }
 })
@@ -1940,8 +1892,8 @@ observeEvent(input$import, {
     }
     refreshData()
     refreshComments()
-    rxdata$stagedData <<- readRDS(stagedDataRDS)
-    rxdata$stagedComments <<- readRDS(stagedCommentsRDS)
+    # rxdata$stagedData <<- readRDS(stagedDataRDS)
+    # rxdata$stagedComments <<- readRDS(stagedCommentsRDS)
     rxdata$data_n_db <- readRDS(data_n_RDS)
     rxdata$data_t_db <- readRDS(data_t_RDS)
     rxdata$data_c_db <- readRDS(data_c_RDS)

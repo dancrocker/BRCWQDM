@@ -11,7 +11,6 @@
 ### if the staged data does not have all necessary columns then
 ### mutate them on and re-save csv
 
-
 data_csv2df <- function(data, data_fields, file) {
 
   ### Read the RDS File
@@ -26,6 +25,7 @@ data_csv2df <- function(data, data_fields, file) {
 
    ### Rename E. coli Replicate to E. coli Field Replicate
   if("e_coli_rep" %in% names(mydata)) {
+    print("Changed 'e_coli_rep' to 'e_coli_field_rep")
     mydata <- mydata %>%
       dplyr::rename("e_coli_field_rep" = "e_coli_rep")
   }
