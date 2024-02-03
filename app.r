@@ -602,7 +602,9 @@ ui <- tagList(
           column(12,
                  wellPanel(
                    strong(h4("BRCWQDM DATABASE TABLES")),
-                   br()
+                   em("The data displayed here are not generated from a live database connection. These data are from cached RDS files."),
+                   em("In order to use the filters for numeric columns (ID, SEID, RESULT, CENSOR_VAL), you must provide a range of numeric values with an ellipsis between each number."),
+                   em("For example: 197...450. If you need to search for one number you can use the same number on both sides of the ellipsis, or you can enter the number in the search box above the right side of the table.")
                  ),
                  tabsetPanel(
                    tabPanel("Numeric Data",
@@ -1652,15 +1654,17 @@ observeEvent(input$submit, {
   })
 
 ### DATABASE PAGE ####
-
   if (file.exists(data_n_RDS)){
-    rxdata$data_n_db <- readRDS(data_n_RDS)
+    # Need to filter out NA SEIDs because there are 29 blank/replicate QC results that are not associated with a specific sampling event
+    # Currently these cannot be viewed in the app - need to come up with another means to show these, if desired
+    rxdata$data_n_db <- readRDS(data_n_RDS) %>% filter(!is.na(SEID))
   } else {
     rxdata$data_n_db <- NULL
   }
 
   if (file.exists(data_t_RDS)){
-    rxdata$data_t_db <- readRDS(data_t_RDS)
+  # There are 422 comments with no SEID - mostly because the comment was that no samples were collected, so there is no associated data... need to find a way to get the site into these comment
+    rxdata$data_t_db <- readRDS(data_t_RDS) %>% filter(!is.na(SEID))
   } else {
     rxdata$data_t_db <- NULL
   }

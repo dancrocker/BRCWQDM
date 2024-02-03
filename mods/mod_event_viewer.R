@@ -10,7 +10,6 @@
 library("dplyr")
 library("stringr")
 
-
 ########################################################################.
 ###                             MODULE UI                           ####
 ########################################################################.
@@ -95,7 +94,7 @@ EVENTS <- function(input, output, session, photo_list, globalSession, mode = rea
 ns <- session$ns
 
 # Pass rxdata from modules:
-data_n_db <- readRDS(data_n_RDS)
+data_n_db <- readRDS(data_n_RDS) %>% filter(!is.na(SEID))
 data_t_db <- readRDS(data_t_RDS)
 data_c_db <- readRDS(data_c_RDS)
 data_trans_log_db <- readRDS(trans_log_RDS)
