@@ -720,11 +720,11 @@ user_list <<- assignments_db %>%
   .$NAME
 
 ### Verify User ####
-if(app_user %in% user_list){
-  print(paste0("App user '", app_user, "' verified!"))
-} else {
-  stop("App user '", app_user,"' cannot be verified - please contact the program coordinator and ensure your configuration file user name matches your role in the BRCWQDM database. ")
-}
+# if(app_user %in% user_list){
+#   print(paste0("App user '", app_user, "' verified!"))
+# } else {
+#   stop("App user '", app_user,"' cannot be verified - please contact the program coordinator and ensure your configuration file user name matches your role in the BRCWQDM database. ")
+# }
 
 ### Set User Role ####
 user_role <<- filter(assignments_db, YEAR == max(assignments_db$YEAR),
