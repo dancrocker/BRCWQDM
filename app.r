@@ -727,9 +727,10 @@ user_list <<- assignments_db %>%
 # }
 
 ### Set User Role ####
-user_role <<- filter(assignments_db, YEAR == max(assignments_db$YEAR),
-                     NAME == app_user,
-                     ROLE %in% c("App Developer", "Program Coordinator", "Field Coordinator")) %>% .$ROLE
+user_role <<- "Program Coordinator"
+# user_role <<- filter(assignments_db, YEAR == max(assignments_db$YEAR),
+#                      NAME == app_user,
+#                      ROLE %in% c("App Developer", "Program Coordinator", "Field Coordinator")) %>% .$ROLE
 # user_role <<- "Field Coordinator"
 
 if(user_role %in% c("App Developer", "Program Coordinator")){
