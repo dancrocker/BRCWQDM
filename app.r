@@ -756,7 +756,7 @@ fileChoices <- function(){
 rxdata$fileChoices <- fileChoices()
 
 ### Get samplers from googledrive ####
-if(!exists("testing")) {
+if(exists("testing")) {
   print("Testing mode is on ... no downloads from google sheets")
   rxdata$samplers <<- samplers_db %>% sort()
 } else {
