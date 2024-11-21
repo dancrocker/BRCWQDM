@@ -131,15 +131,15 @@ remote_data_dir <- paste0(getwd(),"/data/")
 
 table_fields <<- readr::read_csv(paste0(wdir,"/data/table_fields.csv"))
 
-data_fields <<- table_fields[1:35,]
-comment_fields <<- table_fields[36:40,]
+data_fields <<- table_fields[1:38,]
+comment_fields <<- table_fields[39:43,]
 
 ### DATA FIELDS ####
 fieldsASIS <<- data_fields$shiny_input[data_fields$as_is == "yes"]
 ### Data Column names csv ####
 col_names <<- data_fields$shiny_input
 ### Comment Column Names csv ####
-comm_col_names <<- comment_fields$shiny_input
+comm_col_naes <<- comment_fields$shiny_input
 
 ### Select Option Choices ####
 ### All selection dependent lists need to go in server
@@ -396,18 +396,20 @@ ui <- tagList(
                             ),
                           column(width = 3,
                              numericInput("no3","Nitrate (mg/L)(C03.A):", value = NULL, min = 0, max = 20),
-                             numericInput("no3_rep","Nitrate Replicate (mg/L)(C03.B):", value = NULL, min = 0, max = 20)
+                             numericInput("no3_rep","Nitrate Lab Replicate (mg/L)(C03.B):", value = NULL, min = 0, max = 20),
+                             numericInput("no3_field_rep","Nitrate Field Replicate (mg/L)(C03.C):", value = NULL, min = 0, max = 20)
                           ),
                           column(width = 3,
                              numericInput("po4","Orthophosphate (mg/L)(C04.A):", value = NULL, min = 0, max = 2),
-                             numericInput("po4_rep","Orthophosphate Replicate (mg/L)(C04.B):", value = NULL, min = 0, max = 2)
-
+                             numericInput("po4_rep","Orthophosphate Lab Replicate (mg/L)(C04.B):", value = NULL, min = 0, max = 2),
+                             numericInput("po4_field_rep","Orthophosphate Field Replicate (mg/L)(C04.C):", value = NULL, min = 0, max = 2)
                           ),
                           column(width = 3,
                              numericInput("conduct", "Specific Conductivity (uS/cm)(C05.A):", value = NULL, min = 0, max = 10000, step = 1),
-                             numericInput("conduct_rep", "Specific Conductivity Replicate (uS/cm)(C05.B):", value = NULL, min = 0, max = 10000, step = 1),
+                             numericInput("conduct_rep", "Specific Conductivity Lab Replicate (uS/cm)(C05.B):", value = NULL, min = 0, max = 10000, step = 1),
+                             numericInput("conduct_field_rep", "Specific Conductivity Field Replicate (uS/cm)(C05.C):", value = NULL, min = 0, max = 10000, step = 1),
                              ADD_COMMENT_UI("add_comment_chemical")
-                          ))
+                            ))
                       )
                     )) # End Well Panel and FR
         ) %>%

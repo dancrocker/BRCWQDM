@@ -31,7 +31,8 @@ data_csv2df <- function(data, data_fields, file) {
   }
 
   ### Add the 4 new columns to the staged data file, if they are not there already and resave file
-  cols <- c("aql_e_coli_field_rep", "aql_e_coli_lab_rep", "aql_e_coli", "e_coli_lab_rep")
+  cols <- c("aql_e_coli_field_rep", "aql_e_coli_lab_rep", "aql_e_coli", "e_coli_lab_rep",
+            "no3_field_rep", "conduct_field_rep", "po4_field_rep")
 
   # Function to add missing columns
   add_cols <- function(df, cols) {
@@ -56,11 +57,14 @@ data_csv2df <- function(data, data_fields, file) {
   new_cols <- c("E. coli Lab Replicate" = NA_real_,
                 "E. coli AQL" = NA,
                 "E. coli Field Rep AQL" = NA,
-                "E. coli Lab Rep AQL" = NA
+                "E. coli Lab Rep AQL" = NA,
+                "Nitrate Field Replicate" = NA_real_,
+                "Conductivity Field Replicate" = NA_real_,
+                "Orthophosphate Field Replicate" = NA_real_
   )
   ### Add the new columns to the data if they are not there
   ### note: the !!! (bang bang bang) unpacks the new_cols list so the function doesn't fail
-  for(i in c(1:4)) {
+  for(i in c(1:7)) {
     if(!names(new_cols[i]) %in% names(mydata)) {
       mydata <- mydata %>%
         as_tibble() %>%
