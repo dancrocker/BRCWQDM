@@ -2016,7 +2016,7 @@ callModule(ADD_COMMENT, "add_comment_other",
 
 callModule(ADD_PHOTO, "add_photo_data_entry",
            site = selected_site,
-           photo_date = selected_date,
+           photo_date = format(selected_date, "%Y-%m-%d"),
            mod_loc = "data entry",
            par = NULL,
            photos = photos_db)

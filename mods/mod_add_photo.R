@@ -48,7 +48,7 @@ observeEvent(input$add_photo_mod, {
 
   # if(mod_loc != "data entry") {
     if(length(site()) > 0) {
-      if(any(site() == "", is.null(photo_date()))){
+      if(any(site() == "", is.null(photo_date))){
         shinyalert("Oops!", "A site and date must be defined in the record to add a photo!.", type = "error")
       } else {
         showModal(modalDialog(
@@ -128,14 +128,14 @@ uploadPhoto <- function(file) {
   if(file.exists(file)){
     # Upload the photo file to Dropbox
     if(par() == "General") {
-      new_name <- glue("{site()}_{photo_date()}_GEN_{format(now(),'%s')}.{stringr::str_sub(file, start = -3, end = -1)}")
+      new_name <- glue("{site()}_{photo_date}_GEN_{format(now(),'%s')}.{stringr::str_sub(file, start = -3, end = -1)}")
     } else {
-      new_name <- glue("{site()}_{photo_date()}_{parameters_db$ABBRV[parameters_db$PARAMETER_NAME == par()]}_{format(now(),'%s')}.{stringr::str_sub(file, start = -3, end = -1)}")
+      new_name <- glue("{site()}_{photo_date}_{parameters_db$ABBRV[parameters_db$PARAMETER_NAME == par()]}_{format(now(),'%s')}.{stringr::str_sub(file, start = -3, end = -1)}")
     }
     fullname <- glue("{dataDir}photos/{new_name}")
     print(paste0("Photo renamed to: ", new_name))
     photo_rec <- tibble(SITE_CODE = site(),
-                      DATE = photo_date(),
+                      DATE = photo_date,
                       PARAMETER = par(),
                       PHOTAGRAPHER = str_trunc(input$photographer, width = 61, side = "right"),
                       FILENAME = new_name,
