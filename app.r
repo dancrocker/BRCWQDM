@@ -139,7 +139,7 @@ fieldsASIS <<- data_fields$shiny_input[data_fields$as_is == "yes"]
 ### Data Column names csv ####
 col_names <<- data_fields$shiny_input
 ### Comment Column Names csv ####
-comm_col_naes <<- comment_fields$shiny_input
+comm_col_names <<- comment_fields$shiny_input
 
 ### Select Option Choices ####
 ### All selection dependent lists need to go in server
