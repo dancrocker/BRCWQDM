@@ -988,7 +988,7 @@ observeEvent(input$wat_clarity, {
 observe({
   mandatoryFilled <- vapply(fieldsMandatory,
            function(x) {
-             !is.null(input[[x]]) && input[[x]] != ""
+             !is.null(input[[x]]) && !"" %in% input[[x]]
            },
            logical(1))
   mandatoryFilled <- all(mandatoryFilled)
