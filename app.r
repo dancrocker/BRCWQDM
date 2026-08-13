@@ -35,7 +35,7 @@ ipak <- function(pkg){
 
 packages <- c("shiny","shinyjs", "shinyFiles", "shinyTime", "shinyalert","shinydashboard", "shinycssloaders","rmarkdown", "knitr", "tidyselect", "lubridate",
               "plotly", "leaflet", "RColorBrewer", "data.table", "DT", "scales", "stringr", "shinythemes", "ggthemes", "tidyr", "tibble",
-              "dplyr", "magrittr", "httr", "tibble", "bsplus", "readxl", "rdrop2", "RSQLite", "readr", "purrr", "htmlwidgets", "ggplot2",
+              "dplyr", "magrittr", "httr", "jsonlite", "tibble", "bsplus", "readxl", "RSQLite", "readr", "purrr", "htmlwidgets", "ggplot2",
               "pool", "curl", "glue","googlesheets4", "fs", "rpivotTable", "xts", "htmltools", "dygraphs")
 
 # install.packages("https://github.com/jeroen/curl/archive/master.tar.gz", repos = NULL)
