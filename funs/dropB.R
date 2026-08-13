@@ -1,22 +1,135 @@
 ### Functions to interface with Dropbox ####
 
-library(rdrop2)
+library(httr)
+library(jsonlite)
 library(tibble)
 library(lubridate)
 
 ### This setting is very important - if not set then random connection errors occur
 httr::set_config(httr::config(http_version = 0))
 
-### Get Token - only need once, then saved locally -DONE
-# drop_auth()
-### Save the Token to an object - DONE
-# token <- drop_auth()
-### Save token
-# tokendir <- paste0(LocalDir, "Data/")
-# saveRDS(token, paste0(tokendir, "dropb_token.RDS"))
+### Dropbox OAuth2 token file - contains client_id, client_secret, and a
+### long-lived refresh_token generated once via funs/dropbox_auth_setup.R.
+### Distributed to each user's install exactly like the old access-token
+### file was.
 tokenpath <- paste0(LocalDir, "Data/dropb_token.RDS")
-### Use Token like this:
-drop_auth(rdstoken = tokenpath)
+
+.dropbox_state <- new.env(parent = emptyenv())
+
+### Exchanges the stored refresh_token for a short-lived (4hr) access token,
+### refreshing only when the cached one is missing or about to expire.
+get_dropbox_token <- function() {
+  if (is.null(.dropbox_state$creds)) {
+    .dropbox_state$creds <- readRDS(tokenpath)
+  }
+  if (is.null(.dropbox_state$access_token) || Sys.time() >= .dropbox_state$expires_at) {
+    resp <- httr::POST(
+      url = "https://api.dropboxapi.com/oauth2/token",
+      body = list(
+        grant_type = "refresh_token",
+        refresh_token = .dropbox_state$creds$refresh_token,
+        client_id = .dropbox_state$creds$client_id,
+        client_secret = .dropbox_state$creds$client_secret
+      ),
+      encode = "form"
+    )
+    if (httr::http_error(resp)) {
+      stop("Dropbox token refresh failed: ", httr::content(resp, as = "text", encoding = "UTF-8"))
+    }
+    result <- httr::content(resp, as = "parsed", type = "application/json")
+    .dropbox_state$access_token <- result$access_token
+    .dropbox_state$expires_at <- Sys.time() + result$expires_in - 60
+  }
+  .dropbox_state$access_token
+}
+
+### Kept so existing call sites (dtoken = drop_auth(rdstoken = tokenpath)) don't need to change
+drop_auth <- function(rdstoken = tokenpath) {
+  get_dropbox_token()
+}
+
+### Low-level Dropbox API v2 wrappers (replace rdrop2, which cannot refresh tokens) ####
+
+drop_dir <- function(path, recursive = FALSE, dtoken) {
+  entries <- list()
+  url <- "https://api.dropboxapi.com/2/files/list_folder"
+  body <- list(path = path, recursive = recursive)
+  repeat {
+    resp <- httr::POST(url = url, httr::add_headers(Authorization = paste("Bearer", dtoken)),
+                        body = body, encode = "json")
+    if (httr::http_error(resp)) {
+      stop("Dropbox list_folder failed for path '", path, "': ",
+           httr::content(resp, as = "text", encoding = "UTF-8"))
+    }
+    result <- httr::content(resp, as = "parsed", type = "application/json")
+    entries <- c(entries, result$entries)
+    if (!isTRUE(result$has_more)) break
+    url <- "https://api.dropboxapi.com/2/files/list_folder/continue"
+    body <- list(cursor = result$cursor)
+  }
+  files <- Filter(function(e) identical(e$`.tag`, "file"), entries)
+  tibble::tibble(
+    name = vapply(files, function(e) e$name, character(1)),
+    path_display = vapply(files, function(e) e$path_display, character(1)),
+    server_modified = as.POSIXct(vapply(files, function(e) e$server_modified, character(1)),
+                                  format = "%Y-%m-%dT%H:%M:%SZ", tz = "UTC")
+  )
+}
+
+drop_upload <- function(file, path, mode = "overwrite", verbose = TRUE, dtoken) {
+  dest_path <- paste0(path, "/", basename(file))
+  api_arg <- jsonlite::toJSON(list(path = dest_path, mode = mode, mute = TRUE), auto_unbox = TRUE)
+  resp <- httr::POST(
+    url = "https://content.dropboxapi.com/2/files/upload",
+    httr::add_headers(
+      Authorization = paste("Bearer", dtoken),
+      `Dropbox-API-Arg` = api_arg,
+      `Content-Type` = "application/octet-stream"
+    ),
+    body = httr::upload_file(file)
+  )
+  if (httr::http_error(resp)) {
+    stop("Dropbox upload failed for file '", file, "': ",
+         httr::content(resp, as = "text", encoding = "UTF-8"))
+  }
+  if (isTRUE(verbose)) {
+    print(paste0("Uploaded '", file, "' to Dropbox path '", dest_path, "'"))
+  }
+  invisible(httr::content(resp, as = "parsed", type = "application/json"))
+}
+
+drop_download <- function(path, local_path, overwrite = TRUE, dtoken) {
+  dest_file <- file.path(local_path, basename(path))
+  api_arg <- jsonlite::toJSON(list(path = path), auto_unbox = TRUE)
+  resp <- httr::POST(
+    url = "https://content.dropboxapi.com/2/files/download",
+    httr::add_headers(
+      Authorization = paste("Bearer", dtoken),
+      `Dropbox-API-Arg` = api_arg
+    ),
+    httr::write_disk(dest_file, overwrite = overwrite)
+  )
+  if (httr::http_error(resp)) {
+    err <- httr::content(resp, as = "text", encoding = "UTF-8")
+    if (file.exists(dest_file)) file.remove(dest_file)
+    stop("Dropbox download failed for path '", path, "': ", err)
+  }
+  invisible(dest_file)
+}
+
+drop_delete <- function(path, dtoken) {
+  resp <- httr::POST(
+    url = "https://api.dropboxapi.com/2/files/delete_v2",
+    httr::add_headers(Authorization = paste("Bearer", dtoken)),
+    body = list(path = path),
+    encode = "json"
+  )
+  if (httr::http_error(resp)) {
+    stop("Dropbox delete failed for path '", path, "': ",
+         httr::content(resp, as = "text", encoding = "UTF-8"))
+  }
+  invisible(httr::content(resp, as = "parsed", type = "application/json"))
+}
 
 ### Function to Load DB RDS Files ####
 LOAD_DB_RDS <- function() {
